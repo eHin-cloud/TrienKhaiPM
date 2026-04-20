@@ -1,0 +1,10 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Nếu người dùng truy cập một file TĨNH có thật (js, css, hình ảnh trong public) thì cho qua
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Các request còn lại đổ về index.php với tham số route
+    RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>

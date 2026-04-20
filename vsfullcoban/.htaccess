@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. Ép buộc sử dụng HTTPS (Vô hiệu hóa ở Local để tránh lỗi SSL)
+    # RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+    # 2. Chuyển hướng mọi yêu cầu từ thư mục gốc vào thư mục public
+    RewriteRule ^$ public/index.php?route=index.php [L,QSA]
+    RewriteRule ^((?!public/).*)$ public/$1 [L]
+</IfModule>
