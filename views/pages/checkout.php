@@ -1,0 +1,510 @@
+<?php
+/**
+ * ============================================================
+ * CHECKOUT.PHP - TRANG THANH TOÁN & XÁC NHẬN ĐƠN HÀNG
+ * (ĐÃ CẬP NHẬT TÍCH HỢP SERVICE LAYER)
+ * ============================================================
+ * 
+ * Logic đặt hàng giờ đây được chuyển hoàn toàn sang services/checkout_services.php
+ * 
+ * LUỒNG HOẠT ĐỘNG:
+ * 1. Nhận danh sách sản phẩm đã tick từ cart.php (selected_items[])
+ * 2. Hiển thị form nhập thông tin người nhận (Họ tên, SĐT, Địa chỉ)
+ * 3. Chọn phương thức thanh toán (QR / COD)
+ * 4. Hiển thị hóa đơn tóm tắt (cột bên phải)
+ * 5. Xử lý đặt hàng: Gọi createOrderFromCart() trong Service Layer.
+ *    - Hàm service sẽ lo việc Transaction, Sinh mã, Xóa giỏ hàng.
+ *    - Redirect/Success state được xử lý sau khi service trả về kết quả.
+ * 
+ * @requires database.php - Hàm getCartItems()
+ * @requires services/checkout_services.php - Hàm xử lý nghiệp vụ chính
+ * @requires header.php   - Giao diện header
+ * @requires footer.php   - Giao diện footer
+ */
+
+// session_start() removed by Router
+// database.php is auto-loaded by Router
+
+use App\Service\CheckoutService;
+use App\Repository\OrderRepository;
+use App\Repository\CartRepository;
+use App\Repository\CouponRepository;
+use App\Repository\UserRepository; // Thêm use cho UserRepository
+
+// Bắt buộc đăng nhập
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Lấy thông tin user hiện tại từ Database để tự động điền form
+$userRepo = new UserRepository($db);
+$currentUser = $userRepo->getUserById($user_id);
+
+// Lấy danh sách địa chỉ từ Address Book
+$stmt_addr = $db->prepare("SELECT * FROM addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC");
+$stmt_addr->execute([$user_id]);
+$saved_addresses = $stmt_addr->fetchAll();
+
+// Xác định địa chỉ mặc định để pre-fill
+$default_addr = null;
+foreach ($saved_addresses as $addr) {
+    if ($addr['is_default']) {
+        $default_addr = $addr;
+        break;
+    }
+}
+
+// Lấy TOÀN BỘ sản phẩm trong giỏ hàng của user
+$all_cart_items = getCartItems($db, $user_id);
+
+// ==========================================
+// BƯỚC 1: NHẬN DANH SÁCH SP ĐÃ TICK TỪ CART.PHP
+// ==========================================
+// Cart.php gửi POST mảng selected_items[] chứa cart_id đã tick
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_items'])) {
+    // Lưu vào session để không bị mất khi reload trang
+    $_SESSION['selected_items'] = $_POST['selected_items'];
+}
+
+// Lấy danh sách cart_id đã chọn từ session
+$selected_ids = $_SESSION['selected_items'] ?? [];
+
+// Nếu không có SP nào được chọn -> redirect về giỏ hàng
+if (empty($selected_ids)) {
+    header("Location: cart.php");
+    exit;
+}
+
+// ==========================================
+// BƯỚC 2: LỌC CHỈ GIỮ SP ĐÃ TICK
+// ==========================================
+// Dùng array_filter để chỉ giữ lại các SP có cart_id nằm trong danh sách đã tick
+$cart_items = array_filter($all_cart_items, function ($item) use ($selected_ids) {
+    return in_array($item['cart_id'], $selected_ids);
+});
+
+// Nếu lọc xong mà không còn SP nào (có thể do SP đã bị xóa) -> về giỏ hàng
+if (empty($cart_items)) {
+    header("Location: cart.php");
+    exit;
+}
+
+// Khởi tạo Service để tính toán bundle discount và giá cuối
+$orderRepo = new OrderRepository($db);
+$cartRepo = new CartRepository($db);
+$couponRepo = new CouponRepository($db);
+$checkoutService = new CheckoutService($db, $orderRepo, $cartRepo, $couponRepo);
+$bundleData = $checkoutService->calculateBundleDiscount($cart_items);
+$bundle_discount = $bundleData['discount'];
+$bundle_message = $bundleData['message'];
+
+// Tính toán tổng tiền đơn hàng ban đầu (chỉ để hiển thị trên giao diện trước khi áp voucher)
+$total_price = array_reduce($cart_items, function ($sum, $item) {
+    return $sum + ($item['price'] * $item['quantity']);
+}, 0);
+
+$order_success = false;  // Cờ đánh dấu đặt hàng thành công (dùng cho COD)
+$order_id = 0;           // Mã đơn hàng sau khi tạo xong
+
+// Khởi tạo trạng thái voucher (sẽ được gọi lại bằng AJAX)
+$applied_discount = 0;
+$applied_voucher_code = '';
+if (isset($_SESSION['applied_voucher'])) {
+    $applied_voucher_code = $_SESSION['applied_voucher']['code'];
+    $applied_discount = $_SESSION['applied_voucher']['discount_amount'];
+}
+$total_discount = $applied_discount + $bundle_discount;
+$display_final_price = $total_price - $total_discount;
+if ($display_final_price < 0) {
+    $display_final_price = 0;
+}
+
+
+// ==========================================
+// BƯỚC 3: XỬ LÝ KHI KHÁCH BẤM "XÁC NHẬN ĐẶT HÀNG"
+// ==========================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_order'])) {
+    // Thu thập thông tin người nhận từ form
+    $fullname = trim($_POST['fullname']);
+    $phone = trim($_POST['phone']);
+    $address = trim($_POST['address']);
+    $note = trim($_POST['note']);
+    $payment_method = $_POST['payment_method'] ?? 'cod'; // Phương thức: 'qr' hoặc 'cod'
+
+    // Validate dữ liệu bắt buộc
+    if (!empty($fullname) && !empty($phone) && !empty($address)) {
+        try {
+            // ***************************************************************
+            // **** SỬ DỤNG SERVICE LAYER ĐỂ XỬ LÝ TOÀN BỘ TRANSACTION ****
+            // ***************************************************************
+
+            // 1. Khởi tạo Repository và Service Class chuẩn Giai đoạn 3
+            $orderRepo = new OrderRepository($db);
+            $cartRepo = new CartRepository($db);
+            $couponRepo = new CouponRepository($db);
+            $checkoutService = new CheckoutService($db, $orderRepo, $cartRepo, $couponRepo);
+
+            // 2. Gọi method của Service (Sử dụng các biến đã được tính toán ở trên)
+            $total_discount = $applied_discount + $bundle_discount;
+            $result = $checkoutService->createOrderFromCart(
+                $user_id,
+                $cart_items,
+                $fullname,
+                $phone,
+                $address,
+                $note,
+                $payment_method,
+                $applied_voucher_code,
+                $total_discount,
+                $display_final_price
+            );
+            if ($result['success']) {
+                $order_id = $result['order_id'];
+                $order_success = ($payment_method === 'cod');
+
+                // Cập nhật và reset session sau thành công
+                unset($_SESSION['selected_items']);
+                if (isset($_SESSION['applied_voucher'])) {
+                    unset($_SESSION['applied_voucher']);
+                }
+
+                // Kiểm tra xem cần redirect hay chỉ cần hiển thị thành công
+                if ($payment_method === 'qr') {
+                    header("Location: payment.php?order_id=" . $order_id);
+                    exit;
+                }
+                // Nếu là COD, $order_success = true, và form sẽ hiển thị thành công.
+            } else {
+                // Xử lý lỗi từ service
+                die(__("system_error") . ": " . $result['message']);
+            }
+
+        } catch (Exception $e) {
+            die(__("system_error") . ": " . $e->getMessage());
+        }
+    }
+}
+
+// Include giao diện header
+require_once __DIR__ . '/../partials/header.php';
+?>
+
+<!-- ==========================================
+     GIAO DIỆN TRANG THANH TOÁN
+     ========================================== -->
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+
+    <!-- ===== GIAO DIỆN ĐẶT HÀNG THÀNH CÔNG (Chỉ hiện khi COD đặt thành công) ===== -->
+    <?php if ($order_success): ?>
+        <div class="bg-white p-10 rounded-xl shadow-sm border border-gray-200 text-center max-w-2xl mx-auto mt-10">
+            <!-- Icon check thành công -->
+            <div
+                class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-5">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2"><?= __("order_success_title") ?></h2>
+            <p class="text-gray-600 mb-6"><?= __("order_success_msg_prefix") ?> <b
+                    class="text-primary text-lg">#
+                    <?= $order_id ?>
+                </b>.<br><?= __("order_success_callback") ?></p>
+            <!-- Nút điều hướng -->
+            <a href="index.php"
+                class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-800 transition shadow-md inline-block"><?= __("continue_shopping") ?></a>
+            <a href="track_order.php"
+                class="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg font-bold hover:bg-gray-200 transition shadow-md inline-block ml-2 border border-gray-200"><?= __("view_order") ?></a>
+        </div>
+
+        <!-- ===== GIAO DIỆN FORM THANH TOÁN (Mặc định) ===== -->
+    <?php else: ?>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <i class="fa-solid fa-money-check-dollar text-primary"></i> <?= __("checkout_info") ?>
+        </h1>
+
+        <form method="POST" action="checkout.php" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <?= csrf_input_field() ?>
+
+            <!-- === CỘT TRÁI: Form thông tin người nhận === -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                        <h3 class="font-bold text-gray-800"><?= __("receiver_info") ?></h3>
+                        <?php if (!empty($saved_addresses)): ?>
+                            <button type="button" onclick="openAddressPicker()" class="text-xs text-blue-600 font-bold hover:underline">
+                                <i class="fa-solid fa-address-book mr-1"></i> Chọn từ địa chỉ đã lưu
+                            </button>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Họ tên + SĐT -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="col-span-full">
+                            <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("fullname") ?> *</label>
+                            <!-- Tự động điền tên từ session nếu đã đăng nhập -->
+                            <input type="text" name="fullname" id="checkout-fullname" required
+                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                                value="<?= htmlspecialchars($default_addr['fullname'] ?? ($_SESSION['fullname'] ?? '')) ?>">
+                        </div>
+                        <div class="col-span-full">
+                            <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("phone") ?> *</label>
+                            <!-- Validate pattern 10 chữ số -->
+                            <input type="tel" name="phone" id="checkout-phone" required pattern="[0-9]{10}" placeholder="VD: 0901234567"
+                                value="<?= htmlspecialchars($default_addr['phone'] ?? ($currentUser['phone'] ?? '')) ?>"
+                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Địa chỉ giao hàng -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("detailed_address") ?> *</label>
+                        <input type="text" name="address" id="checkout-address" required
+                            value="<?= htmlspecialchars($default_addr['address'] ?? ($currentUser['address'] ?? '')) ?>"
+                            placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+
+                    <!-- Ghi chú (tùy chọn) -->
+                    <div class="mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("order_note") ?></label>
+                        <textarea name="note" rows="3" placeholder="Ghi chú thêm về thời gian giao hàng, chỉ dẫn địa chỉ..."
+                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- === PHƯƠNG THỨC THANH TOÁN === -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><?= __("payment_method") ?></h3>
+
+                    <!-- Lựa chọn 1: Chuyển khoản QR (khuyên dùng - checked mặc định) -->
+                    <label
+                        class="flex items-start gap-3 p-4 border border-blue-200 bg-blue-50 rounded-lg mb-3 cursor-pointer transition relative group">
+                        <input type="radio" name="payment_method" value="qr" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'qr') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
+                    accent-primary">
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-800 flex items-center gap-2"><?= __("qr_payment") ?> <span
+                                    class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse"><?= __("recommended") ?></span></div>
+                            <div class="text-sm text-gray-600 mt-1"><?= __("qr_desc") ?></div>
+                            <!-- Logo đối tác thanh toán -->
+                            <div class="flex gap-2 mt-2">
+                                <img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" class="h-5">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png"
+                                    class="h-5">
+                            </div>
+                        </div>
+                    </label>
+
+                    <!-- Lựa chọn 2: Thanh toán khi nhận hàng (COD) -->
+                    <label
+                        class="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="payment_method" value="cod" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'cod') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
+                    accent-primary">
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-800"><?= __("cod_payment") ?></div>
+                            <div class="text-sm text-gray-600 mt-1"><?= __("cod_desc") ?></div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- === CỘT PHẢI: Hóa đơn tóm tắt === -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 sticky top-24">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><?= __("your_order") ?> (
+                        <?= count($cart_items) ?> <?= __("results") ?>)
+                    </h3>
+
+                    <!-- Danh sách sản phẩm đã chọn (scrollable nếu nhiều) -->
+                    <div class="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2 hide-scrollbar">
+                        <?php foreach ($cart_items as $item): ?>
+                            <div class="flex justify-between items-start gap-3 text-sm">
+                                <div class="flex items-start gap-2 flex-1">
+                                    <div class="font-medium text-gray-800 w-6 shrink-0">
+                                        <?= $item['quantity'] ?>x
+                                    </div>
+                                    <div class="text-gray-600 line-clamp-2">
+                                        <?= htmlspecialchars($item['name']) ?>
+                                    </div>
+                                </div>
+                                <div class="font-bold text-gray-800 shrink-0">
+                                    <?= number_format($item['price'] * $item['quantity']) ?>đ
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <!-- Mã giảm giá -->
+                    <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2"><?= __("coupon_code") ?></label>
+                        <div class="flex gap-2">
+                            <input type="text" id="voucherCodeInput" value="<?= htmlspecialchars($applied_voucher_code) ?>"
+                                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary outline-none uppercase"
+                                placeholder="Nhập mã...">
+                            <button type="button" onclick="applyVoucher()"
+                                class="bg-gray-800 text-white px-4 shrink-0 rounded font-bold text-sm hover:bg-gray-700 transition"><?= __("apply") ?></button>
+                        </div>
+                        <p id="voucherMessage"
+                            class="text-xs mt-2 <?= $applied_discount > 0 ? 'text-green-600 font-bold' : 'hidden' ?>">
+                            <?= $applied_discount > 0 ? 'Mã đã được áp dụng!' : '' ?>
+                        </p>
+                    </div>
+
+                    <!-- Tóm tắt giá tiền -->
+                    <div class="border-t border-gray-100 pt-4 mb-6" id="summaryBlock">
+                        <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+                            <span><?= __("subtotal") ?>:</span>
+                            <span id="subTotalStr" data-value="<?= $total_price ?>">
+                                <?= number_format($total_price) ?>đ
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+                            <span><?= __("shipping_fee") ?>:</span>
+                            <span class="text-green-600 font-medium"><?= __("free") ?></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 text-sm font-bold text-green-600 <?= $applied_discount > 0 ? '' : 'hidden' ?>"
+                            id="discountRow">
+                            <span><?= __("voucher_discount") ?>:</span>
+                            <span id="discountValStr">-
+                                <?= number_format($applied_discount) ?>đ
+                            </span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2 text-sm font-bold text-green-600 <?= $bundle_discount > 0 ? '' : 'hidden' ?>"
+                            id="bundleRow">
+                            <span><?= __("combo_discount") ?>:</span>
+                            <span id="bundleValStr" data-value="<?= $bundle_discount ?>">-
+                                <?= number_format($bundle_discount) ?>đ
+                            </span>
+                        </div>
+                        <?php if ($bundle_discount > 0 && !empty($bundle_message)): ?>
+                        <div class="text-xs text-gray-500 mb-2"><?= htmlspecialchars($bundle_message) ?></div>
+                        <?php endif; ?>
+                        <div class="flex justify-between items-center mt-4 border-t border-gray-100 pt-3">
+                            <span class="font-bold text-gray-800"><?= __("final_total") ?>:</span>
+                            <span class="font-extrabold text-2xl text-danger" id="finalTotalStr">
+                                <?= number_format($display_final_price) ?>đ
+                            </span>
+                        </div>
+                        <div class="text-[11px] text-right text-gray-500 italic mt-1"><?= __("vat_included") ?></div>
+                    </div>
+
+                    <!-- Nút xác nhận đặt hàng -->
+                    <button type="submit" name="submit_order"
+                        class="w-full bg-gradient-to-b from-[#fd3a3a] to-[#d70018] text-white rounded-lg py-3.5 font-bold text-lg shadow-md hover:opacity-90 transition"><?= __("confirm_order") ?></button>
+                    <a href="cart.php" class="block text-center text-primary text-sm mt-4 hover:underline"><i
+                            class="fa-solid fa-arrow-left mr-1"></i> <?= __("back_to_cart") ?></a>
+                </div>
+            </div>
+        </form>
+    <?php endif; ?>
+</div>
+
+<script>
+    function applyVoucher() {
+        const codeInput = document.getElementById('voucherCodeInput');
+        const code = codeInput.value.trim();
+        const msgEl = document.getElementById('voucherMessage');
+        const subTotal = parseFloat(document.getElementById('subTotalStr').getAttribute('data-value'));
+        const bundleDiscount = parseFloat(document.getElementById('bundleValStr').dataset.value || 0);
+
+        if (!code) {
+            msgEl.textContent = 'Vui lòng nhập mã giảm giá!';
+            msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+            return;
+        }
+
+        fetch('ajax_voucher.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ code: code, total_price: subTotal, bundle_discount: bundleDiscount, csrf_token: '<?= generate_csrf_token() ?>' })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Thành công
+                    msgEl.textContent = data.message + ' (' + data.discount_text + ')';
+                    msgEl.className = 'text-xs mt-2 text-green-600 font-bold';
+
+                    // Cập nhật DOM
+                    const discountRow = document.getElementById('discountRow');
+                    discountRow.classList.remove('hidden');
+                    document.getElementById('discountValStr').textContent = '-' + new Intl.NumberFormat('vi-VN').format(data.discount_amount) + 'đ';
+                    document.getElementById('finalTotalStr').textContent = new Intl.NumberFormat('vi-VN').format(data.new_total) + 'đ';
+                    // Highlight input field
+                    codeInput.classList.add('border-green-500', 'bg-green-50');
+                } else {
+                    // Lỗi
+                    msgEl.textContent = data.message;
+                    msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+                    document.getElementById('discountRow').classList.add('hidden');
+                    const bundleDiscount = parseFloat(document.getElementById('bundleValStr').dataset.value || 0);
+                    document.getElementById('finalTotalStr').textContent = new Intl.NumberFormat('vi-VN').format(subTotal - bundleDiscount) + 'đ';
+                    codeInput.classList.remove('border-green-500', 'bg-green-50');
+                }
+            })
+            .catch(err => {
+                console.error('Error applying voucher:', err);
+                msgEl.textContent = 'Đã xảy ra lỗi hệ thống khi áp dụng mã.';
+                msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+            });
+    }
+</script>
+
+<!-- Modal Chọn địa chỉ đã lưu -->
+<div id="addressPickerModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div class="p-5 border-b flex justify-between items-center bg-gray-50">
+            <h3 class="font-bold text-gray-800">Chọn địa chỉ nhận hàng</h3>
+            <button onclick="closeAddressPicker()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-4 max-h-[400px] overflow-y-auto space-y-3">
+            <?php if (!empty($saved_addresses)): ?>
+                <?php foreach ($saved_addresses as $addr): ?>
+                    <div class="p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group" 
+                         onclick='selectAddress(<?= json_encode($addr) ?>)'>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-gray-800 group-hover:text-blue-700"><?= htmlspecialchars($addr['fullname']) ?></span>
+                            <span class="text-gray-400">|</span>
+                            <span class="text-gray-600"><?= htmlspecialchars($addr['phone']) ?></span>
+                            <?php if ($addr['is_default']): ?>
+                                <span class="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Mặc định</span>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-xs text-gray-500 line-clamp-2"><?= htmlspecialchars($addr['address']) ?></p>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <div class="p-4 border-t bg-gray-50 text-center">
+            <a href="profile.php?tab=addresses" class="text-sm text-blue-600 font-bold hover:underline">+ Thêm địa chỉ mới</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openAddressPicker() {
+        const modal = document.getElementById('addressPickerModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAddressPicker() {
+        const modal = document.getElementById('addressPickerModal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function selectAddress(addr) {
+        const nameInput = document.getElementById('checkout-fullname');
+        const phoneInput = document.getElementById('checkout-phone');
+        const addrInput = document.getElementById('checkout-address');
+        
+        if (nameInput) nameInput.value = addr.fullname;
+        if (phoneInput) phoneInput.value = addr.phone;
+        if (addrInput) addrInput.value = addr.address;
+        
+        closeAddressPicker();
+    }
+</script>
+
+<?php require_once __DIR__ . '/../partials/footer.php'; ?>
