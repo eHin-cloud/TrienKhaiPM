@@ -467,13 +467,20 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         if (data.success) {
                             renderNotifications(data.data.items);
                             updateNotiBadge(data.data.unread_count);
+                        } else {
+                            notiList.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs"><?= __('please_login_to_view') ?></div>`;
+                            updateNotiBadge(0);
                         }
+                    })
+                    .catch(() => {
+                        notiList.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs"><?= __('please_login_to_view') ?></div>`;
+                        updateNotiBadge(0);
                     });
             }
 
             function renderNotifications(items) {
                 if (items.length === 0) {
-                    notiList.innerHTML = `<div class="p-10 text-center text-gray-400 text-sm">Bạn không có thông báo nào.</div>`;
+                    notiList.innerHTML = `<div class="p-10 text-center text-gray-400 text-sm"><?= __('no_notifications') ?></div>`;
                     return;
                 }
 

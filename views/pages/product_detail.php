@@ -77,25 +77,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
         $media_json = !empty($media_paths) ? json_encode($media_paths) : null;
 
         // --- CHÈN DATABASE & UPDATE TỔNG ---
-        // Xác thực logic: Giá trị đánh giá phải nằm trong ngưỡng [1,5] sao
-        if ($rating > 0 && $rating <= 5 && !empty($comment)) {
-            $stmtRev = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment, media) VALUES (?, ?, ?, ?, ?)");
-            if ($stmtRev->execute([$id, $user_id, $rating, $comment, $media_json])) {
+        $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
 
-                // Thực thi truy xuất DB để tính lại trung bình cộng tổng số thực tế
-                $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ?");
-                $avgStmt->execute([$id]);
-                $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+        // Xác thực logic: Giá trị đánh giá phải nằm trong ngưỡng [1,5] sao (nếu không phải reply)
+        if (!empty($comment)) {
+            $stmtRev = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment, media, parent_id) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmtRev->execute([$id, $user_id, $rating, $comment, $media_json, $parent_id])) {
 
-                // Cập nhật giá trị đã tính toán trở lại bảng cha `products` để không phải truy vấn lúc show list home
-                $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")->execute([round($avgData['avg_rating'], 1), $avgData['total'], $id]);
+                // Chỉ tính lại trung bình nếu là review gốc (không phải reply)
+                if (!$parent_id) {
+                    // Thực thi truy xuất DB để tính lại trung bình cộng tổng số thực tế
+                    $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ? AND parent_id IS NULL");
+                    $avgStmt->execute([$id]);
+                    $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+
+                    // Cập nhật giá trị đã tính toán trở lại bảng cha `products` để không phải truy vấn lúc show list home
+                    $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")->execute([round($avgData['avg_rating'], 1), $avgData['total'], $id]);
+                }
 
                 // Load lại component review sau khi xong
+                if (isset($_POST['ajax']) && $_POST['ajax'] == 1) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => 'Cảm ơn quý khách đã comment!']);
+                    exit;
+                }
+                $_SESSION['review_success_msg'] = "Cảm ơn quý khách đã comment!";
                 header("Location: product_detail.php?id=$id#reviews");
                 exit;
             }
         }
     }
+}
+
+// Chế độ chỉ lấy danh sách đánh giá (Dùng cho AJAX cập nhật UI không reload)
+if (isset($_GET['only_reviews']) && $_GET['only_reviews'] == 1) {
+    $reviews = getProductReviews($db, $id);
+    if (empty($reviews)) {
+        echo '<p class="text-center text-gray-500 italic py-4">' . __("no_reviews") . '</p>';
+    } else {
+        $totalReviews = count($reviews);
+        foreach ($reviews as $index => $rev) {
+            echo '<div class="review-item ' . ($index >= 2 ? 'hidden' : '') . '" data-index="' . $index . '">';
+            echo renderReviewItem($rev, $id);
+            echo '</div>';
+        }
+        if ($totalReviews > 2) {
+            echo '<div class="text-center mt-6" id="load-more-reviews-container">';
+            echo '<button onclick="loadMoreReviews()" class="px-8 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary hover:text-white transition shadow-sm">';
+            echo 'Xem thêm ' . ($totalReviews - 2) . ' đánh giá khác';
+            echo '</button></div>';
+        }
+    }
+    exit;
 }
 
 /**
@@ -178,6 +211,138 @@ $cross_sell_products = $productService->getCrossSellProducts($id, 6);
 // Truy xuất danh sách đánh giá & thống kê số điểm phân phối sao
 $reviews = getProductReviews($db, $id);
 $reviewStats = getReviewStats($reviews);
+
+/**
+ * Hàm đệ quy hiển thị đánh giá và phản hồi
+ */
+function renderReviewItem($rev, $productId, $level = 0) {
+    global $id; // ID sản phẩm từ trang cha
+    $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    $is_owner = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $rev['user_id'];
+    
+    ob_start(); ?>
+    <div class="<?= $level === 0 ? 'border-b border-gray-100 py-6 last:border-0' : 'mt-4 border-t border-gray-50 pt-4 pb-2' ?>">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-2">
+            <div class="font-bold <?= $level === 0 ? 'text-[14px]' : 'text-[13px]' ?> flex items-center gap-2">
+                <span class="<?= $level === 0 ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' ?> bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
+                    <?= mb_substr($rev['fullname'], 0, 1) ?>
+                </span>
+                <span class="text-gray-800"><?= htmlspecialchars($rev['fullname']) ?></span>
+                <span class="text-[11px] text-gray-400 font-normal ml-1">• <?= date('H:i d/m/Y', strtotime($rev['created_at'])) ?></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <?php if ($is_owner || $is_admin): ?>
+                    <button onclick="confirmDeleteReview(<?= $rev['id'] ?>)" class="text-gray-300 hover:text-red-500 transition text-[12px]">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <form id="delete-review-form-<?= $rev['id'] ?>" method="POST" action="product_detail.php?id=<?= $id ?>" class="hidden">
+                        <?= csrf_input_field() ?>
+                        <input type="hidden" name="delete_review" value="1">
+                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Rating (Chỉ hiện cho review gốc) -->
+        <?php if ($level === 0): ?>
+            <div class="flex items-center gap-2 mb-2 pl-10">
+                <div class="flex text-yellow-400 text-[12px] gap-0.5">
+                    <?php for ($i = 1; $i <= 5; $i++) echo "<i class='fa-solid fa-star " . ($i <= $rev['rating'] ? '' : 'text-gray-200') . "'></i>"; ?>
+                </div>
+                <span class="text-xs font-medium text-gray-500">
+                    <?php
+                    $labels = [1 => __("very_bad"), 2 => __("bad"), 3 => __("normal"), 4 => __("good"), 5 => __("excellent")];
+                    echo $labels[$rev['rating']] ?? '';
+                    ?>
+                </span>
+            </div>
+        <?php endif; ?>
+
+        <!-- Nội dung -->
+        <p class="text-[14px] <?= $level === 0 ? 'pl-10' : 'pl-8' ?> text-gray-700 leading-relaxed">
+            <?= nl2br(htmlspecialchars($rev['comment'])) ?>
+        </p>
+
+        <!-- Media (Chỉ hiện cho review gốc nếu có) -->
+        <?php if ($level === 0): 
+            $media = isset($rev['media']) ? json_decode($rev['media'], true) : [];
+            if (!empty($media)): ?>
+                <div class="flex flex-wrap gap-2 mt-3 pl-10">
+                    <?php foreach ($media as $file): 
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        $is_video = in_array($ext, ['mp4', 'webm', 'mov']); ?>
+                        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group" onclick="openMediaViewer('<?= $file ?>', <?= $is_video ? 'true' : 'false' ?>)">
+                            <?php if ($is_video): ?>
+                                <video src="<?= $file ?>" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition">
+                                    <i class="fa-solid fa-play text-white text-lg"></i>
+                                </div>
+                            <?php else: ?>
+                                <img src="<?= $file ?>" class="w-full h-full object-cover group-hover:scale-105 transition">
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; 
+        endif; ?>
+
+        <!-- Nút Phản hồi & Form -->
+        <div class="<?= $level === 0 ? 'pl-10' : 'pl-8' ?> mt-3">
+            <button onclick="toggleReplyForm(<?= $rev['id'] ?>, '<?= addslashes($rev['fullname']) ?>')" class="text-primary text-[13px] font-bold hover:underline flex items-center gap-1 opacity-80 hover:opacity-100 transition">
+                <i class="fa-solid fa-reply"></i> <?= __("reply") ?>
+            </button>
+
+            <div id="reply-form-<?= $rev['id'] ?>" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 mt-3 max-w-xl shadow-sm">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <form method="POST" action="product_detail.php?id=<?= $id ?>#reviews">
+                        <?= csrf_input_field() ?>
+                        <input type="hidden" name="parent_id" value="<?= $rev['id'] ?>">
+                        <input type="hidden" name="rating" value="5">
+                        <textarea name="comment" required rows="<?= $level === 0 ? '4' : '3' ?>" 
+                            class="w-full p-3 text-[14px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none mb-2 resize-none shadow-inner"
+                            placeholder="<?= __("reply_placeholder") ?>"></textarea>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="toggleReplyForm(<?= $rev['id'] ?>)" class="px-3 py-1.5 text-gray-500 text-xs font-medium hover:bg-gray-200 rounded-md transition"><?= __("cancel") ?></button>
+                            <button type="submit" name="submit_review" class="bg-primary text-white px-5 py-1.5 rounded-md text-xs font-bold hover:bg-blue-800 transition shadow-sm">
+                                <?= __("send") ?>
+                            </button>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <div class="text-center py-2">
+                        <p class="text-xs text-gray-500 mb-2"><?= __("login_to_review") ?></p>
+                        <button onclick="document.getElementById('loginModal').classList.remove('hidden')" class="text-primary font-bold text-xs hover:underline"><?= __("login_now") ?></button>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Các phản hồi con (Chỉ hiện ở cấp gốc) -->
+            <?php if ($level === 0 && !empty($rev['replies'])): ?>
+                <?php 
+                $replyCount = count($rev['replies']);
+                if ($replyCount >= 2): 
+                ?>
+                    <div class="mt-3">
+                        <button onclick="toggleReplies(<?= $rev['id'] ?>)" id="btn-show-replies-<?= $rev['id'] ?>" 
+                            class="text-[12px] text-primary font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-full transition">
+                            <i class="fa-solid fa-caret-down"></i> <?= sprintf(__("view_more_replies"), $replyCount) ?>
+                        </button>
+                        <div id="replies-container-<?= $rev['id'] ?>" class="hidden">
+                            <?php foreach ($rev['replies'] as $reply) echo renderReviewItem($reply, $productId, 1); ?>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="mt-2">
+                        <?php foreach ($rev['replies'] as $reply) echo renderReviewItem($reply, $productId, 1); ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php return ob_get_clean();
+}
 
 // Thiết lập Meta SEO cho trang chi tiết sản phẩm
 $meta_title = $product['name'] . " - Điện Máy PRO";
@@ -384,7 +549,7 @@ require_once __DIR__ . '/../partials/header.php';
             <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("highlights") ?></h2>
             <div id="desc-container" class="relative overflow-hidden" style="max-height: 350px;">
                 <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed text-[15px] text-justify">
-                    <?= $product['description'] ? $product['description'] : '<p>Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>' ?>
+                    <?= translate_html_content($product['description'] ? $product['description'] : '<p>Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>', 'prod_desc_' . $product['id']) ?>
                     <img src="<?= asset($product['image']) ?>"
                         class="w-full max-w-[500px] mx-auto my-6 rounded-lg border border-gray-100"
                         alt="<?= $product['name'] ?>">
@@ -401,7 +566,7 @@ require_once __DIR__ . '/../partials/header.php';
                 <h2 class="text-[18px] font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200"><?= __("specifications") ?>
                 </h2>
                 <div class="text-[14px] text-gray-700 specs-table overflow-hidden" style="max-height: 300px;">
-                    <?= $product['specifications'] ? $product['specifications'] : '<p>Chưa cập nhật thông số.</p>' ?>
+                    <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>Chưa cập nhật thông số.</p>', 'prod_specs_' . $product['id']) ?>
                 </div>
                 <style>
                     .specs-table ul {
@@ -550,77 +715,25 @@ require_once __DIR__ . '/../partials/header.php';
         </div>
 
         <!-- DANH SÁCH ĐÁNH GIÁ -->
-        <div>
+        <div id="reviews-list-container">
             <?php if (empty($reviews)): ?>
                 <p class="text-center text-gray-500 italic py-4"><?= __("no_reviews") ?></p>
-<?php else:
-                foreach ($reviews as $rev): ?>
-                    <div class="border-b border-gray-100 py-5 last:border-0">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-bold text-[14px] flex items-center gap-2">
-                                <span
-                                    class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold"><?= mb_substr($rev['fullname'], 0, 1) ?></span>
-                                <?= htmlspecialchars($rev['fullname']) ?>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span
-                                    class="text-xs text-gray-400"><?= date('d/m/Y H:i', strtotime($rev['created_at'])) ?></span>
-                                <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $rev['user_id'] || $_SESSION['role'] === 'admin')): ?>
-                                    <button onclick="confirmDeleteReview(<?= $rev['id'] ?>)"
-                                        class="text-gray-300 hover:text-red-500 transition text-sm" title="Xóa đánh giá">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                    <form id="delete-review-form-<?= $rev['id'] ?>" method="POST"
-                                        action="product_detail.php?id=<?= $id ?>" class="hidden">
-                                        <?= csrf_input_field() ?>
-                                        <input type="hidden" name="delete_review" value="1">
-                                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
-                                    </form>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 mb-2 pl-10">
-                            <div class="flex text-yellow-400 text-[12px] gap-0.5">
-                                <?php for ($i = 1; $i <= 5; $i++)
-                                    echo "<i class='fa-solid fa-star " . ($i <= $rev['rating'] ? '' : 'text-gray-200') . "'></i>"; ?>
-                            </div>
-                            <span class="text-xs font-medium text-gray-500">
-                                <?php
-                                $labels = [1 => __("very_bad"), 2 => __("bad"), 3 => __("normal"), 4 => __("good"), 5 => __("excellent")];
-                                echo $labels[$rev['rating']] ?? '';
-                                ?>
-                            </span>
-                        </div>
-                        <p class="text-[14px] text-gray-700 pl-10 leading-relaxed">
-                            <?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
-
-                        <?php
-                        // Hiển thị ảnh/video đính kèm
-                        $media = isset($rev['media']) ? json_decode($rev['media'], true) : [];
-                        if (!empty($media)): ?>
-                            <div class="flex flex-wrap gap-2 mt-3 pl-10">
-                                <?php foreach ($media as $idx => $file):
-                                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                                    $is_video = in_array($ext, ['mp4', 'webm', 'mov']);
-                                    ?>
-                                    <?php if ($is_video): ?>
-                                        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
-                                            onclick="openMediaViewer('<?= $file ?>', true)">
-                                            <video src="<?= $file ?>" class="w-full h-full object-cover"></video>
-                                            <div
-                                                class="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition">
-                                                <i class="fa-solid fa-play text-white text-lg"></i>
-                                            </div>
-                                        </div>
-                                    <?php else: ?>
-                                        <img src="<?= $file ?>" onclick="openMediaViewer('<?= $file ?>', false)"
-                                            class="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition hover:shadow-md">
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+            <?php else:
+                $totalReviews = count($reviews);
+                foreach ($reviews as $index => $rev): ?>
+                    <div class="review-item <?= $index >= 2 ? 'hidden' : '' ?>" data-index="<?= $index ?>">
+                        <?= renderReviewItem($rev, $id) ?>
                     </div>
-                <?php endforeach; endif; ?>
+                <?php endforeach; ?>
+
+                <?php if ($totalReviews > 2): ?>
+                    <div class="text-center mt-6" id="load-more-reviews-container">
+                        <button onclick="loadMoreReviews()" class="px-8 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary hover:text-white transition shadow-sm">
+                            <?= sprintf(__("view_more_reviews"), $totalReviews - 2) ?>
+                        </button>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -727,7 +840,7 @@ require_once __DIR__ . '/../partials/header.php';
         </div>
         <div class="p-6 overflow-y-auto specs-table">
             <h4 class="font-bold text-primary mb-3"><?= htmlspecialchars($product['name']) ?></h4>
-            <?= $product['specifications'] ?>
+            <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>' . __("no_specifications") . '</p>', 'prod_specs_' . $product['id']) ?>
         </div>
     </div>
 </div>
@@ -797,29 +910,20 @@ require_once __DIR__ . '/../partials/header.php';
     }
 
     /**
-     * ẨN / HIỆN FORM ĐÁNH GIÁ SẢN PHẨM
-     * Xử lý ẩn/hiện và tự động cuộn trang (scrollInfoView) cho hộp thoại nhập review.
-     */
-    function toggleReviewForm() {
-        const form = document.getElementById('review-form-container');
-        form.classList.toggle('hidden');
-        if (!form.classList.contains('hidden')) {
-            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-
-    /**
      * CHỌN SỐ SAO CẢM NHẬN (TỪ 1 ĐẾN 5)
-     * Nhận giá trị nguyên (rating), cập nhật màu sắc sao tương ứng, gán text và gắn vào input hidden.
      */
-    const ratingLabels = { 1: 'Rất tệ', 2: 'Tệ', 3: 'Bình thường', 4: 'Tốt', 5: 'Tuyệt vời' };
+    const ratingLabels = { 
+        1: '<?= __("very_bad") ?>', 
+        2: '<?= __("bad") ?>', 
+        3: '<?= __("normal") ?>', 
+        4: '<?= __("good") ?>', 
+        5: '<?= __("excellent") ?>' 
+    };
     function setRating(rating) {
-        const inputRating = document.getElementById('input_rating');
-        const ratingText = document.getElementById('rating-text');
-        
-        if (inputRating) inputRating.value = rating;
-        if (ratingText) ratingText.innerText = ratingLabels[rating];
-
+        const input = document.getElementById('input_rating');
+        if (input) input.value = rating;
+        const text = document.getElementById('rating-text');
+        if (text) text.innerText = ratingLabels[rating];
         for (let i = 1; i <= 5; i++) {
             let star = document.getElementById('star_' + i);
             if (star) {
@@ -838,6 +942,162 @@ require_once __DIR__ . '/../partials/header.php';
         setRating(5);
     }
 
+    /**
+     * ẨN / HIỆN FORM PHẢN HỒI ĐÁNH GIÁ
+     */
+    function toggleReplyForm(reviewId, userName = '') {
+        const form = document.getElementById('reply-form-' + reviewId);
+        if (form) {
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                const textarea = form.querySelector('textarea');
+                if (textarea) {
+                    if (userName) {
+                        textarea.value = '@' + userName + ' ';
+                    }
+                    textarea.focus();
+                }
+            }
+        }
+    }
+
+    /**
+     * ẨN / HIỆN DANH SÁCH PHẢN HỒI (KHI CÓ NHIỀU PHẢN HỒI)
+     */
+    function toggleReplies(reviewId) {
+        const container = document.getElementById('replies-container-' + reviewId);
+        const btn = document.getElementById('btn-show-replies-' + reviewId);
+        if (container && btn) {
+            container.classList.remove('hidden');
+            btn.classList.add('hidden'); // Ẩn nút sau khi đã mở
+        }
+    }
+
+    /**
+     * TẢI THÊM ĐÁNH GIÁ (HIỆN CÁC ĐÁNH GIÁ ĐANG ẨN)
+     */
+    function loadMoreReviews() {
+        const hiddenReviews = document.querySelectorAll('.review-item.hidden');
+        hiddenReviews.forEach(el => el.classList.remove('hidden'));
+        const btnContainer = document.getElementById('load-more-reviews-container');
+        if (btnContainer) btnContainer.remove();
+    }
+
+    /**
+     * TẢI LẠI DANH SÁCH ĐÁNH GIÁ QUA AJAX (KHÔNG RELOAD TRANG)
+     */
+    async function refreshReviewsList() {
+        const container = document.getElementById('reviews-list-container');
+        if (!container) return;
+        try {
+            const response = await fetch(`product_detail.php?id=<?= $id ?>&only_reviews=1`);
+            const html = await response.text();
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Lỗi khi tải lại danh sách đánh giá:', error);
+        }
+    }
+
+    /**
+     * XỬ LÝ GỬI ĐÁNH GIÁ/PHẢN HỒI QUA AJAX
+     */
+    async function handleReviewSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        formData.append('ajax', '1');
+        formData.append('submit_review', '1');
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Hiển thị thông báo cảm ơn - Dạng pill sang xịn mịn tích hợp Nyan Cat ở vị trí checkmark
+                Swal.fire({
+                    html: `
+                        <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+                            <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+                            <span class="text-[14px] md:text-[14px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+                        </div>
+                    `,
+                    background: 'transparent',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    backdrop: `rgba(0, 0, 0, 0.25)`, 
+                    position: 'top',
+                    customClass: {
+                        popup: 'bg-transparent border-0 p-0 shadow-none'
+                    },
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    }
+                });
+
+                // Reset form và ẩn đi (nếu là form phản hồi)
+                form.reset();
+                if (form.closest('[id^="reply-form-"]')) {
+                    form.closest('[id^="reply-form-"]').classList.add('hidden');
+                }
+
+                // Cập nhật lại danh sách đánh giá
+                await refreshReviewsList();
+            }
+        } catch (error) {
+            console.error('Lỗi khi gửi đánh giá:', error);
+            Swal.fire('<?= __("error") ?>', '<?= __("review_submit_error") ?>', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    }
+
+    // Gắn sự kiện AJAX cho tất cả các form đánh giá (bao gồm cả các form mới được render qua AJAX)
+    document.addEventListener('submit', function(e) {
+        if (e.target && (e.target.id === 'main-review-form' || e.target.closest('[id^="reply-form-"]'))) {
+            handleReviewSubmit(e);
+        }
+    });
+
+    /**
+     * HIỆN THÔNG BÁO CẢM ON SAU KHI ĐÁNH GIÁ THÀNH CÔNG (Dành cho trường hợp reload truyền thống nếu có)
+     */
+    <?php if (isset($_SESSION['review_success_msg'])): ?>
+        Swal.fire({
+            html: `
+                <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+                    <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+                    <span class="text-[14px] md:text-[15px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+                </div>
+            `,
+            background: 'transparent',
+            showConfirmButton: false,
+            timer: 3500,
+            backdrop: `rgba(0, 0, 0, 0.25)`, 
+            position: 'top',
+            customClass: {
+                popup: 'bg-transparent border-0 p-0 shadow-none'
+            },
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
+        });
+        <?php unset($_SESSION['review_success_msg']); ?>
+    <?php endif; ?>
 
     /**
      * PREVIEW FILE MEDIA (ẢNH/VIDEO) TRƯỚC KHI UPLOAD
@@ -850,13 +1110,15 @@ require_once __DIR__ . '/../partials/header.php';
         preview.innerHTML = '';
 
         if (input.files.length > 5) {
-            alert('Tối đa 5 file!');
+            alert('<?= __("max_files_warning") ?>');
             input.value = '';
             return;
         }
 
         if (input.files.length > 0) {
-            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">Đã chọn ' + input.files.length + ' file</p><p class="text-xs text-gray-400 mt-1">Bấm lại để thay đổi</p>';
+            const filesSelectedText = '<?= __("files_selected") ?>'.replace('%s', input.files.length);
+            const changeMediaText = '<?= __("change_media") ?>';
+            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">' + filesSelectedText + '</p><p class="text-xs text-gray-400 mt-1">' + changeMediaText + '</p>';
         }
 
         Array.from(input.files).forEach((file, idx) => {
@@ -927,11 +1189,11 @@ require_once __DIR__ . '/../partials/header.php';
                 <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fa-solid fa-trash-can text-red-500 text-2xl"></i>
                 </div>
-                <h3 class="font-bold text-gray-800 text-lg mb-2">Xóa đánh giá?</h3>
-                <p class="text-sm text-gray-500 mb-5">Đánh giá của bạn sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
+                <h3 class="font-bold text-gray-800 text-lg mb-2"><?= __("delete_review_title") ?></h3>
+                <p class="text-sm text-gray-500 mb-5"><?= __("delete_review_warning") ?></p>
                 <div class="flex gap-3">
-                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition">Hủy</button>
-                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md">Xóa</button>
+                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition"><?= __("cancel") ?></button>
+                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md"><?= __("confirm_delete") ?></button>
                 </div>
             </div>
         `;

@@ -260,6 +260,14 @@
         - Nguyên nhân: Khi backend gặp lỗi HTTP (ví dụ: mất kết nối, lỗi 500, lỗi PHP Warning/Fatal chèn HTML báo lỗi của Apache) và ném ra `DioException`, Dio trả về `e.response?.data` dưới dạng một chuỗi `String`. Câu lệnh parse lỗi cũ cố gắng truy cập khóa String `e.response?.data?['message']` trên kiểu dữ liệu `String`, dẫn đến lỗi của Dart che lấp toàn bộ lỗi thực tế của server.
         - Giải pháp: Viết lại hàm `getAiResponse` xử lý parse dữ liệu động và xử lý `DioException` an toàn tuyệt đối. Nếu response hoặc error data là kiểu `String` thô, tự động bắt exception, decode nếu là JSON, cắt ngắn hoặc trích xuất trực tiếp chuỗi lỗi của server để hiển thị rõ ràng trên UI giúp người dùng tự khắc phục.
 
+### [2026-05-17] - Merge & Upgrade Integration (Tích hợp nâng cấp từ nhánh Thiện)
+- **Tích hợp Reviews đệ quy và AJAX mượt mà ([product_detail.php](file:///d:/Sever/htdocs/PMPBDT/views/pages/product_detail.php)):** Thêm phản hồi đánh giá nhiều cấp (replies), phân trang động và AJAX submit form với SweetAlert GIF Nyan Cat cực kỳ cao cấp, giữ nguyên album ảnh auto slide.
+- **Tích hợp Dịch thuật Cấu hình So sánh ([compare.php](file:///d:/Sever/htdocs/PMPBDT/views/pages/compare.php)):** Tự động chuyển dịch specifications sang tiếng Anh khi đổi ngôn ngữ, giữ nguyên sticky column, highlight khác biệt.
+- **Đồng bộ hệ thống ngôn ngữ (`vi.php` & `en.php`):** Chép đè từ điển đầy đủ các key cho Installments, 2FA OTP và Reviews đệ quy.
+- **Nâng cấp API Reviews và API Notifications:** Hỗ trợ lưu trữ review con (`parent_id`) và tự động dịch thông báo động qua API.
+- **Surgical Integration Header ([views/partials/header.php](file:///d:/Sever/htdocs/PMPBDT/views/partials/header.php)):** Gộp tế vi cải tiến dịch thuật, logic loadNotifications catch lỗi của Thiện vào file gốc của chúng ta mà không làm hỏng tính năng Comparison Search Modal premium và dynamic UI của chúng ta.
+- **Tạo mới `views/pages/two_factor.php` & `views/pages/video.php`:** Đồng bộ trọn vẹn luồng bảo mật 2FA OTP và trang video nổi bật theo phong cách thiết kế xanh dương premium đồng bộ với thương hiệu DienMayPro.
+
 ### Việc cần làm tiếp theo (TODO)
 1. **Hoàn thiện API Catalog & Checkout:** Đồng bộ hóa cho Mobile App.
 2. **Cải thiện Catalog Filter:** Thêm lọc theo đánh giá sao (vừa mới có dữ liệu reviews).

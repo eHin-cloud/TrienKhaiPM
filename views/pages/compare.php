@@ -182,10 +182,19 @@ require_once __DIR__ . '/../partials/header.php';
                             $rowBg = ($rowIndex % 2 == 0) ? '' : 'bg-gray-50/30';
                         ?>
                             <tr class="border-b border-gray-100 hover:bg-gray-50 transition compare-row <?= $rowBg ?>">
-                                <td class="p-4 pl-6 text-sm font-bold text-gray-700 bg-gray-50/50 w-64 align-top"><?= htmlspecialchars($spec_key) ?></td>
+                                <td class="p-4 pl-6 text-sm font-bold text-gray-700 bg-gray-50/50 w-64 align-top">
+                                    <?= htmlspecialchars(getCurrentLang() === 'en' ? translate_html_content($spec_key, 'spec_key_' . md5($spec_key)) : $spec_key) ?>
+                                </td>
                                 <?php foreach ($products as $p): ?>
                                     <td class="p-4 text-sm text-gray-600 leading-relaxed align-top compare-value">
-                                        <?= isset($specs_by_product[$p['id']][$spec_key]) ? nl2br(htmlspecialchars($specs_by_product[$p['id']][$spec_key])) : '<span class="text-gray-300">—</span>' ?>
+                                        <?php
+                                        if (isset($specs_by_product[$p['id']][$spec_key])) {
+                                            $val = $specs_by_product[$p['id']][$spec_key];
+                                            echo nl2br(htmlspecialchars(getCurrentLang() === 'en' ? translate_html_content($val, 'spec_val_' . md5($val)) : $val));
+                                        } else {
+                                            echo '<span class="text-gray-300">—</span>';
+                                        }
+                                        ?>
                                     </td>
                                 <?php endforeach; ?>
                             </tr>
