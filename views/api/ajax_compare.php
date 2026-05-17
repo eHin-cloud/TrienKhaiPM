@@ -10,6 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../../core/lang.php';
+
 // Khởi tạo danh sách nếu chưa có
 if (!isset($_SESSION['compare_list'])) {
     $_SESSION['compare_list'] = [];
@@ -28,18 +30,18 @@ $response = [
 switch ($action) {
     case 'add':
         if ($product_id <= 0) {
-            $response['message'] = 'ID sản phẩm không hợp lệ.';
+            $response['message'] = __('invalid_product_id');
             break;
         }
 
         if (in_array($product_id, $_SESSION['compare_list'])) {
-            $response['message'] = 'Sản phẩm này đã có trong danh sách so sánh.';
+            $response['message'] = __('already_in_compare');
             $response['success'] = true; // Vẫn coi là thành công
             break;
         }
 
         if (count($_SESSION['compare_list']) >= 3) {
-            $response['message'] = 'Bạn chỉ có thể so sánh tối đa 3 sản phẩm cùng lúc.';
+            $response['message'] = __('max_compare_limit');
             break;
         }
 
@@ -50,7 +52,7 @@ switch ($action) {
         $p = $stmt->fetch();
 
         if (!$p) {
-            $response['message'] = 'Sản phẩm không tồn tại.';
+            $response['message'] = __('product_not_exist');
             break;
         }
 
@@ -62,7 +64,7 @@ switch ($action) {
             $p1 = $stmt2->fetch();
 
             if ($p1 && $p1['category_id'] != $p['category_id']) {
-                $response['message'] = 'Bạn chỉ nên so sánh các sản phẩm cùng loại.';
+                $response['message'] = __('compare_same_category');
                 // Ở đây ta có thể chọn chặn lại hoặc cảnh báo. Ở đây tôi sẽ chặn để UX tốt hơn.
                 break;
             }
@@ -70,7 +72,7 @@ switch ($action) {
 
         $_SESSION['compare_list'][] = $product_id;
         $response['success'] = true;
-        $response['message'] = 'Đã thêm vào danh sách so sánh.';
+        $response['message'] = __('added_to_compare');
         break;
 
     case 'remove':
@@ -78,13 +80,8 @@ switch ($action) {
             unset($_SESSION['compare_list'][$key]);
             $_SESSION['compare_list'] = array_values($_SESSION['compare_list']);
             $response['success'] = true;
+            $response['message'] = __('removed_from_compare');
         }
-        break;
-
-    case 'force_add':
-        $_SESSION['compare_list'] = [$product_id];
-        $response['success'] = true;
-        $response['message'] = 'Đã xóa danh sách cũ và bắt đầu so sánh loại sản phẩm mới.';
         break;
 
     case 'clear':
@@ -102,7 +99,7 @@ switch ($action) {
 if (!empty($_SESSION['compare_list'])) {
     require_once __DIR__ . '/../../core/database.php';
     $ids = implode(',', $_SESSION['compare_list']);
-    $stmt = $db->query("SELECT id, name, image, category_id FROM products WHERE id IN ($ids) ORDER BY FIELD(id, $ids)");
+    $stmt = $db->query("SELECT id, name, image FROM products WHERE id IN ($ids) ORDER BY FIELD(id, $ids)");
     $response['full_list'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
     $response['full_list'] = [];

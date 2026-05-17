@@ -123,6 +123,11 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                 <i class="fa-solid fa-right-left w-5 text-purple-400"></i> Y/c Đổi Trả
             </a>
 
+            <a href="?p=installments"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'installments' ? 'bg-red-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
+                <i class="fa-solid fa-credit-card w-5 text-red-400"></i> Y/c Trả Góp
+            </a>
+
             <a href="?p=products"
                 class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'products' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
                 <i class="fa-solid fa-box w-5"></i> Sản phẩm
@@ -212,6 +217,8 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         echo "Quản lý Yêu Cầu Bảo Hành";
                     elseif ($page === 'returns')
                         echo "Quản lý Yêu Cầu Đổi Trả";
+                    elseif ($page === 'installments')
+                        echo "Quản lý Yêu Cầu Trả Góp";
                     ?>
                 </h2>
             </div>
@@ -1027,6 +1034,64 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         </table>
                     </div>
 
+                <!-- BẢNG YÊU CẦU TRẢ GÓP -->
+                <?php elseif ($page === 'installments'): ?>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
+                        <span class="text-gray-600 font-medium">Tổng cộng: <?= count($items) ?> yêu cầu trả góp</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm min-w-[900px]">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                    <th class="p-4 border-b font-semibold w-16">ID</th>
+                                    <th class="p-4 border-b font-semibold">Khách hàng</th>
+                                    <th class="p-4 border-b font-semibold">Sản phẩm</th>
+                                    <th class="p-4 border-b font-semibold">Gói đăng ký</th>
+                                    <th class="p-4 border-b font-semibold">Trạng thái & Ghi chú (Admin)</th>
+                                    <th class="p-4 border-b font-semibold text-xs">Ngày đăng ký</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($items as $item): ?>
+                                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition align-top">
+                                        <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
+                                        <td class="p-4 font-medium text-gray-800">
+                                            <?= htmlspecialchars($item['fullname']) ?><br>
+                                            <span class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i><?= htmlspecialchars($item['phone']) ?></span>
+                                        </td>
+                                        <td class="p-4 font-medium text-gray-800">
+                                            <div class="flex items-center gap-2">
+                                                <img src="<?= htmlspecialchars($item['product_image']) ?>" class="w-10 h-10 object-contain rounded border bg-white shrink-0">
+                                                <span class="line-clamp-2 max-w-[200px] text-xs"><?= htmlspecialchars($item['product_name']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-gray-600 text-xs font-semibold max-w-xs break-words">
+                                            <?= htmlspecialchars($item['installment_term']) ?>
+                                        </td>
+                                        <td class="p-4">
+                                            <!-- Form cập nhật trạng thái + ghi chú Admin -->
+                                            <form method="POST" class="space-y-2">
+                                                <?= csrf_input_field() ?>
+                                                <input type="hidden" name="action" value="update_installment_status">
+                                                <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                <select name="status" class="text-xs p-1.5 w-full border border-gray-300 rounded font-bold outline-none <?= $item['status']==='pending'?'bg-yellow-50 text-yellow-700':($item['status']==='approved'?'bg-green-50 text-green-700':'bg-red-50 text-red-700') ?>">
+                                                    <option value="pending" <?= $item['status'] == 'pending' ? 'selected' : '' ?>>Chờ duyệt</option>
+                                                    <option value="approved" <?= $item['status'] == 'approved' ? 'selected' : '' ?>>Chấp nhận</option>
+                                                    <option value="rejected" <?= $item['status'] == 'rejected' ? 'selected' : '' ?>>Từ chối</option>
+                                                </select>
+                                                
+                                                <!-- Ô GHI NỘI DUNG (ADMIN NOTES) -->
+                                                <textarea name="admin_note" rows="2" class="w-full text-xs p-2 border border-gray-200 rounded resize-none focus:ring-1 focus:ring-red-400 outline-none" placeholder="Ghi chú nội dung trả góp..."><?= htmlspecialchars($item['admin_note'] ?? '') ?></textarea>
+                                                
+                                                <button type="submit" class="w-full text-xs bg-red-600 text-white px-3 py-1.5 rounded font-bold hover:bg-red-700 transition shadow"><i class="fa-solid fa-paper-plane mr-1"></i>Cập nhật</button>
+                                            </form>
+                                        </td>
+                                        <td class="p-4 text-gray-500 text-xs"><?= date('H:i d/m/Y', strtotime($item['created_at'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($items)): ?><tr><td colspan="6" class="p-8 text-center text-gray-500">Không có yêu cầu trả góp nào</td></tr><?php endif; ?>
+                            </tbody>
+
                 <?php elseif ($page === 'homepage'): ?>
                     <!-- QUẢN LÝ BANNER TRANG CHỦ -->
                     <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
@@ -1322,24 +1387,11 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                             class="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hoặc dùng URL Ảnh chính</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hoặc dùng URL Ảnh</label>
                         <input type="text" name="image" id="prod_image"
                             class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="https://...">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tải thêm nhiều ảnh phụ (Gallery)</label>
-                        <input type="file" name="more_images_upload[]" accept="image/*" multiple
-                            class="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
-                        <p class="text-[10px] text-gray-400 mt-1 italic">* Giữ Ctrl/Shift để chọn nhiều ảnh</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hoặc nhập danh sách URL ảnh phụ</label>
-                        <textarea name="more_images_urls" id="prod_more_images_urls" rows="2"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                            placeholder="Mỗi URL ảnh một dòng..."></textarea>
-                    </div>
-
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Quà Tặng (Cách nhau bằng dấu ;
                             )</label>
@@ -1694,12 +1746,10 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('prod_price').value = '';
             document.getElementById('prod_old_price').value = '';
             document.getElementById('prod_image').value = '';
-            document.getElementById('prod_more_images_urls').value = '';
             document.getElementById('prod_gift').value = '';
             document.getElementById('prod_tags').value = '';
             if (tinymce.get('prod_desc')) tinymce.get('prod_desc').setContent('');
             if (tinymce.get('prod_specs')) tinymce.get('prod_specs').setContent('');
-
             document.getElementById('productModal').classList.remove('hidden');
         }
 
@@ -1713,24 +1763,8 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('prod_price').value = product.price;
             document.getElementById('prod_old_price').value = product.old_price;
             document.getElementById('prod_image').value = product.image;
-            
-            // Xử lý more_images (JSON array) -> chuỗi xuống dòng để hiện trong textarea
-            let moreImagesText = "";
-            if (product.more_images) {
-                try {
-                    const moreArr = JSON.parse(product.more_images);
-                    if (Array.isArray(moreArr)) {
-                        moreImagesText = moreArr.join("\n");
-                    }
-                } catch(e) {
-                    console.error("Lỗi parse more_images:", e);
-                }
-            }
-            document.getElementById('prod_more_images_urls').value = moreImagesText;
-
             document.getElementById('prod_gift').value = product.gift_text;
             document.getElementById('prod_tags').value = product.tags;
-
             if (tinymce.get('prod_desc')) tinymce.get('prod_desc').setContent(product.description || '');
             if (tinymce.get('prod_specs')) tinymce.get('prod_specs').setContent(product.specifications || '');
             document.getElementById('productModal').classList.remove('hidden');

@@ -18,31 +18,12 @@ $twoFaAction = $_POST['action'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $userService->handleAccountAction($_POST, $userId);
-    
-    if ($result['success']) {
-        // Lưu thông báo vào session để hiển thị sau khi redirect
-        $_SESSION['success_msg'] = $result['message'];
-        
-        // Nếu là cập nhật profile, ta redirect để refresh dữ liệu mới
-        if (isset($_POST['action']) && $_POST['action'] === 'update_profile') {
-            header("Location: profile.php?tab=profile");
-            exit();
-        }
-    } else {
-        $message = $result['message'];
-        $messageType = 'error';
-    }
+    $message = $result['message'];
+    $messageType = $result['success'] ? 'success' : 'error';
 
     if ($twoFaAction === 'enable_2fa' && $result['success']) {
         $twoFaAction = 'verify_2fa_enable';
     }
-}
-
-// Lấy thông báo từ session (nếu có) sau khi redirect
-if (isset($_SESSION['success_msg'])) {
-    $message = $_SESSION['success_msg'];
-    $messageType = 'success';
-    unset($_SESSION['success_msg']);
 }
 
 // 3. Lấy dữ liệu profile với phân trang
@@ -63,7 +44,30 @@ $pending2FAEnroll = $_SESSION['two_factor_pending_enroll'] ?? null;
 $showTwoFactorOtpForm = is_array($pending2FAEnroll) && (int)($pending2FAEnroll['user_id'] ?? 0) === $userId;
 $showTwoFactorSetup = $twoFactorInfo === 0 && !$showTwoFactorOtpForm;
 
-// Tab hiện tại (lấy từ GET)
+// 1. KIỂM TRA POST REQUEST: Người dùng có vừa bấm nút "Cập nhật" không?
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profile'])) {
+
+    // 2. GOM DỮ LIỆU TỪ FORM: Lấy dữ liệu từ các thẻ <input name="...">
+    $data = [
+        'full_name' => $_POST['full_name'],
+        'phone' => $_POST['phone'],
+        'address' => $_POST['address'] // Nhận địa chỉ mới nhập từ form
+    ];
+
+    // 3. GỌI SERVICE XỬ LÝ: Truyền ID ($userId đã lấy từ Session) và mảng dữ liệu vào
+    if ($userService->updateProfile($userId, $data)) {
+
+        // 4. THÔNG BÁO & CHUYỂN HƯỚNG: Lưu câu thông báo vào Session
+        $_SESSION['success_msg'] = __("update_profile_success");
+
+        // Load lại chính trang này (Refresh) bằng lệnh header() 
+        // để form cập nhật lại giá trị mới nhất từ DB
+        header("Location: profile.php");
+        exit(); // Bắt buộc phải có exit() sau khi dùng header chuyển hướng
+    }
+}
+
+// Xác định tab hiện tại
 $currentTab = $_GET['tab'] ?? 'profile';
 
 /**
@@ -173,7 +177,7 @@ if ($currentTab === 'wishlist') {
                             <i class="fas fa-user-edit mr-2 text-blue-500"></i> <?= __('update_info') ?>
                         </h2>
                         <div class="mb-5 flex flex-wrap items-center gap-3 text-sm">
-                            <span class="text-gray-500">Loại tài khoản:</span>
+                            <span class="text-gray-500"><?= __('account_type') ?>:</span>
                             <?php if (($user['auth_provider'] ?? 'local') === 'google'): ?>
                                 <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
                                     <i class="fa-brands fa-google mr-1"></i> Google
@@ -183,7 +187,7 @@ if ($currentTab === 'wishlist') {
                                     <i class="fa-solid fa-user mr-1"></i> DienMayPro
                                 </span>
                             <?php endif; ?>
-                            <span class="text-gray-500">Tên đăng nhập:</span>
+                            <span class="text-gray-500"><?= __('username') ?>:</span>
                             <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                 @<?= e($user['username'] ?? '') ?>
                             </span>
@@ -200,7 +204,7 @@ if ($currentTab === 'wishlist') {
                             </div>
 
                             <div class="col-span-2 md:col-span-1">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
+                                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __('username') ?></label>
                                 <input type="text" name="username"
                                     value="<?php echo htmlspecialchars($user['username'] ?? ''); ?>"
                                     class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
@@ -281,63 +285,63 @@ if ($currentTab === 'wishlist') {
                             <div class="flex items-start justify-between gap-4 mb-4">
                                 <div>
                                     <h2 class="text-xl font-semibold flex items-center">
-                                        <i class="fas fa-shield-halved mr-2 text-blue-500"></i> Bảo mật 2 lớp
+                                        <i class="fas fa-shield-halved mr-2 text-blue-500"></i> <?= __('two_factor_auth') ?>
                                     </h2>
-                                    <p class="text-sm text-gray-500 mt-1">Dùng ứng dụng Authenticator để lấy mã xác thực động.</p>
+                                    <p class="text-sm text-gray-500 mt-1"><?= __('two_factor_desc') ?></p>
                                 </div>
                                 <?php if (!$twoFactorColumnsReady): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200">Cần cập nhật DB</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200"><?= __('need_db_update') ?></span>
                                 <?php elseif ((int) $twoFactorInfo === 1): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">Đang bật</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200"><?= __('enabled') ?></span>
                                 <?php elseif ($showTwoFactorOtpForm): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">Đang chờ xác minh</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200"><?= __('waiting_verification') ?></span>
                                 <?php else: ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">Đang tắt</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200"><?= __('disabled') ?></span>
                                 <?php endif; ?>
                                 <?php if (($user['email'] ?? '') !== '' && preg_match('/@gmail\.com$/i', (string) $user['email'])): ?>
-                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">Đủ điều kiện bật 2FA</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200"><?= __('eligible_for_2fa') ?></span>
                                 <?php endif; ?>
                             </div>
 
                             <?php if (!$twoFactorColumnsReady): ?>
                                 <div class="rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
-                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Cơ sở dữ liệu chưa có cột `two_factor_enabled` và `two_factor_secret`. Vui lòng chạy file `sql/add_two_factor_columns_to_users.sql`.
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> <?= __('two_factor_db_error') ?>
                                 </div>
                             <?php else: ?>
                                 <?php if ((int) $twoFactorInfo === 1): ?>
                                     <div class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 mb-4">
-                                        <i class="fa-solid fa-circle-check mr-1"></i> Tài khoản của bạn đang được bảo vệ bằng Authenticator.
+                                        <i class="fa-solid fa-circle-check mr-1"></i> <?= __('two_factor_active_msg') ?>
                                     </div>
                                     <form method="POST" class="max-w-md">
                                         <?= csrf_input_field() ?>
                                         <input type="hidden" name="action" value="disable_2fa">
-                                        <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium">Tắt bảo mật 2 lớp</button>
+                                        <button type="submit" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"><?= __('disable_two_factor') ?></button>
                                     </form>
                                 <?php else: ?>
                                     <?php if (!(($user['auth_provider'] ?? 'local') === 'google' || preg_match('/@gmail\.com$/i', (string)($user['email'] ?? '')))): ?>
                                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-                                            Chỉ tài khoản có Gmail hoặc tài khoản Google mới có thể bật 2 lớp trong hệ thống này.
+                                            <?= __('two_factor_restrictions') ?>
                                         </div>
                                     <?php elseif (!$showTwoFactorOtpForm): ?>
                                         <form method="POST" class="max-w-md">
                                             <?= csrf_input_field() ?>
                                             <input type="hidden" name="action" value="enable_2fa">
-                                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">Bật bảo mật 2 lớp</button>
+                                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"><?= __('enable_two_factor') ?></button>
                                         </form>
                                     <?php else: ?>
                                         <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
-                                            <i class="fa-solid fa-circle-check mr-1"></i> Đã gửi OTP đến Gmail của bạn. Vui lòng nhập mã để xác nhận bật 2FA.
+                                            <i class="fa-solid fa-circle-check mr-1"></i> <?= __('otp_sent_msg') ?>
                                         </div>
                                         <form method="POST" class="max-w-md mt-4">
                                             <?= csrf_input_field() ?>
                                             <input type="hidden" name="action" value="verify_2fa_enable">
                                             <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Mã OTP</label>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __('otp_code') ?></label>
                                                 <input type="text" name="otp_code" maxlength="6" pattern="\d{6}" required
                                                     class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                                    placeholder="Nhập mã 6 số từ Gmail">
+                                                    placeholder="<?= __('otp_placeholder') ?>">
                                             </div>
-                                            <button type="submit" class="mt-4 w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium">Xác nhận bật 2FA</button>
+                                            <button type="submit" class="mt-4 w-full bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"><?= __('confirm_two_factor') ?></button>
                                         </form>
                                     <?php endif; ?>
                                 <?php endif; ?>
@@ -447,7 +451,7 @@ if ($currentTab === 'wishlist') {
                             <!-- JS sẽ load địa chỉ vào đây -->
                             <div class="p-10 text-center text-gray-400">
                                 <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                                <p>Đang tải danh sách địa chỉ...</p>
+                                <p><?= __('loading_addresses') ?></p>
                             </div>
                         </div>
                     </div>
@@ -478,27 +482,26 @@ if ($currentTab === 'wishlist') {
                                     <label for="addr-default" class="text-sm text-gray-700 font-medium"><?= __('set_default_address') ?></label>
                                 </div>
                                 <div class="pt-4 flex gap-3">
-                                    <button type="button" onclick="closeAddressModal()" class="flex-1 px-4 py-2 border rounded-xl text-gray-600 hover:bg-gray-50 font-medium">Hủy</button>
-                                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium">Lưu</button>
+                                    <button type="button" onclick="closeAddressModal()" class="flex-1 px-4 py-2 border rounded-xl text-gray-600 hover:bg-gray-50 font-medium"><?= __('cancel') ?></button>
+                                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-medium"><?= __('save') ?></button>
                                 </div>
                             </form>
                         </div>
                     </div>
 
                 <?php elseif ($currentTab === 'notifications'): ?>
-                    <!-- Tab: Thông báo -->
                     <div class="bg-white rounded-xl shadow-sm p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-xl font-semibold flex items-center">
                                 <i class="fas fa-bell mr-2 text-blue-500"></i> <?= __('notifications') ?>
                             </h2>
-                            <button onclick="markAllReadAndReload()" class="text-sm text-blue-600 hover:underline font-medium">Đánh dấu tất cả là đã đọc</button>
+                            <button onclick="markAllReadAndReload()" class="text-sm text-blue-600 hover:underline font-medium"><?= __('mark_all_read') ?></button>
                         </div>
                         <div id="full-noti-list" class="space-y-3">
                             <!-- JS sẽ load thông báo vào đây -->
                             <div class="p-10 text-center text-gray-400">
                                 <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
-                                <p>Đang tải thông báo...</p>
+                                <p><?= __('loading_notifications') ?></p>
                             </div>
                         </div>
                     </div>
@@ -506,7 +509,7 @@ if ($currentTab === 'wishlist') {
                     <!-- Tab: Danh sách yêu thích -->
                     <div class="bg-white rounded-xl shadow-sm overflow-hidden min-h-[500px]">
                         <!-- Header -->
-                        <div class="bg-gradient-to-r from-pink-500 to-rose-600 p-6 text-white">
+                        <div class="bg-gradient-to-r from-pink-500 to-rose-600 p-6 text-white flex justify-between items-center">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                                     <i class="fas fa-heart text-xl"></i>
@@ -516,6 +519,11 @@ if ($currentTab === 'wishlist') {
                                     <p class="text-rose-100 text-sm mt-0.5"><?= count($wishlistItems) ?> <?= __('products_count') ?></p>
                                 </div>
                             </div>
+                            <?php if (!empty($wishlistItems)): ?>
+                                <button onclick="clearWishlist()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all flex items-center gap-2 border border-white/10 shadow-sm">
+                                    <i class="fas fa-trash-can text-sm"></i> <?= __('clear_all') ?>
+                                </button>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Content -->
@@ -576,7 +584,7 @@ if ($currentTab === 'wishlist') {
                                                         </button>
 
                                                         <!-- Nút thêm vào giỏ -->
-                                                        <button onclick="addToCart(<?= $item['id'] ?>)" 
+                                                        <button onclick="addToCartAjax(<?= $item['id'] ?>)"
                                                             class="bg-primary text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-blue-700 transition-all shadow-md shadow-blue-100"
                                                             title="<?= __('add_to_cart') ?>">
                                                             <i class="fas fa-cart-plus"></i>
@@ -644,7 +652,7 @@ if ($currentTab === 'wishlist') {
                 list.innerHTML = `
                     <div class="p-10 text-center text-gray-400 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
                         <i class="fas fa-map-marker-alt text-4xl mb-3"></i>
-                        <p>Bạn chưa có địa chỉ nào được lưu.</p>
+                        <p><?= __('no_saved_addresses') ?></p>
                     </div>`;
                 return;
             }
@@ -653,7 +661,7 @@ if ($currentTab === 'wishlist') {
             items.forEach(item => {
                 html += `
                     <div class="p-5 border rounded-xl hover:border-blue-500 transition-all bg-white relative group ${item.is_default ? 'ring-2 ring-blue-100 border-blue-500' : ''}">
-                        ${item.is_default ? '<span class="absolute -top-3 left-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">MẶC ĐỊNH</span>' : ''}
+                        ${item.is_default ? '<span class="absolute -top-3 left-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm"><?= __('default_label') ?></span>' : ''}
                         <div class="flex justify-between items-start">
                             <div class="space-y-1">
                                 <h4 class="font-bold text-gray-800 flex items-center gap-2">
@@ -669,7 +677,7 @@ if ($currentTab === 'wishlist') {
                             </div>
                         </div>
                         ${!item.is_default ? `
-                            <button onclick="setDefaultAddress(${item.id})" class="mt-3 text-xs text-blue-600 font-medium hover:underline">Đặt làm mặc định</button>
+                            <button onclick="setDefaultAddress(${item.id})" class="mt-3 text-xs text-blue-600 font-medium hover:underline"><?= __('set_as_default') ?></button>
                         ` : ''}
                     </div>
                 `;
@@ -684,14 +692,14 @@ if ($currentTab === 'wishlist') {
 
             form.reset();
             if (item) {
-                title.innerText = 'Cập nhật địa chỉ';
+                title.innerText = '<?= __('update_address') ?>';
                 document.getElementById('addr-id').value = item.id;
                 document.getElementById('addr-fullname').value = item.fullname;
                 document.getElementById('addr-phone').value = item.phone;
                 document.getElementById('addr-address').value = item.address;
                 document.getElementById('addr-default').checked = item.is_default;
             } else {
-                title.innerText = 'Thêm địa chỉ mới';
+                title.innerText = '<?= __('add_new_address') ?>';
                 document.getElementById('addr-id').value = '';
             }
 
@@ -747,7 +755,7 @@ if ($currentTab === 'wishlist') {
         }
 
         function deleteAddress(id) {
-            if (!confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) return;
+            if (!confirm('<?= __('confirm_delete_address') ?>')) return;
             fetch(getApiUrl('api/address.php?action=delete'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -782,14 +790,19 @@ if ($currentTab === 'wishlist') {
                 .then(data => {
                     if (data.success) {
                         renderFullNotiList(data.data.items);
+                    } else {
+                        document.getElementById('full-noti-list').innerHTML = `<div class="p-10 text-center text-gray-400"><?= __('please_login_to_view') ?></div>`;
                     }
+                })
+                .catch(() => {
+                    document.getElementById('full-noti-list').innerHTML = `<div class="p-10 text-center text-gray-400"><?= __('please_login_to_view') ?></div>`;
                 });
         }
 
         function renderFullNotiList(items) {
             const list = document.getElementById('full-noti-list');
             if (items.length === 0) {
-                list.innerHTML = `<div class="p-10 text-center text-gray-400">Bạn chưa có thông báo nào.</div>`;
+                list.innerHTML = `<div class="p-10 text-center text-gray-400"><?= __('no_notifications') ?></div>`;
                 return;
             }
 
@@ -863,37 +876,50 @@ if ($currentTab === 'wishlist') {
             })
             .catch(err => {
                 console.error(err);
-                Swal.fire('Lỗi', 'Không thể kết nối đến máy chủ', 'error');
+                Swal.fire('<?= __('error') ?>', '<?= __('cannot_connect_server') ?>', 'error');
             });
         }
 
-        function addToCart(productId) {
-            const formData = new FormData();
-            formData.append('action', 'add_to_cart');
-            formData.append('product_id', productId);
-            formData.append('quantity', 1);
-            
-            fetch(getApiUrl('add_to_cart.php'), {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Thành công',
-                        text: '<?= __('added_to_cart') ?>',
-                        icon: 'success',
-                        showCancelButton: true,
-                        confirmButtonText: 'Đến giỏ hàng',
-                        cancelButtonText: 'Tiếp tục xem'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = 'cart.php';
+        function clearWishlist() {
+            Swal.fire({
+                title: '<?= __('notification') ?>',
+                text: '<?= __('confirm_clear_wishlist') ?>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: '<?= __('agree') ?>',
+                cancelButtonText: '<?= __('cancel') ?>'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const formData = new FormData();
+                    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+                    formData.append('csrf_token', csrfToken);
+
+                    fetch(getApiUrl('api/wishlist.php?action=clear'), {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: '<?= __('notification') ?>',
+                                text: data.message,
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('<?= __('error') ?>', data.message, 'error');
                         }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire('<?= __('error') ?>', '<?= __('cannot_connect_server') ?>', 'error');
                     });
-                } else {
-                    Swal.fire('Thông báo', data.message, 'warning');
                 }
             });
         }

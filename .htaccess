@@ -10,5 +10,5 @@
     RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
 </IfModule>
 
-php_value display_errors on
+php_value display_errors On
 php_value date.timezone Asia/Ho_Chi_Minh

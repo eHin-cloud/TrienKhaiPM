@@ -198,12 +198,6 @@ function sendEmail($to_email, $to_name, $subject, $body)
 {
     // Bỏ qua nếu email rỗng hoặc chưa cấu hình
     if (empty($to_email) || empty(SMTP_USERNAME) || empty(SMTP_PASSWORD) || empty(SMTP_FROM_EMAIL)) {
-        $errorMsg = "Gửi mail thất bại do thiếu thông tin: " . 
-                    "to_email=" . (empty($to_email) ? 'rỗng' : $to_email) . ", " .
-                    "SMTP_USERNAME=" . (empty(SMTP_USERNAME) ? 'rỗng' : SMTP_USERNAME) . ", " .
-                    "SMTP_PASSWORD=" . (empty(SMTP_PASSWORD) ? 'rỗng' : 'đã có') . ", " .
-                    "SMTP_FROM_EMAIL=" . (empty(SMTP_FROM_EMAIL) ? 'rỗng' : SMTP_FROM_EMAIL) . "\n";
-        @file_put_contents(__DIR__ . '/../scratch/mail_error.txt', $errorMsg, FILE_APPEND);
         return false;
     }
 
@@ -233,9 +227,7 @@ function sendEmail($to_email, $to_name, $subject, $body)
         $mail->send();
         return true;
     } catch (Exception $e) {
-        $errorMsg = "PHPMailer Error: " . $mail->ErrorInfo . " | Exception: " . $e->getMessage() . "\n" .
-                    "SMTP Config: Host=" . SMTP_HOST . ", Port=" . SMTP_PORT . ", User=" . SMTP_USERNAME . ", From=" . SMTP_FROM_EMAIL . "\n";
-        @file_put_contents(__DIR__ . '/../scratch/mail_error.txt', $errorMsg, FILE_APPEND);
+        // Log lỗi (không hiển thị cho user)
         error_log("PHPMailer Error: " . $mail->ErrorInfo);
         return false;
     }

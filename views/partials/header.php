@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         if ($user) {
             if (isset($user['is_banned']) && $user['is_banned'] == 1) {
-                $auth_error = "Tài khoản của bạn đã bị khóa tạm thời do có dấu hiệu bất thường. Vui lòng liên hệ Nhân viên qua zalo để biết thêm chi tiết.";
+                $auth_error = "Tài khoản của bạn đã bị khóa tạm thời do có dấu hiệu bất thường. Vui lòng liên hệ NHân Viên để qua zalo để biết thêm chi tiết.";
                 record_login_history($db, $user['id'], 'failed');
             } else {
                 $has2FA = (int)($user['two_factor_enabled'] ?? 0) === 1;
@@ -467,13 +467,20 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         if (data.success) {
                             renderNotifications(data.data.items);
                             updateNotiBadge(data.data.unread_count);
+                        } else {
+                            notiList.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs"><?= __('please_login_to_view') ?></div>`;
+                            updateNotiBadge(0);
                         }
+                    })
+                    .catch(() => {
+                        notiList.innerHTML = `<div class="p-8 text-center text-gray-400 text-xs"><?= __('please_login_to_view') ?></div>`;
+                        updateNotiBadge(0);
                     });
             }
 
             function renderNotifications(items) {
                 if (items.length === 0) {
-                    notiList.innerHTML = `<div class="p-10 text-center text-gray-400 text-sm">Bạn không có thông báo nào.</div>`;
+                    notiList.innerHTML = `<div class="p-10 text-center text-gray-400 text-sm"><?= __('no_notifications') ?></div>`;
                     return;
                 }
 
@@ -530,25 +537,19 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             }
             ?>
             const initialCompareList = <?php echo json_encode($initialCompareList); ?>;
+            const compareBtnText = '<?php echo __('compare'); ?>';
+            const addPlaceholderText = '<?php echo __('add_placeholder'); ?>';
+            const collapseText = '<?php echo __('collapse'); ?>';
+            const expandText = '<?php echo __('expand'); ?>';
+            const notificationTitle = '<?php echo __('notification'); ?>';
+            const warningTitle = '<?php echo __('warning'); ?>';
             const csrfToken = '<?php echo $_SESSION['csrf_token'] ?? ''; ?>';
-            window.toggleCompare = function(id, btn) {
-                // Xác định action: Nếu đã có trong danh sách thì là remove, ngược lại là add
-                // Ta có thể kiểm tra danh sách hiện tại qua DOM hoặc gọi API. 
-                // Ở đây ta gọi API với action 'add' trước, nếu API báo đã có, ta gọi 'remove' (hoặc ngược lại)
-                // Cách tốt nhất là truyền action cụ thể hoặc để API tự xử lý. 
-                // Nhưng để đơn giản và an toàn, ta sẽ dùng list hiện có trong renderCompareBar để check.
-                
-                let currentItems = [];
-                const bar = document.getElementById('compare-sticky-bar');
-                if (bar && !bar.classList.contains('hidden')) {
-                    // Lấy ID từ các nút xóa hoặc lưu list vào biến global
-                }
 
+            window.toggleCompare = function(id, btn) {
                 const formData = new FormData();
-                // Ta sẽ gửi action mặc định là 'add'. Nếu API báo đã có, ta sẽ thực hiện 'remove'.
                 formData.append('action', 'add'); 
                 formData.append('product_id', id);
-                formData.append('csrf_token', csrfToken);
+                formData.append('csrf_token', document.querySelector('input[name="csrf_token"]')?.value || '');
 
                 fetch(getApiUrl('ajax_compare.php'), {
                     method: 'POST',
@@ -557,12 +558,11 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
-                        // Nếu message báo đã có -> Ta thực hiện remove
-                        if (data.message === 'Sản phẩm này đã có trong danh sách so sánh.') {
+                        if (data.message === 'Sản phẩm này đã có trong danh sách so sánh.' || data.message === 'This product is already in the compare list.') {
                             const removeData = new FormData();
                             removeData.append('action', 'remove');
                             removeData.append('product_id', id);
-                            removeData.append('csrf_token', csrfToken);
+                            removeData.append('csrf_token', document.querySelector('input[name="csrf_token"]')?.value || '');
                             
                             return fetch(getApiUrl('ajax_compare.php'), {
                                 method: 'POST',
@@ -579,7 +579,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         updateCompareBadge(finalData.count, finalData.full_list);
                         if (finalData.message) {
                             Swal.fire({
-                                title: 'Thông báo',
+                                title: notificationTitle,
                                 text: finalData.message,
                                 icon: 'success',
                                 toast: true,
@@ -591,59 +591,11 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                     }
                 })
                 .catch(err => {
-                    if (err.message === 'Bạn chỉ nên so sánh các sản phẩm cùng loại.') {
-                        Swal.fire({
-                            title: 'Khác loại sản phẩm',
-                            text: 'Bạn chỉ nên so sánh các sản phẩm cùng loại. Bạn có muốn xóa danh sách hiện tại để bắt đầu so sánh loại sản phẩm mới này không?',
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonColor: '#d33',
-                            cancelButtonColor: '#3085d6',
-                            confirmButtonText: 'Đồng ý, xóa và thêm mới',
-                            cancelButtonText: 'Bỏ qua',
-                            reverseButtons: true
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                const forceData = new FormData();
-                                forceData.append('action', 'force_add');
-                                forceData.append('product_id', id);
-                                forceData.append('csrf_token', csrfToken);
-                                
-                                fetch(getApiUrl('ajax_compare.php'), {
-                                    method: 'POST',
-                                    body: forceData
-                                })
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        updateCompareBadge(data.count, data.full_list);
-                                        Swal.fire({
-                                            title: 'Thành công',
-                                            text: data.message,
-                                            icon: 'success',
-                                            toast: true,
-                                            position: 'top-end',
-                                            showConfirmButton: false,
-                                            timer: 3000
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    } else {
-                        Swal.fire('Thông báo', err.message, 'warning');
-                    }
+                    Swal.fire(warningTitle, err.message, 'warning');
                 });
             }
 
-            let currentCompareCategoryId = null;
-
             window.updateCompareBadge = function(count, fullList = []) {
-                if (fullList.length > 0) {
-                    currentCompareCategoryId = fullList[0].category_id;
-                } else {
-                    currentCompareCategoryId = null;
-                }
                 renderCompareBar(fullList);
             }
 
@@ -660,14 +612,12 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 bar.classList.remove('hidden');
                 countBadge.innerText = items.length;
                 
-                // Cập nhật text nút So sánh chính (để hiện số lượng cả khi thu gọn)
                 const mainBtn = document.getElementById('compare-main-btn');
                 if (mainBtn) {
-                    mainBtn.innerHTML = `So sánh (${items.length}) <i class="fa-solid fa-right-left text-[10px]"></i>`;
+                    mainBtn.innerHTML = `${compareBtnText} (${items.length}) <i class="fa-solid fa-right-left text-[10px]"></i>`;
                 }
 
                 let html = '';
-                // Render tối đa 3 slot
                 for (let i = 0; i < 3; i++) {
                     const item = items[i];
                     if (item) {
@@ -684,120 +634,14 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         `;
                     } else {
                         html += `
-                            <div onclick="openCompareSearch()" 
-                                 class="hidden md:flex w-48 border-2 border-dashed border-gray-200 rounded-2xl items-center justify-center p-2 opacity-60 bg-gray-50/30 cursor-pointer hover:border-primary hover:bg-white transition-all group/add">
-                                <i class="fa-solid fa-plus text-gray-300 mr-2 text-[10px] group-hover/add:text-primary transition-colors"></i>
-                                <span class="text-[10px] font-medium text-gray-400 italic group-hover/add:text-primary transition-colors">Thêm...</span>
+                            <div class="hidden md:flex w-48 border-2 border-dashed border-gray-100 rounded-2xl items-center justify-center p-2 opacity-40 bg-gray-50/30">
+                                <i class="fa-solid fa-plus text-gray-300 mr-2 text-[10px]"></i>
+                                <span class="text-[10px] font-medium text-gray-400 italic">${addPlaceholderText}</span>
                             </div>
                         `;
                     }
                 }
                 listContainer.innerHTML = html;
-            }
-
-            window.openCompareSearch = function() {
-                document.getElementById('compare-search-modal').classList.remove('hidden');
-                const input = document.getElementById('compare-search-input');
-                input.focus();
-                
-                // Nếu chưa có từ khóa và đã có danh mục so sánh -> Hiển thị gợi ý
-                if (!input.value.trim() && currentCompareCategoryId) {
-                    const resultsContainer = document.getElementById('compare-search-results');
-                    resultsContainer.innerHTML = `
-                        <div class="flex items-center justify-center py-10">
-                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>`;
-                        
-                    fetch(getApiUrl(`api/search.php?cat_id=${currentCompareCategoryId}`))
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.data.products.length > 0) {
-                                renderCompareSearchResults(data.data.products, true);
-                            }
-                        });
-                }
-            }
-
-            window.closeCompareSearch = function() {
-                document.getElementById('compare-search-modal').classList.add('hidden');
-                document.getElementById('compare-search-input').value = '';
-                document.getElementById('compare-search-results').innerHTML = `
-                    <div class="text-center py-10 text-gray-400">
-                        <i class="fa-solid fa-keyboard text-3xl mb-3 block opacity-20"></i>
-                        <p class="text-sm italic">Nhập tên sản phẩm để tìm kiếm...</p>
-                    </div>`;
-            }
-
-            let searchTimeout = null;
-            window.handleCompareSearch = function(keyword) {
-                const resultsContainer = document.getElementById('compare-search-results');
-                if (!keyword.trim()) {
-                    // Nếu xóa trắng ô search -> Nếu có danh mục đang so sánh thì lại hiện gợi ý
-                    if (currentCompareCategoryId) {
-                        window.openCompareSearch(); // Gọi lại hàm mở để hiện gợi ý
-                    } else {
-                        resultsContainer.innerHTML = `
-                            <div class="text-center py-10 text-gray-400">
-                                <i class="fa-solid fa-keyboard text-3xl mb-3 block opacity-20"></i>
-                                <p class="text-sm italic">Nhập tên sản phẩm để tìm kiếm...</p>
-                            </div>`;
-                    }
-                    return;
-                }
-
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    fetch(getApiUrl(`api/search.php?keyword=${encodeURIComponent(keyword)}`))
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.data.products.length > 0) {
-                                renderCompareSearchResults(data.data.products, false);
-                            } else {
-                                resultsContainer.innerHTML = `
-                                    <div class="text-center py-10 text-gray-400">
-                                        <i class="fa-solid fa-face-frown text-3xl mb-3 block opacity-20"></i>
-                                        <p class="text-sm italic">Không tìm thấy sản phẩm nào...</p>
-                                    </div>`;
-                            }
-                        });
-                }, 300);
-            }
-
-            /**
-             * Helper function để render kết quả tìm kiếm trong modal so sánh
-             */
-            function renderCompareSearchResults(products, isSuggestion = false) {
-                const resultsContainer = document.getElementById('compare-search-results');
-                let html = '';
-                
-                if (isSuggestion) {
-                    html += `<div class="px-2 mb-2"><span class="text-[11px] font-bold text-primary uppercase tracking-wider bg-blue-50 px-2 py-1 rounded">Gợi ý sản phẩm cùng loại</span></div>`;
-                }
-
-                products.forEach(p => {
-                    const priceFmt = new Intl.NumberFormat('vi-VN').format(p.price) + 'đ';
-                    const oldPriceFmt = p.old_price ? new Intl.NumberFormat('vi-VN').format(p.old_price) + 'đ' : '';
-                    
-                    html += `
-                        <div class="flex items-center gap-4 p-3 bg-white border border-gray-100 rounded-2xl hover:border-primary/30 hover:bg-primary/5 transition-all group">
-                            <div class="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center p-1 shrink-0 overflow-hidden">
-                                <img src="${jsAsset(p.image)}" class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="text-sm font-bold text-gray-800 line-clamp-1 group-hover:text-primary transition-colors">${p.name}</h4>
-                                <div class="flex items-center gap-3 mt-1">
-                                    <span class="text-danger font-bold text-sm">${priceFmt}</span>
-                                    ${oldPriceFmt ? `<span class="text-gray-400 text-xs line-through">${oldPriceFmt}</span>` : ''}
-                                </div>
-                            </div>
-                            <button onclick="toggleCompare(${p.id}); closeCompareSearch();" 
-                                    class="px-5 py-2 bg-red-50 text-red-600 rounded-xl text-sm font-bold hover:bg-red-600 hover:text-white transition-all shadow-sm">
-                                Chọn
-                            </button>
-                        </div>
-                    `;
-                });
-                resultsContainer.innerHTML = html;
             }
 
             window.toggleCompareBar = function() {
@@ -806,13 +650,11 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 const text = document.getElementById('compare-bar-toggle-text');
                 
                 if (bar.classList.contains('is-collapsed')) {
-                    // MỞ RỘNG (Về dạng thanh ngang full-width)
                     bar.classList.remove('is-collapsed');
                     icon.classList.remove('fa-chevron-up');
                     icon.classList.add('fa-chevron-down');
-                    text.innerText = 'Thu gọn';
+                    text.innerText = collapseText;
                 } else {
-                    // THU GỌN (Về dạng ô vuông floating)
                     bar.classList.add('is-collapsed');
                     icon.classList.remove('fa-chevron-down');
                     icon.classList.add('fa-chevron-up');
@@ -823,7 +665,6 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             // Tự động load danh sách khi trang vừa nạp (Dùng dữ liệu từ PHP để tránh mất khi reload)
             document.addEventListener('DOMContentLoaded', function() {
                 if (initialCompareList && initialCompareList.length > 0) {
-                    currentCompareCategoryId = initialCompareList[0].category_id;
                     renderCompareBar(initialCompareList);
                 }
             });
@@ -858,31 +699,25 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             <!-- THANH TÌM KIẾM (Desktop - ẩn trên mobile) -->
             <div class="hidden md:flex flex-1 max-w-[600px] h-10 relative">
                 <form action="index.php" method="GET"
-                    class="flex w-full h-full bg-white rounded-md shadow-sm items-center">
+                    class="flex w-full h-full bg-white rounded-md shadow-sm items-center overflow-hidden">
                     <!-- Dropdown danh mục trong search bar -->
-                    <div class="relative h-full">
-                        <button type="button" id="cat-dropdown-btn"
+                    <div class="relative h-full" id="cat-dropdown-btn">
+                        <button type="button"
                             class="px-3 h-full bg-gray-50 border-r border-gray-200 cursor-pointer flex items-center gap-2 text-gray-700 text-[13px] font-medium hover:bg-gray-100 transition rounded-l-md">
                             <i class="fa-solid fa-bars"></i> <?= __('category') ?> <i
                                 class="fa-solid fa-chevron-down text-[10px]"></i>
                         </button>
                         <!-- Menu dropdown danh mục (ẩn mặc định, toggle bằng JS) -->
                         <div id="cat-dropdown-menu"
-                            class="hidden absolute left-0 top-full mt-1 w-[220px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 py-2">
-                            <ul class="text-sm text-gray-700">
-                                <li>
-                                    <a href="index.php" class="flex items-center px-4 py-2.5 hover:bg-blue-50 hover:text-primary transition">
-                                        <i class="fa-solid fa-border-all w-5 text-gray-400"></i> <?= __('all_products') ?>
-                                    </a>
-                                </li>
-                                <div class="my-1 border-t border-gray-100"></div>
+                            class="hidden absolute left-0 top-full mt-1 w-[200px] bg-white border border-gray-200 rounded shadow-lg z-50">
+                            <ul class="py-2 text-sm text-gray-700">
+                                <li><a href="index.php"
+                                        class="block px-4 py-2 hover:bg-gray-100"><?= __('all_products') ?></a></li>
                                 <?php foreach ($categories as $cat): ?>
-                                    <li>
-                                        <a href="index.php?cat_id=<?= $cat['id'] ?>" class="flex items-center px-4 py-2.5 hover:bg-blue-50 hover:text-primary transition">
-                                            <i class="fa-solid <?= $cat['icon'] ?> w-5 text-primary/70"></i>
-                                            <span class="ml-1"><?= htmlspecialchars(__cat($cat['name'])) ?></span>
-                                        </a>
-                                    </li>
+                                    <li><a href="index.php?cat_id=<?= $cat['id'] ?>"
+                                            class="block px-4 py-2 hover:bg-gray-100"><i
+                                                class="fa-solid <?= $cat['icon'] ?> w-5"></i>
+                                            <?= htmlspecialchars(__cat($cat['name'])) ?></a></li>
                                 <?php endforeach; ?>
                             </ul>
                         </div>
@@ -943,20 +778,19 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             <?= $unread_notifications ?>
                         </span>
                     </button>
-                    <!-- Dropdown thông báo -->
                     <div id="noti-dropdown" class="absolute right-0 top-full mt-0 w-[320px] bg-white border border-gray-200 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-gray-800">
                         <div class="p-3 border-b flex justify-between items-center bg-gray-50">
-                            <span class="font-bold text-sm">Thông báo</span>
-                            <button onclick="markAllRead()" class="text-xs text-blue-600 hover:underline">Đánh dấu tất cả là đã đọc</button>
+                            <span class="font-bold text-sm"><?= __('notifications') ?></span>
+                            <button onclick="markAllRead()" class="text-xs text-blue-600 hover:underline"><?= __('mark_all_read') ?></button>
                         </div>
                         <div id="noti-list" class="max-h-[400px] overflow-y-auto">
                             <div class="p-8 text-center text-gray-400 text-xs">
                                 <i class="fa-solid fa-spinner fa-spin mb-2 text-lg"></i>
-                                <p>Đang tải thông báo...</p>
+                                <p><?= __('loading_notifications') ?></p>
                             </div>
                         </div>
                         <div class="p-2 border-t text-center bg-gray-50">
-                            <a href="profile.php?tab=notifications" class="text-xs text-blue-600 font-medium">Xem tất cả</a>
+                            <a href="profile.php?tab=notifications" class="text-xs text-blue-600 font-medium"><?= __('view_all') ?></a>
                         </div>
                     </div>
                 </div>
@@ -1029,29 +863,23 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
 
         <!-- THANH TÌM KIẾM MOBILE (ẩn trên desktop) -->
         <div class="md:hidden px-4 pb-3 relative">
-            <form action="index.php" method="GET" class="h-10 bg-white rounded-md shadow-sm flex items-center w-full">
+            <form action="index.php" method="GET" class="h-10 bg-white rounded-md shadow-sm flex items-center w-full overflow-hidden">
                 <!-- Dropdown danh mục mobile -->
-                <div class="relative h-full">
-                    <button type="button" id="mobile-cat-dropdown-btn"
-                        class="h-full px-4 bg-gray-50 border-r border-gray-200 flex items-center hover:bg-gray-100 active:bg-gray-200 transition rounded-l-md">
+                <div class="relative h-full" id="mobile-cat-dropdown-btn">
+                    <button type="button"
+                        class="h-full px-3 bg-gray-50 border-r border-gray-200 flex items-center hover:bg-gray-100 transition rounded-l-md">
                         <i class="fa-solid fa-bars text-gray-700"></i>
                     </button>
                     <div id="mobile-cat-dropdown-menu"
-                        class="hidden absolute left-0 top-full mt-1 w-[220px] bg-white border border-gray-200 rounded-xl shadow-2xl z-50 py-2">
-                        <ul class="text-sm text-gray-700">
-                            <li>
-                                <a href="index.php" class="flex items-center px-4 py-2.5 hover:bg-blue-50 transition">
-                                    <i class="fa-solid fa-border-all w-5 text-gray-400"></i> <?= __('all_products') ?>
-                                </a>
-                            </li>
-                            <div class="my-1 border-t border-gray-100"></div>
+                        class="hidden absolute left-0 top-full mt-1 w-[200px] bg-white border border-gray-200 rounded shadow-lg z-50">
+                        <ul class="py-2 text-sm text-gray-700">
+                            <li><a href="index.php"
+                                    class="block px-4 py-2 hover:bg-gray-100"><?= __('all_products') ?></a></li>
                             <?php foreach ($categories as $cat): ?>
-                                <li>
-                                    <a href="index.php?cat_id=<?= $cat['id'] ?>" class="flex items-center px-4 py-2.5 hover:bg-blue-50 transition">
-                                        <i class="fa-solid <?= $cat['icon'] ?> w-5 text-primary/70"></i>
-                                        <span class="ml-1"><?= htmlspecialchars(__cat($cat['name'])) ?></span>
-                                    </a>
-                                </li>
+                                <li><a href="index.php?cat_id=<?= $cat['id'] ?>"
+                                        class="block px-4 py-2 hover:bg-gray-100"><i
+                                            class="fa-solid <?= $cat['icon'] ?> w-5"></i>
+                                        <?= htmlspecialchars(__cat($cat['name'])) ?></a></li>
                             <?php endforeach; ?>
                         </ul>
                     </div>
@@ -1124,12 +952,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             const menuDesktop = document.getElementById('cat-dropdown-menu');
             if (btnDesktop && menuDesktop) {
                 btnDesktop.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    menuDesktop.classList.toggle('hidden');
-                });
-                // Ngăn menu đóng khi click vào bên trong menu
-                menuDesktop.addEventListener('click', function (e) {
-                    e.stopPropagation();
+                    menuDesktop.classList.toggle('hidden'); e.stopPropagation();
                 });
             }
 
@@ -1138,23 +961,14 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             const menuMobile = document.getElementById('mobile-cat-dropdown-menu');
             if (btnMobile && menuMobile) {
                 btnMobile.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    menuMobile.classList.toggle('hidden');
-                });
-                // Ngăn menu đóng khi click vào bên trong menu
-                menuMobile.addEventListener('click', function (e) {
-                    e.stopPropagation();
+                    menuMobile.classList.toggle('hidden'); e.stopPropagation();
                 });
             }
 
             // Đóng dropdown khi click ra ngoài
             document.addEventListener('click', function (e) {
-                if (menuDesktop && !menuDesktop.classList.contains('hidden')) {
-                    menuDesktop.classList.add('hidden');
-                }
-                if (menuMobile && !menuMobile.classList.contains('hidden')) {
-                    menuMobile.classList.add('hidden');
-                }
+                if (btnDesktop && menuDesktop && !btnDesktop.contains(e.target)) menuDesktop.classList.add('hidden');
+                if (btnMobile && menuMobile && !btnMobile.contains(e.target)) menuMobile.classList.add('hidden');
             });
         });
     </script>
@@ -1189,22 +1003,15 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
          ========================================== -->
     <!-- Modal tự động hiện khi có $auth_error (đăng nhập/đăng ký lỗi) -->
     <div id="loginModal"
-        class="<?= ($auth_error || $auth_success || $show_forgot_tab) ? '' : 'hidden' ?> fixed inset-0 z-[100] flex items-start sm:items-center justify-center px-4 py-6 bg-slate-950/70 backdrop-blur-md overflow-y-auto">
-
-        <div class="relative w-full max-w-4xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 ring-white/10">
-
-
+        class="<?= ($auth_error || $auth_success || $show_forgot_tab) ? '' : 'hidden' ?> fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 bg-slate-950/70 backdrop-blur-md">
+        <div class="relative w-full max-w-5xl overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 ring-white/10">
             <button onclick="document.getElementById('loginModal').classList.add('hidden')"
-                class="absolute left-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
-                <i class="fa-solid fa-xmark text-xl"></i>
+                class="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25">
+                <i class="fa-solid fa-xmark"></i>
             </button>
 
-            <div class="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] lg:h-[620px]">
-
-
-                <!-- BẢNG QUẢNG CÁO: Ẩn trên mobile, chỉ hiện trên desktop (lg) -->
-                <div class="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0f5fe6] via-[#0b4fbf] to-[#0a2f7a] p-8 text-white md:p-10">
-
+            <div class="grid min-h-[620px] grid-cols-1 lg:grid-cols-[0.95fr_1.05fr]">
+                <div class="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0f5fe6] via-[#0b4fbf] to-[#0a2f7a] p-8 text-white md:p-10">
                     <div class="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-white/10"></div>
                     <div class="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-secondary/15"></div>
 
@@ -1213,36 +1020,34 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             <i class="fa-solid fa-bolt-lightning text-secondary"></i> DienMayPro
                         </div>
                         <h2 class="mt-6 max-w-md text-4xl font-black leading-tight md:text-5xl">
-                            Mua sắm điện máy
-                            <span class="text-secondary">thông minh hơn</span>
+                            <?= __('banner_title_prefix') ?>
+                            <span class="text-secondary"><?= __('banner_title_highlight') ?></span>
                         </h2>
                         <p class="mt-4 max-w-md text-sm leading-7 text-blue-100 md:text-base">
-                            Hàng nghìn sản phẩm chính hãng với giá tốt nhất. Giao hàng nhanh, bảo hành chính hãng và trải nghiệm mượt mà trên mọi thiết bị.
+                            <?= __('banner_desc') ?>
                         </p>
                     </div>
 
                     <div class="relative z-10 grid grid-cols-3 gap-3 text-center text-sm">
                         <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                             <p class="text-2xl font-black text-secondary">10K+</p>
-                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100">SẢN PHẨM</p>
+                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100"><?= __('products_label') ?></p>
                         </div>
                         <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                             <p class="text-2xl font-black text-secondary">98%</p>
-                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100">HÀI LÒNG</p>
+                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100"><?= __('satisfaction_label') ?></p>
                         </div>
                         <div class="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
                             <p class="text-2xl font-black text-secondary">2H+</p>
-                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100">GIAO HÀNG</p>
+                            <p class="mt-1 text-xs font-semibold tracking-[0.15em] text-blue-100"><?= __('delivery_label') ?></p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 sm:p-6 md:p-8 flex items-center overflow-hidden">
-
+                <div class="bg-slate-50 p-5 sm:p-6 md:p-8 flex items-center">
                     <div class="mx-auto w-full max-w-xl flex-col">
                         <!-- Tabs: Đăng nhập / Đăng ký -->
-                        <div class="mb-3 grid grid-cols-2 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200 transition-all duration-300">
-
+                        <div class="mb-5 grid grid-cols-2 rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-200 transition-all duration-300">
                             <button id="tab-login" onclick="switchAuthTab('login')"
                                 class="auth-tab-button rounded-xl py-3 text-center text-sm font-bold transition-all duration-300 ease-out <?= (!$show_register_tab && !$show_forgot_tab) ? 'bg-primary text-white shadow-md shadow-primary/20' : 'text-slate-500 hover:text-slate-700' ?>"><?= __('login') ?></button>
                             <button id="tab-register" onclick="switchAuthTab('register')"
@@ -1268,17 +1073,13 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             </div>
                         <?php endif; ?>
 
-                        <div id="auth-panel-shell" class="w-full h-full lg:max-h-[500px] overflow-y-auto hide-scrollbar px-1">
-
-
-
+                        <div id="auth-panel-shell" class="relative min-h-[640px] overflow-hidden rounded-[24px] bg-white p-5 shadow-xl ring-1 ring-slate-200 md:p-6 transition-[height] duration-300 ease-out">
                             <!-- FORM ĐĂNG NHẬP -->
-                            <form id="form-login" method="POST" class="auth-panel <?= ($show_register_tab || $show_forgot_tab) ? 'hidden' : '' ?>">
-
+                            <form id="form-login" method="POST" class="auth-panel absolute inset-0 p-5 md:p-6 <?= ($show_register_tab || $show_forgot_tab) ? 'is-hidden' : 'is-visible' ?>">
                                 <?= csrf_input_field() ?>
                                 <input type="hidden" name="action" value="login">
-                                <h3 class="text-2xl font-black text-slate-800">Chào mừng quay lại</h3>
-                                <p class="mt-1 text-sm text-slate-500">Đăng nhập để tiếp tục mua sắm.</p>
+                                <h3 class="text-2xl font-black text-slate-800"><?= __('welcome_back') ?></h3>
+                                <p class="mt-1 text-sm text-slate-500"><?= __('login_subtitle') ?></p>
                                 <div class="mt-5 space-y-4">
                                     <div>
                                         <label class="mb-1 block text-sm font-medium text-slate-700"><?= __('username') ?></label>
@@ -1296,19 +1097,18 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                                 <a href="google_login.php"
                                     class="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                                     <i class="fa-brands fa-google text-[#EA4335]"></i>
-                                    Đăng nhập bằng Google
+                                    <?= __('login_with_google') ?>
                                 </a>
                                 <a href="forgot_password.php"
-                                    class="mt-3 inline-flex w-full items-center justify-center rounded-xl text-sm font-semibold text-primary transition hover:underline">Quên mật khẩu?</a>
+                                    class="mt-3 inline-flex w-full items-center justify-center rounded-xl text-sm font-semibold text-primary transition hover:underline"><?= __('forgot_password_link') ?></a>
                             </form>
 
                             <!-- FORM ĐĂNG KÝ -->
-                            <form id="form-register" method="POST" class="auth-panel <?= !$show_register_tab ? 'hidden' : '' ?>">
-
+                            <form id="form-register" method="POST" class="auth-panel absolute inset-0 p-5 md:p-6 <?= !$show_register_tab ? 'is-hidden' : 'is-visible' ?>">
                                 <?= csrf_input_field() ?>
                                 <input type="hidden" name="action" value="register">
-                                <h3 class="text-2xl font-black text-slate-800">Tạo tài khoản mới</h3>
-                                <p class="mt-1 text-sm text-slate-500">Chỉ mất vài giây để bắt đầu.</p>
+                                <h3 class="text-2xl font-black text-slate-800"><?= __('create_new_account') ?></h3>
+                                <p class="mt-1 text-sm text-slate-500"><?= __('register_subtitle') ?></p>
                                 <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <div class="md:col-span-2">
                                         <label class="mb-1 block text-sm font-medium text-slate-700"><?= __('fullname') ?></label>
@@ -1322,7 +1122,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                                             placeholder="VD: 0901234567">
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-sm font-medium text-slate-700">Email (không bắt buộc)</label>
+                                        <label class="mb-1 block text-sm font-medium text-slate-700"><?= __('email_optional') ?></label>
                                         <input type="email" name="email"
                                             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/10"
                                             placeholder="example@gmail.com">
@@ -1352,8 +1152,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             </form>
 
                             <!-- FORM QUÊN MẬT KHẨU -->
-                            <div id="form-forgot" class="auth-panel <?= !$show_forgot_tab ? 'hidden' : '' ?>">
-
+                            <div id="form-forgot" class="auth-panel absolute inset-0 p-5 md:p-6 <?= !$show_forgot_tab ? 'is-hidden' : 'is-visible' ?>">
                                 <h3 class="text-2xl font-black text-slate-800">Quên mật khẩu</h3>
                                 <p class="mt-1 text-sm text-slate-500">Xác minh email để đặt lại mật khẩu.</p>
                                 <form method="POST" class="<?= $forgot_step === 1 ? 'mt-5' : 'hidden' ?>" id="forgot-step-1">
@@ -1413,6 +1212,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
          * @param {string} tab - 'login' hoặc 'register'
          */
         function switchAuthTab(tab) {
+            const shell = document.getElementById('auth-panel-shell');
             const panels = {
                 login: document.getElementById('form-login'),
                 register: document.getElementById('form-register'),
@@ -1424,12 +1224,19 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 forgot: document.getElementById('tab-forgot'),
             };
 
+            if (shell) {
+                shell.style.height = shell.offsetHeight + 'px';
+                shell.style.minHeight = shell.offsetHeight + 'px';
+            }
+
             Object.entries(panels).forEach(([name, panel]) => {
                 if (!panel) return;
                 if (name === tab) {
-                    panel.classList.remove('hidden');
+                    panel.classList.remove('is-hidden');
+                    panel.classList.add('is-visible');
                 } else {
-                    panel.classList.add('hidden');
+                    panel.classList.remove('is-visible');
+                    panel.classList.add('is-hidden');
                 }
             });
 
@@ -1437,15 +1244,24 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 if (!btn) return;
                 if (name === tab) {
                     btn.classList.add('bg-primary', 'text-white', 'shadow-md');
-                    btn.classList.remove('text-slate-500', 'text-slate-700');
+                    btn.classList.remove('text-slate-500');
                 } else {
                     btn.classList.remove('bg-primary', 'text-white', 'shadow-md');
                     btn.classList.add('text-slate-500');
                 }
             });
+
+            window.requestAnimationFrame(() => {
+                if (shell) {
+                    const activePanel = panels[tab];
+                    if (activePanel) {
+                        const nextHeight = Math.max(activePanel.scrollHeight + 32, 640);
+                        shell.style.height = nextHeight + 'px';
+                        shell.style.minHeight = nextHeight + 'px';
+                    }
+                }
+            });
         }
-
-
 
 
 
@@ -1455,6 +1271,16 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
          * - Chặn submit nếu không đạt yêu cầu
          */
         document.addEventListener('DOMContentLoaded', function () {
+            // Tự động đóng modal khi click ra ngoài vùng mờ
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) {
+                loginModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.add('hidden');
+                    }
+                });
+            }
+
             const regPw = document.getElementById('reg-password');
             const pwLen = document.getElementById('pw-len');
             const pwLetter = document.getElementById('pw-letter');
@@ -1552,7 +1378,7 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         }
                         
                         Swal.fire({
-                            title: 'Thông báo',
+                            title: '<?= __('notification') ?>',
                             text: data.message,
                             icon: 'success',
                             toast: true,
@@ -1561,10 +1387,10 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             timer: 2000
                         });
                     } else {
-                        if (data.message.includes('đăng nhập')) {
-                            Swal.fire('Thông báo', '<?= __("wishlist_login_required") ?>', 'warning');
+                        if (data.message.includes('đăng nhập') || data.message.includes('login')) {
+                            Swal.fire('<?= __('notification') ?>', '<?= __("wishlist_login_required") ?>', 'warning');
                         } else {
-                            Swal.fire('Lỗi', data.message, 'error');
+                            Swal.fire('<?= __('error') ?>', data.message, 'error');
                         }
                     }
                 })

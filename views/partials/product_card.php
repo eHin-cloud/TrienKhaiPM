@@ -31,9 +31,9 @@ $productJson = htmlspecialchars(json_encode([
         endforeach; ?>
     </div>
 
+    <!-- Ảnh sản phẩm -->
     <div class="h-36 md:h-44 mb-3 overflow-hidden flex items-center justify-center p-2 relative group-img">
-        <img src="<?= asset($p['image']) ?>" class="max-w-full max-h-full object-contain">
-
+        <img src="<?= htmlspecialchars($p['image']) ?>" class="max-w-full max-h-full object-contain">
         
         <!-- Nút Xem nhanh (Chỉ hiện khi hover) -->
         <button type="button" 

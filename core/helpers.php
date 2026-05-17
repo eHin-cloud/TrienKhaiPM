@@ -20,30 +20,6 @@ if (!function_exists('e')) {
 }
 
 /**
- * Lấy đường dẫn tuyệt đối cho tài nguyên (ảnh, CSS, JS)
- * 
- * @param string $path Đường dẫn tương đối (vd: 'uploads/abc.jpg')
- * @return string Đường dẫn tuyệt đối (vd: '/PMPBDT/public/uploads/abc.jpg')
- */
-if (!function_exists('asset')) {
-    function asset(?string $path): string {
-        if (!$path || trim($path) === '') {
-            return '/PMPBDT/public/assets/img/no-image.png'; // Trả về ảnh mặc định nếu rỗng
-        }
-        // Nếu là URL tuyệt đối (bắt đầu bằng http:// hoặc https://) thì trả về luôn
-        if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
-            return $path;
-        }
-        // Xóa dấu / ở đầu nếu có để tránh trùng lặp
-        $path = ltrim($path, '/');
-        // Trả về đường dẫn tuyệt đối từ root web
-        return '/PMPBDT/public/' . $path;
-    }
-}
-
-
-
-/**
  * Điều hướng trang (Redirect)
  * 
  * @param string $url

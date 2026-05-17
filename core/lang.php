@@ -12,6 +12,10 @@
  *   echo __('cart');        // In ra "Giỏ hàng" hoặc "Cart"
  */
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Xử lý chuyển ngôn ngữ khi user click nút
 if (isset($_GET['lang']) && in_array($_GET['lang'], ['vi', 'en'])) {
     $_SESSION['lang'] = $_GET['lang'];
@@ -61,3 +65,77 @@ function __cat($name) {
 function getCurrentLang() {
     return $_SESSION['lang'] ?? 'vi';
 }
+
+/**
+ * TỰ ĐỘNG DỊCH NỘI DUNG HTML (MÔ TẢ/THÔNG SỐ) SANG TIẾNG ANH & CACHE FILE TĨNH
+ */
+function translate_html_content($html, $cacheKey) {
+    if (empty($html)) return $html;
+    if (getCurrentLang() === 'vi') return $html;
+    
+    $cacheDir = __DIR__ . '/../storage/cache/translation/';
+    if (!file_exists($cacheDir)) {
+        @mkdir($cacheDir, 0777, true);
+    }
+    
+    $cacheFile = $cacheDir . md5($cacheKey . '_' . md5($html)) . '.html';
+    if (file_exists($cacheFile)) {
+        return file_get_contents($cacheFile);
+    }
+    
+    // Advanced HTML tag-preserving translation
+    try {
+        $parts = preg_split('/(<[^>]+>)/U', $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+        $translatedHtml = "";
+        
+        foreach ($parts as $part) {
+            if (empty($part)) continue;
+            
+            // If it is a HTML tag, keep it exactly as is
+            if (strpos($part, '<') === 0 && strpos($part, '>') === strlen($part) - 1) {
+                $translatedHtml .= $part;
+            } else {
+                // Translate text node, ignoring raw spacing or pure numbers
+                $trimmed = trim($part);
+                if (empty($trimmed) || is_numeric($trimmed) || (strlen($trimmed) <= 1 && !preg_match('/\p{L}/u', $trimmed))) {
+                    $translatedHtml .= $part;
+                } else {
+                    $url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" . urlencode($trimmed);
+                    $options = [
+                        "http" => [
+                            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36\r\n"
+                        ]
+                    ];
+                    $context = stream_context_create($options);
+                    $response = @file_get_contents($url, false, $context);
+                    if ($response !== false) {
+                        $resData = json_decode($response, true);
+                        if (isset($resData[0])) {
+                            $segmentTrans = "";
+                            foreach ($resData[0] as $segment) {
+                                $segmentTrans .= $segment[0] ?? "";
+                            }
+                            if (!empty($segmentTrans)) {
+                                $left_space = strlen($part) - strlen(ltrim($part));
+                                $right_space = strlen($part) - strlen(rtrim($part));
+                                $translatedHtml .= str_repeat(" ", $left_space) . $segmentTrans . str_repeat(" ", $right_space);
+                                continue;
+                            }
+                        }
+                    }
+                    $translatedHtml .= $part;
+                }
+            }
+        }
+        
+        if (!empty($translatedHtml)) {
+            @file_put_contents($cacheFile, $translatedHtml);
+            return $translatedHtml;
+        }
+    } catch (\Exception $e) {
+        // Fallback to original html
+    }
+    
+    return $html;
+}
+

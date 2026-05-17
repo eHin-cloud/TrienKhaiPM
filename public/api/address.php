@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../core/database.php';
 require_once __DIR__ . '/../../core/security.php';
 require_once __DIR__ . '/../../core/api.php';
+require_once __DIR__ . '/../../core/lang.php';
 
 // Log function for debugging
 function debug_log($msg) {
@@ -18,7 +19,7 @@ $userId = (int) ($authUser['user_id'] ?? 0);
 
 if ($userId <= 0) {
     debug_log("Unauthorized access attempt.");
-    api_json_response(false, 'Vui lòng đăng nhập.', [], 401);
+    api_json_response(false, __('please_login'), [], 401);
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -37,7 +38,7 @@ switch ($action) {
                 $item['is_default'] = (bool) $item['is_default'];
             }
             
-            api_json_response(true, 'Lấy danh sách địa chỉ thành công.', $items);
+            api_json_response(true, __('get_address_list_success'), $items);
         } catch (Exception $e) {
             api_json_response(false, 'Lỗi database: ' . $e->getMessage());
         }
@@ -52,7 +53,7 @@ switch ($action) {
         $isDefault = (int) ($data['is_default'] ?? 0);
 
         if (empty($fullname) || empty($phone) || empty($address)) {
-            api_json_response(false, 'Vui lòng nhập đầy đủ thông tin.', [], 422);
+            api_json_response(false, __('fill_all_info'), [], 422);
         }
 
         try {
@@ -63,7 +64,7 @@ switch ($action) {
             $stmt = $db->prepare('INSERT INTO addresses (user_id, fullname, phone, address, is_default) VALUES (?, ?, ?, ?, ?)');
             $stmt->execute([$userId, $fullname, $phone, $address, $isDefault]);
             
-            api_json_response(true, 'Thêm địa chỉ thành công.', ['id' => $db->lastInsertId()]);
+            api_json_response(true, __('add_address_success'), ['id' => $db->lastInsertId()]);
         } catch (Exception $e) {
             api_json_response(false, 'Lỗi lưu địa chỉ: ' . $e->getMessage());
         }
@@ -78,7 +79,7 @@ switch ($action) {
         $address = trim($data['address'] ?? '');
         $isDefault = (int) ($data['is_default'] ?? 0);
 
-        if ($id <= 0) api_json_response(false, 'Thiếu ID địa chỉ.', [], 422);
+        if ($id <= 0) api_json_response(false, __('missing_address_id'), [], 422);
 
         try {
             if ($isDefault === 1) {
@@ -88,7 +89,7 @@ switch ($action) {
             $stmt = $db->prepare('UPDATE addresses SET fullname = ?, phone = ?, address = ?, is_default = ? WHERE id = ? AND user_id = ?');
             $stmt->execute([$fullname, $phone, $address, $isDefault, $id, $userId]);
             
-            api_json_response(true, 'Cập nhật địa chỉ thành công.');
+            api_json_response(true, __('update_address_success'));
         } catch (Exception $e) {
             api_json_response(false, 'Lỗi cập nhật: ' . $e->getMessage());
         }
@@ -101,7 +102,7 @@ switch ($action) {
         try {
             $stmt = $db->prepare('DELETE FROM addresses WHERE id = ? AND user_id = ?');
             $stmt->execute([$id, $userId]);
-            api_json_response(true, 'Xóa địa chỉ thành công.');
+            api_json_response(true, __('delete_address_success'));
         } catch (Exception $e) {
             api_json_response(false, 'Lỗi xóa: ' . $e->getMessage());
         }
@@ -115,7 +116,7 @@ switch ($action) {
             $db->prepare('UPDATE addresses SET is_default = 0 WHERE user_id = ?')->execute([$userId]);
             $stmt = $db->prepare('UPDATE addresses SET is_default = 1 WHERE id = ? AND user_id = ?');
             $stmt->execute([$id, $userId]);
-            api_json_response(true, 'Đã đặt làm địa chỉ mặc định.');
+            api_json_response(true, __('set_default_address_success'));
         } catch (Exception $e) {
             api_json_response(false, 'Lỗi đặt mặc định: ' . $e->getMessage());
         }

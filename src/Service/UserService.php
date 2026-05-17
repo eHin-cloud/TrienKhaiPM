@@ -25,24 +25,6 @@ class UserService
     }
 
     /**
-     * Cập nhật thông tin profile trực tiếp (Dùng cho profile.php).
-     * @param int $userId
-     * @param array $data
-     * @return bool
-     */
-    public function updateProfile(int $userId, array $data): bool
-    {
-        // Chuẩn hóa dữ liệu: Đảm bảo key khớp với database (fullname thay vì full_name)
-        $mappedData = [
-            'fullname' => $data['full_name'] ?? $data['fullname'] ?? '',
-            'phone'    => $data['phone'] ?? '',
-            'address'  => $data['address'] ?? ''
-        ];
-
-        return $this->userRepo->updateUserProfile($userId, $mappedData);
-    }
-
-    /**
      * Xử lý các hành động cập nhật tài khoản từ Form.
      * @param array $post Dữ liệu từ $_POST.
      * @param int $userId ID của người dùng đang đăng nhập.
@@ -136,8 +118,8 @@ class UserService
             return ['success' => false, 'message' => 'Mật khẩu mới và xác nhận mật khẩu không khớp!'];
         }
 
-        if (strlen($newPassword) < 8 || !preg_match('/[a-zA-Z]/', $newPassword)) {
-            return ['success' => false, 'message' => 'Mật khẩu mới phải có ít nhất 8 ký tự và chứa ít nhất 1 chữ cái!'];
+        if (strlen($newPassword) < 6) {
+            return ['success' => false, 'message' => 'Mật khẩu mới phải có ít nhất 6 ký tự!'];
         }
 
         // Kiểm tra mật khẩu hiện tại
@@ -241,9 +223,9 @@ class UserService
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        // Thông báo chính xác để debug và hỗ trợ người dùng dễ dàng hơn
+        // Không tiết lộ email có tồn tại hay không.
         if (!$user) {
-            return ['success' => false, 'message' => 'Địa chỉ email này không tồn tại trong hệ thống!'];
+            return ['success' => true, 'message' => 'Nếu email tồn tại trong hệ thống, mã OTP đã được gửi.'];
         }
 
         if (session_status() === PHP_SESSION_NONE) {
@@ -251,17 +233,11 @@ class UserService
         }
 
         $otp = (string) random_int(100000, 999999);
-        $expiresAt = time() + 600; // 10 phút
-
-        // Lưu trực tiếp vào Database để hỗ trợ Mobile App (không có Session Cookie)
-        $stmtUpdate = $this->db->prepare("UPDATE users SET reset_password_otp = ?, reset_password_otp_expires_at = ? WHERE id = ?");
-        $stmtUpdate->execute([$otp, $expiresAt, (int)$user['id']]);
-
         $_SESSION['reset_password_otp'] = [
             'user_id' => (int) $user['id'],
             'email' => $user['email'],
             'otp' => $otp,
-            'expires_at' => $expiresAt,
+            'expires_at' => time() + 600, // 10 phút
             'attempts' => 0,
             'last_sent_at' => time(),
             'resend_available_at' => time() + 60,
@@ -269,7 +245,6 @@ class UserService
         ];
 
         require_once __DIR__ . '/../../core/mail_helper.php';
-        require_once __DIR__ . '/../../core/otp_mail_templates.php';
         $subject = 'DienMayPro - Mã OTP đặt lại mật khẩu';
         $body = buildOtpEmailTemplate(
             'Đặt lại mật khẩu',
@@ -281,8 +256,6 @@ class UserService
         $sent = sendEmail($user['email'], $user['fullname'] ?: 'Khách hàng', $subject, $body);
         if (!$sent) {
             unset($_SESSION['reset_password_otp']);
-            $stmtClear = $this->db->prepare("UPDATE users SET reset_password_otp = NULL, reset_password_otp_expires_at = NULL WHERE id = ?");
-            $stmtClear->execute([(int)$user['id']]);
             return ['success' => false, 'message' => 'Không thể gửi OTP lúc này. Vui lòng thử lại sau!'];
         }
 
@@ -298,13 +271,17 @@ class UserService
 
         $sessionOtp = $_SESSION['reset_password_otp'] ?? null;
         if (!$sessionOtp) {
-            // Nếu không có Session, thử đọc từ DB của email này để lấy lịch sử
-            $stmtUser = $this->db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
-            $stmtUser->execute([$email]);
-            $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-            if (!$user) {
-                return ['success' => false, 'message' => 'Vui lòng yêu cầu OTP trước khi gửi lại!'];
-            }
+            return ['success' => false, 'message' => 'Vui lòng yêu cầu OTP trước khi gửi lại!'];
+        }
+
+        if (strcasecmp($email, $sessionOtp['email'] ?? '') !== 0) {
+            return ['success' => false, 'message' => 'Email không khớp với yêu cầu OTP!'];
+        }
+
+        $lastSentAt = (int) ($sessionOtp['last_sent_at'] ?? 0);
+        if ($lastSentAt > 0 && (time() - $lastSentAt) < 60) {
+            $wait = 60 - (time() - $lastSentAt);
+            return ['success' => false, 'message' => 'Vui lòng chờ ' . $wait . ' giây trước khi gửi lại OTP!'];
         }
 
         return $this->requestPasswordResetOtp($post);
@@ -320,28 +297,31 @@ class UserService
         $newPassword = trim($post['new_password'] ?? '');
         $confirmPassword = trim($post['confirm_password'] ?? '');
 
-        if (empty($email) || empty($otp)) {
-            return ['success' => false, 'message' => 'Vui lòng nhập đầy đủ thông tin!'];
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        // Lấy thông tin OTP trực tiếp từ Database
-        $stmtUser = $this->db->prepare("SELECT id, reset_password_otp, reset_password_otp_expires_at FROM users WHERE email = ? LIMIT 1");
-        $stmtUser->execute([$email]);
-        $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            return ['success' => false, 'message' => 'Không tìm thấy tài khoản với email này!'];
+        $sessionOtp = $_SESSION['reset_password_otp'] ?? null;
+        if (!$sessionOtp) {
+            return ['success' => false, 'message' => 'OTP không tồn tại hoặc đã hết hạn. Vui lòng yêu cầu lại mã mới!'];
         }
 
-        $dbOtp = $user['reset_password_otp'] ?? '';
-        $dbExpiresAt = (int)($user['reset_password_otp_expires_at'] ?? 0);
-
-        if (empty($dbOtp) || $dbExpiresAt < time()) {
-            return ['success' => false, 'message' => 'Mã OTP đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu lại mã mới!'];
+        if ($sessionOtp['expires_at'] < time()) {
+            unset($_SESSION['reset_password_otp']);
+            return ['success' => false, 'message' => 'OTP đã hết hạn. Vui lòng yêu cầu mã mới!'];
         }
 
-        if ($otp !== $dbOtp) {
-            return ['success' => false, 'message' => 'Mã OTP không chính xác!'];
+        if (strcasecmp($email, $sessionOtp['email']) !== 0) {
+            return ['success' => false, 'message' => 'Email không khớp với yêu cầu OTP!'];
+        }
+
+        if (!preg_match('/^\d{6}$/', $otp) || $otp !== $sessionOtp['otp']) {
+            $_SESSION['reset_password_otp']['attempts'] = (int) ($sessionOtp['attempts'] ?? 0) + 1;
+            if ($_SESSION['reset_password_otp']['attempts'] >= 5) {
+                unset($_SESSION['reset_password_otp']);
+                return ['success' => false, 'message' => 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu lại mã mới!'];
+            }
+            return ['success' => false, 'message' => 'Mã OTP không đúng!'];
         }
 
         if (strlen($newPassword) < 8 || !preg_match('/[a-zA-Z]/', $newPassword)) {
@@ -352,18 +332,11 @@ class UserService
         }
 
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-        
-        // Tiến hành cập nhật mật khẩu mới và xóa mã OTP trong DB
-        $stmtUpdate = $this->db->prepare("UPDATE users SET password = ?, reset_password_otp = NULL, reset_password_otp_expires_at = NULL WHERE id = ?");
-        if (!$stmtUpdate->execute([$hashedPassword, (int)$user['id']])) {
+        if (!$this->userRepo->updatePassword((int) $sessionOtp['user_id'], $hashedPassword)) {
             return ['success' => false, 'message' => 'Không thể cập nhật mật khẩu. Vui lòng thử lại!'];
         }
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
         unset($_SESSION['reset_password_otp']);
-
         return ['success' => true, 'message' => 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập lại.'];
     }
 
@@ -384,21 +357,16 @@ class UserService
             return ['success' => false, 'message' => 'Cơ sở dữ liệu chưa có cột 2FA.'];
         }
 
-        $otp = (string) random_int(100000, 999999);
-        $expiresAt = time() + 600;
-
-        // Lưu trực tiếp vào Database
-        $stmtUpdate = $this->db->prepare("UPDATE users SET two_factor_otp = ?, two_factor_otp_expires_at = ? WHERE id = ?");
-        $stmtUpdate->execute([$otp, $expiresAt, $userId]);
-
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+
+        $otp = (string) random_int(100000, 999999);
         $_SESSION['two_factor_pending_enroll'] = [
             'user_id' => $userId,
             'email' => $user['email'],
             'otp' => $otp,
-            'expires_at' => $expiresAt,
+            'expires_at' => time() + 600,
             'attempts' => 0,
         ];
 
@@ -415,8 +383,6 @@ class UserService
         $sent = sendEmail($user['email'], $user['fullname'] ?: 'Khách hàng', $subject, $body);
         if (!$sent) {
             unset($_SESSION['two_factor_pending_enroll']);
-            $stmtClear = $this->db->prepare("UPDATE users SET two_factor_otp = NULL, two_factor_otp_expires_at = NULL WHERE id = ?");
-            $stmtClear->execute([$userId]);
             return ['success' => false, 'message' => 'Không thể gửi mã OTP 2FA. Vui lòng thử lại sau!'];
         }
 
@@ -425,23 +391,26 @@ class UserService
 
     public function verifyTwoFactorEnrollment(int $userId, string $code): array
     {
-        // Đọc trực tiếp từ DB để giải phóng sự phụ thuộc vào Session
-        $stmtUser = $this->db->prepare("SELECT two_factor_otp, two_factor_otp_expires_at FROM users WHERE id = ? LIMIT 1");
-        $stmtUser->execute([$userId]);
-        $user = $stmtUser->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            return ['success' => false, 'message' => 'Không tìm thấy tài khoản.'];
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        $dbOtp = $user['two_factor_otp'] ?? '';
-        $dbExpiresAt = (int)($user['two_factor_otp_expires_at'] ?? 0);
-
-        if (empty($dbOtp) || $dbExpiresAt < time()) {
-            return ['success' => false, 'message' => 'Mã OTP 2FA đã hết hạn hoặc không tồn tại. Vui lòng yêu cầu lại mã mới!'];
+        $pending = $_SESSION['two_factor_pending_enroll'] ?? null;
+        if (!$pending || (int)($pending['user_id'] ?? 0) !== $userId) {
+            return ['success' => false, 'message' => 'Phiên xác minh 2FA không hợp lệ.'];
         }
 
-        if ($code !== $dbOtp) {
+        if (($pending['expires_at'] ?? 0) < time()) {
+            unset($_SESSION['two_factor_pending_enroll']);
+            return ['success' => false, 'message' => 'Mã OTP 2FA đã hết hạn. Vui lòng yêu cầu lại mã mới!'];
+        }
+
+        if (!preg_match('/^\d{6}$/', $code) || $code !== ($pending['otp'] ?? '')) {
+            $_SESSION['two_factor_pending_enroll']['attempts'] = (int)($pending['attempts'] ?? 0) + 1;
+            if ($_SESSION['two_factor_pending_enroll']['attempts'] >= 5) {
+                unset($_SESSION['two_factor_pending_enroll']);
+                return ['success' => false, 'message' => 'Bạn đã nhập sai OTP quá nhiều lần. Vui lòng yêu cầu lại mã mới!'];
+            }
             return ['success' => false, 'message' => 'Mã OTP không đúng.'];
         }
 
@@ -449,15 +418,7 @@ class UserService
             return ['success' => false, 'message' => 'Không thể bật 2FA.'];
         }
 
-        // Kích hoạt thành công, dọn dẹp DB
-        $stmtClear = $this->db->prepare("UPDATE users SET two_factor_otp = NULL, two_factor_otp_expires_at = NULL WHERE id = ?");
-        $stmtClear->execute([$userId]);
-
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
         unset($_SESSION['two_factor_pending_enroll']);
-
         return ['success' => true, 'message' => 'Đã bật bảo mật 2 lớp bằng Gmail OTP thành công!'];
     }
 

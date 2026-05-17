@@ -1,8 +1,1 @@
-/vendor
-/mobile_app
-/storage/logs/*.log
-/storage/cache/*
-/.idea
-/.vscode
-*.log
 config_api.php

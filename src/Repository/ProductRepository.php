@@ -31,8 +31,8 @@ class ProductRepository {
         $stmt = $this->db->prepare("
             SELECT p.*, c.name AS category_name, b.name AS brand_name
             FROM products p
-            JOIN categories c ON p.category_id = c.id
-            JOIN brands b ON p.brand_id = b.id
+            LEFT JOIN categories c ON p.category_id = c.id
+            LEFT JOIN brands b ON p.brand_id = b.id
             WHERE p.id = ?
         ");
         $stmt->execute([$id]);
@@ -161,19 +161,18 @@ class ProductRepository {
             }
         }
 
-        // Fallback: Nếu chưa gán phụ kiện riêng, hãy lấy các sản phẩm từ danh mục "Phụ kiện"
+        // Fallback: nếu chưa có bảng pivot, dùng products cùng category như gợi ý tạm.
         $stmt = $this->db->prepare("SELECT p.*, b.name as brand_name
             FROM products p
             LEFT JOIN brands b ON p.brand_id = b.id
-            JOIN categories c ON p.category_id = c.id
-            WHERE c.name LIKE '%Phụ kiện%'
+            WHERE p.category_id = ?
               AND p.id != ?
             ORDER BY p.rate_star DESC, p.price ASC, p.id DESC
             LIMIT ?");
-        $stmt->bindValue(1, $productId, PDO::PARAM_INT);
-        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->bindValue(1, $product['category_id'], PDO::PARAM_INT);
+        $stmt->bindValue(2, $productId, PDO::PARAM_INT);
+        $stmt->bindValue(3, $limit, PDO::PARAM_INT);
         $stmt->execute();
-
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

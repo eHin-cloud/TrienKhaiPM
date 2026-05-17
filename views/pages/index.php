@@ -872,8 +872,8 @@ if ($is_ajax) {
             <?php if (empty($products)): ?>
                 <div class="text-center py-16 bg-white rounded-xl border border-gray-100 shadow-sm">
                     <i class="fa-solid fa-box-open text-5xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500 font-medium">Không tìm thấy sản phẩm phù hợp với bộ lọc hiện tại.</p>
-                    <a href="index.php" class="inline-block mt-4 text-primary font-medium hover:underline">Quay lại trang chủ</a>
+                    <p class="text-gray-500 font-medium"><?= __("no_products_found") ?></p>
+                    <a href="index.php" class="inline-block mt-4 text-primary font-medium hover:underline"><?= __("back_to_home") ?></a>
                 </div>
             <?php else: ?>
                 <!-- 1. Skeleton Loading Grid (Ẩn đi sau khi load) -->
@@ -961,7 +961,6 @@ if ($is_ajax) {
         padding: 1.5rem;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         margin-bottom: 2rem;
-        position: relative;
     }
     .recom-carousel {
         display: flex;
@@ -970,11 +969,10 @@ if ($is_ajax) {
         -webkit-overflow-scrolling: touch;
         gap: 1rem;
         padding-bottom: 0.5rem;
-        scroll-behavior: smooth;
     }
-    /* Ẩn thanh cuộn trên mọi trình duyệt */
-    .recom-carousel::-webkit-scrollbar { display: none; }
-    .recom-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+    .recom-carousel::-webkit-scrollbar { height: 6px; }
+    .recom-carousel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .recom-carousel::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
     
     .recom-card {
         min-width: 240px;
@@ -982,13 +980,11 @@ if ($is_ajax) {
         flex-shrink: 0;
         scroll-snap-align: start;
     }
-
-    @media (max-width: 768px) {
-        .recom-card { min-width: 200px; max-width: 200px; }
-    }
+    
+    /* Ẩn thanh cuộn mặc định trên một số trình duyệt nếu muốn đẹp hơn */
+    .recom-carousel.hide-scroll::-webkit-scrollbar { display: none; }
+    .recom-carousel.hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 </style>
-
-
 
 <?php
     $suggested_limit = 8;
@@ -1001,9 +997,7 @@ if ($is_ajax) {
             <h3 class="text-lg font-extrabold text-gray-800 flex items-center gap-2 mb-4 border-b border-gray-100 pb-3 uppercase">
                 <i class="fa-solid fa-thumbs-up text-secondary"></i> <?= __("alternative_title") ?>
             </h3>
-            <button onclick="scrollCarousel('carousel-alt', 'prev')" class="carousel-nav-btn prev"><i class="fa-solid fa-chevron-left"></i></button>
-            <button onclick="scrollCarousel('carousel-alt', 'next')" class="carousel-nav-btn next"><i class="fa-solid fa-chevron-right"></i></button>
-            <div class="recom-carousel" id="carousel-alt">
+            <div class="recom-carousel">
                 <?php foreach ($home_alternative as $p) {
                     echo '<div class="recom-card">';
                     include __DIR__ . '/../partials/product_card.php';
@@ -1011,7 +1005,6 @@ if ($is_ajax) {
                 } ?>
             </div>
         </div>
-
     <?php endif; ?>
 
 
@@ -1021,9 +1014,7 @@ if ($is_ajax) {
             <h3 class="text-lg font-extrabold text-gray-800 flex items-center gap-2 mb-4 border-b border-gray-200 pb-3 uppercase">
                 <i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i> <?= $cat_id_filter > 0 ? __("similar_products") : __("suggested_for_you") ?>
             </h3>
-            <button onclick="scrollCarousel('carousel-sug', 'prev')" class="carousel-nav-btn prev"><i class="fa-solid fa-chevron-left"></i></button>
-            <button onclick="scrollCarousel('carousel-sug', 'next')" class="carousel-nav-btn next"><i class="fa-solid fa-chevron-right"></i></button>
-            <div class="recom-carousel" id="carousel-sug">
+            <div class="recom-carousel">
                 <?php foreach ($suggested_products as $p) {
                     echo '<div class="recom-card">';
                     include __DIR__ . '/../partials/product_card.php';
@@ -1031,7 +1022,6 @@ if ($is_ajax) {
                 } ?>
             </div>
         </div>
-
     <?php endif; ?>
 </div>
 <?php endif; ?>

@@ -36,8 +36,6 @@
   - **Quản lý địa chỉ (Address Book):** Cho phép người dùng thêm/sửa/xóa và chọn địa chỉ mặc định tại trang Profile. Tích hợp bộ chọn địa chỉ (Address Picker) vào trang Checkout.
   - **Thông báo (Notifications):** Thêm icon chuông trên Header với badge đếm số lượng chưa đọc. Hỗ trợ xem nhanh qua dropdown và trang danh sách chi tiết trong Profile.
   - **Tìm kiếm thông minh (Search Suggestions):** Gợi ý sản phẩm và danh mục theo thời gian thực (real-time) ngay khi người dùng gõ vào thanh tìm kiếm.
-  - **Hiển thị nhiều hình ảnh sản phẩm (Product Gallery):** Đã nâng cấp trang chi tiết sản phẩm để hỗ trợ hiển thị nhiều hình ảnh (gallery). Thêm cột `more_images` vào bảng `products` để lưu trữ danh sách ảnh bổ sung (dạng JSON). Giao diện cho phép người dùng click vào các thumbnail để chuyển đổi ảnh chính. **Đã bổ sung tính năng Auto Slide tự động chuyển ảnh sau mỗi 5 giây, hỗ trợ reset bộ đếm khi tương tác thủ công và tự động cuộn thanh thumbnail.**
-
 
 ## Các file đã can thiệp (Gần đây)
 - [x] Đã khắc phục lỗi không hiển thị lịch sử đăng nhập khi sử dụng tài khoản Google.
@@ -64,9 +62,7 @@
 - [MODIFY] `views/pages/checkout.php`: Tích hợp tính năng chọn địa chỉ từ Address Book.
 - [CREATE] `public/api/search.php`: API endpoint phục vụ gợi ý tìm kiếm.
 - [MODIFY] `views/partials/header.php`: Tích hợp UI Tìm kiếm thông minh và Dropdown Thông báo. Bổ sung JS logic điều khiển.
-- [MODIFY] `views/pages/product_detail.php`: Cập nhật giao diện hiển thị gallery ảnh (Main Image + Thumbnails) và logic JavaScript xử lý chuyển đổi ảnh.
 - [MODIFY] `core/lang/vi.php` & `en.php`: Thêm các key dịch thuật cho địa chỉ và thông báo.
-
 
 ## Logic i18n
 - Sử dụng hàm helper `__()` được định nghĩa trong `core/lang/vi.php` và `en.php`.
@@ -157,7 +153,6 @@
     - Đã thêm nút So sánh vào thẻ sản phẩm (`product_card.php`) và trang chi tiết (`product_detail.php`).
     - **Nâng cấp:** Đã thêm Thanh so sánh thông minh (Sticky Comparison Bar) ở đáy màn hình với khả năng "biến hình" linh hoạt: Chuyển đổi giữa dạng thanh ngang đầy đủ và dạng ô vuông nhỏ gọn (Floating Box) ở góc màn hình khi thu gọn.
     - **Fix Bug:** Đã sửa lỗi thanh so sánh bị mất khi reload trang bằng cách sử dụng cơ chế truyền dữ liệu trực tiếp từ PHP Session sang JavaScript ngay khi load trang.
-    - **Nâng cấp UX chuyên sâu:** Đã thay thế việc cuộn trang bằng giao diện **Modal Tìm kiếm So sánh** chuyên dụng. Tích hợp tính năng **Xác nhận thông minh**: Khi so sánh sản phẩm khác loại, hệ thống sẽ hiển thị hộp thoại hỏi ý kiến người dùng có muốn xóa danh sách cũ để bắt đầu so sánh loại mới không (thay vì chỉ hiện thông báo chặn), giúp tăng tốc quá trình mua sắm.
     - **UI Polish:** Di chuyển nút So sánh trên thẻ sản phẩm từ góc trái sang góc phải, nằm phía dưới nút Xem nhanh (con mắt) để giao diện gọn gàng hơn.
 - [x] **UI Polish:** Đồng bộ hóa `ProductCard` dùng chung trên toàn App, nâng cấp `CheckoutScreen` và `ProfileScreen` với các lối tắt chức năng mới.
 - [x] **Bug Fix (Compiler Errors):** Đã sửa hàng loạt lỗi biên dịch Flutter liên quan đến sai đường dẫn Import, thiếu Model (OrderDetail), thiếu trường dữ liệu (oldPrice trong CatalogProduct) và lỗi tham số Widget (AppTextField, backgroundColor cho Card, showBackButton cho MobilePage). Đã chuẩn hóa toàn bộ dự án sang sử dụng **Package Import**.
@@ -174,94 +169,7 @@
     - Đã tạo thư mục `docs/` và di chuyển các file tài liệu `.md` (`mobile-api-spec.md`, `ngucanh.md`,...) vào đó.
     - Thư mục gốc hiện chỉ còn các file cấu hình cốt lõi và `ai-memory.md`.
 
-### [2026-05-16] - Security & Audit Refinement
-- **SQL Injection Fixes:** Refactored `AdminService.php` to use prepared statements for all administrative queries (orders, products, login history, chart data).
-- **Password Consistency:** Unified minimum password length to 8 characters and required at least one letter across the system (`UserService.php` & Admin User Management).
-- **Typo & UX Fixes:** Fixed "NHân Viên" typo in `header.php`. Verified CSRF protection handles JSON and header-based tokens for AJAX.
-- **Audit:** Conducted deep audit of `product_detail.php` gallery logic, comparison module, and admin CRUD. Verified image upload security with multi-file support.
-
-### [2026-05-17] - Mobile Plan Phase 1 & 2 Execution
-- **Giai đoạn 1: Quick Wins UI/UX (Đồng bộ Thông báo, Wishlist, Product Gallery)**
-    - **Kích hoạt chuông thông báo Trang chủ:**
-        - File đã sửa: [home_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/home/presentation/screens/home_screen.dart)
-        - Kế thừa `notificationControllerProvider` để đếm số lượng tin chưa đọc. Gắn `Badge` hiển thị trực quan và liên kết chuyển hướng sang `/notifications`.
-    - **Tích hợp nút Yêu thích (Wishlist) vào trang Chi tiết:**
-        - File đã sửa: [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart)
-        - Thêm nút Trái tim (IconButton) trên AppBar, bám sát trạng thái và gọi API `toggle` qua `wishlistControllerProvider`.
-    - **Nâng cấp Slider Album ảnh (Product Gallery):**
-        - File đã sửa: [catalog_product.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/catalog/data/models/catalog_product.dart) và [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart)
-        - Cập nhật model `CatalogProduct` thêm `moreImages`, hỗ trợ parse JSON string lẫn array an toàn.
-        - Nâng cấp `_ProductHero` thành StatefulWidget, hiển thị Slider ảnh chính mượt mà cùng danh sách các Thumbnail phụ để người dùng click lựa chọn tương tác.
-
-- **Giai đoạn 2: Nâng cấp Bảo mật & Xác thực (2FA Gmail OTP & Quên mật khẩu)**
-    - **Nâng cấp API 2FA ở Backend:**
-        - File đã sửa: [auth.php](file:///d:/Sever/htdocs/PMPBDT/public/api/auth.php)
-        - Action `login` được nâng cấp kiểm tra cờ `two_factor_enabled`. Nếu có bật 2FA, backend tự động sinh OTP, gửi email qua mail helper và trả về cờ `requires_2fa: true` cùng mã token ngắn hạn `pending_token` đã ký bằng JWT.
-        - Action `two-factor-verify` được tối ưu hóa để xác thực OTP gửi lên cùng `pending_token`, giải quyết triệt để vấn đề phụ thuộc vào Session PHP trên Mobile App di động và đảm bảo chuẩn RESTful/JWT tuyệt đối.
-    - **Đồng bộ Repo & Controller trên Flutter:**
-        - File đã sửa: [auth_repository.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/data/repositories/auth_repository.dart) và [auth_controller.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/controllers/auth_controller.dart)
-        - Thiết kế thêm lớp `LoginResult` để quản lý luồng 2FA. Tích hợp các hàm gọi API gửi OTP, verify 2FA, forgot password gửi OTP và reset password.
-    - **Thiết kế UI & Logic Điều hướng Xác thực 2FA:**
-        - File đã sửa: [two_factor_verify_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/two_factor_verify_screen.dart), [login_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/login_screen.dart), và [app_router.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/core/router/app_router.dart)
-        - Xây dựng màn hình nhập OTP 6 chữ số kèm countdown 60 giây và nút hủy đăng nhập an toàn.
-        - Định cấu hình định tuyến cho route `/two-factor-verify` và nâng cấp logic `redirect` bảo mật cao: Bắt buộc khóa chặt người dùng tại màn hình OTP nếu tài khoản đang kích hoạt 2FA chưa xác minh, tự động chuyển hướng về `/home` khi xác thực thành công.
-    - **Thiết kế UI Quên mật khẩu (2 bước khôi phục):**
-        - File đã sửa: [forgot_password_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/forgot_password_screen.dart) và [login_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/login_screen.dart)
-        - Tạo màn hình quên mật khẩu quy trình 2 bước: Bước 1 nhập Email nhận mã OTP; Bước 2 nhập OTP và mật khẩu mới để phục hồi tài khoản di động. Liên kết kích hoạt thông qua nút "Quên mật khẩu?" tại màn hình Login.
-
-- **Giai đoạn 3: Tích hợp Đột phá Trải nghiệm (Gemini AI RAG Chatbot, Gợi ý Tìm kiếm, So sánh Sản phẩm)**
-    - **Gemini AI Chatbot RAG (Mobile & Backend API):**
-        - File đã tạo: [chatbot.php](file:///d:/Sever/htdocs/PMPBDT/public/api/chatbot.php) tại Backend làm proxy an toàn kết nối Google Gemini API (model `gemini-2.5-flash` và fallback `gemini-2.5-flash-lite`), tích hợp cơ chế RAG tự động trích lọc từ khóa trong câu hỏi của khách hàng để truy vấn CSDL PHP MySQL (FullText/LIKE) chèn 10 sản phẩm liên quan làm ngữ cảnh bổ trợ.
-        - File đã tạo/sửa: [chat_message.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/data/models/chat_message.dart), [chatbot_repository.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/data/repositories/chatbot_repository.dart), [chatbot_controller.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/presentation/controllers/chatbot_controller.dart) và [chatbot_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/presentation/screens/chatbot_screen.dart) phía di động.
-        - **Parser HTML sang Link di động mượt mà:** `ChatbotScreen` được tích hợp bộ parser HTML thông minh, tự động parse các thẻ `<b>`, `<br>` và đặc biệt là thẻ `<a href="...">` chèn link từ Gemini API. Khi bấm vào sản phẩm trong chat bong bóng, app tự động điều hướng tới `/product/ID` trên di động; khi bấm vào danh mục/thương hiệu, app tự động mở `/catalog?keyword=...` cực kỳ ảo diệu!
-        - **Context RAG Injection:** Tích hợp nút FAB mở AI Chat tại [home_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/home/presentation/screens/home_screen.dart) và nút FAB RAG Context-Aware mở AI chat tại [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart) (tự động đính kèm thông tin bối cảnh sản phẩm khách hàng đang xem để AI tư vấn chính xác).
-        - File đã sửa: [mobile_page.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/core/widgets/mobile_page.dart) nâng cấp Scaffold hỗ trợ thuộc tính `floatingActionButton` dùng chung cho toàn app.
-    - **Search Suggestions (Gợi ý tìm kiếm tức thời):**
-        - File đã tạo: [search_suggestions_provider.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/catalog/presentation/controllers/search_suggestions_provider.dart) tự động gọi `/search.php?keyword=...` để lấy dữ liệu gợi ý danh mục và sản phẩm liên quan từ Backend.
-        - File đã sửa: [home_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/home/presentation/screens/home_screen.dart) thay thế thanh tìm kiếm cũ thành `SearchAnchor` Material 3 hiện đại, bung mở giao diện tìm kiếm full-screen cùng suggestionsBuilder phân vùng "Danh mục gợi ý" & "Sản phẩm gợi ý" (có ảnh thu nhỏ, tên và giá bán định dạng VNĐ) vô cùng mượt mà và trực quan.
-    - **So sánh sản phẩm (Product Comparison):**
-        - File đã tạo/sửa: [compare_controller.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/controllers/compare_controller.dart), [compare_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/compare_screen.dart) và [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart)
-        - Triển khai `CompareController` quản lý danh sách tối đa 3 sản phẩm so sánh.
-        - Xây dựng màn hình `CompareScreen` dạng bảng cuộn ngang premium: cột nhãn thông số được khóa cố định bên trái, các sản phẩm xếp cột thẳng hàng tăm tắp, so sánh đầy đủ thông tin: Ảnh, Tên, Giá bán, Giá cũ, Thương hiệu, Mô tả ngắn, và tích hợp nút "Mua ngay" (thêm giỏ hàng) + nút "Chi tiết".
-        - Tích hợp nút so sánh sản phẩm (IconButton `compare_arrows`) vào AppBar [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart) cùng SnackBar hành động nhanh dẫn hướng đến trang so sánh `/compare` khi thêm thành công.
-    - **Định tuyến toàn diện:**
-        - File đã sửa: [app_router.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/core/router/app_router.dart) đăng ký các route `/chatbot` và `/compare` full-screen chuyên nghiệp.
-
-- **Giai đoạn 4: Push Notification & Hoàn thiện hạ tầng (FCM Token Sync & Lịch sử xem sản phẩm)**
-    - **Backend Migration & API FCM Token:**
-        - File đã tạo: [migration_fcm_token.php](file:///d:/Sever/htdocs/PMPBDT/scratch/migration_fcm_token.php) chạy SQL migration thêm cột `fcm_token` vào bảng `users`.
-        - File đã tạo: [fcm_token.php](file:///d:/Sever/htdocs/PMPBDT/public/api/fcm_token.php) hỗ trợ POST lưu FCM token từ điện thoại lên CSDL thông qua Bearer JWT    - **Sửa Lỗi Parser Dữ liệu Lỗi Chatbot (type 'String' is not a subtype of type 'int' of 'index'):**
-        - File đã sửa: [chatbot_repository.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/data/repositories/chatbot_repository.dart).
-        - Nguyên nhân: Khi backend gặp lỗi HTTP (ví dụ: mất kết nối, lỗi 500, lỗi PHP Warning/Fatal chèn HTML báo lỗi của Apache) và ném ra `DioException`, Dio trả về `e.response?.data` dưới dạng một chuỗi `String`. Câu lệnh parse lỗi cũ cố gắng truy cập khóa String `e.response?.data?['message']` trên kiểu dữ liệu `String`, dẫn đến lỗi của Dart che lấp toàn bộ lỗi thực tế của server.
-        - Giải pháp: Viết lại hàm `getAiResponse` xử lý parse dữ liệu động và xử lý `DioException` an toàn tuyệt đối. Nếu response hoặc error data là kiểu `String` thô, tự động bắt exception, decode nếu là JSON, cắt ngắn hoặc trích xuất trực tiếp chuỗi lỗi của server để hiển thị rõ ràng trên UI giúp người dùng tự khắc phục.
-    - **Sửa Lỗi Chức Năng Quên Mật Khẩu và Bật Bảo Mật 2 Lớp (2FA) trên Mobile App:**
-        - File đã tạo & thực thi: [migrate_otp.php](file:///d:/Sever/htdocs/PMPBDT/scratch/migrate_otp.php) (Bổ sung 4 trường `reset_password_otp`, `reset_password_otp_expires_at`, `two_factor_otp`, `two_factor_otp_expires_at` vào bảng `users`).
-        - File đã tạo & test: [test_mail.php](file:///d:/Sever/htdocs/PMPBDT/scratch/test_mail.php) để debug kiểm tra kết nối SMTP Gmail.
-        - File đã sửa: [UserService.php](file:///d:/Sever/htdocs/PMPBDT/src/Service/UserService.php) và [auth.php](file:///d:/Sever/htdocs/PMPBDT/public/api/auth.php).
-        - Nguyên nhân: Mobile App giao tiếp qua API không duy trì Session Cookie (`PHPSESSID`) tự động như trình duyệt Web. Logic cũ lưu mã OTP quên mật khẩu và OTP bật 2FA vào `$_SESSION` dẫn đến khi Mobile gửi request reset mật khẩu hoặc xác minh 2FA, session bị trống trơn (null). Đồng thời file `auth.php` thiếu từ khóa `break;` và **thiếu nạp file `.env`** khiến toàn bộ cấu hình SMTP Gmail bị trống rỗng khi gửi API trực tiếp từ di động.
-        - Giải pháp: Chuyển toàn bộ cơ chế lưu và xác thực mã OTP quên mật khẩu cũng như bật 2FA từ `$_SESSION` sang lưu trữ trực tiếp vào các trường CSDL mới trong bảng `users` có thiết lập thời gian hết hạn (10 phút). **Nạp biến môi trường bằng `\App\Support\Env::load` ở đầu file `public/api/auth.php`** để các API gửi OTP nhận diện đúng SMTP Gmail. Sửa chữa thêm `break;` cho cấu trúc switch-case của `auth.php`. Kết quả test kiểm tra kết nối SMTP Gmail gửi thành công rực rỡ!
-
-### Việc cần làm tiếp theo (TODO)fications/presentation/controllers/notification_controller.dart) bổ sung phương thức `updateFcmToken` và `syncFcmToken` hỗ trợ kết nối API.
-        - File đã sửa: [app.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/app.dart) chuyển class `PmpbdtApp` sang ConsumerStatefulWidget gọi khởi tạo service một lần duy nhất trong `initState`.
-    - **Lưu trữ & Hiển thị Sản phẩm vừa xem (Recently Viewed):**
-        - File đã tạo: [recently_viewed_controller.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/controllers/recently_viewed_controller.dart) quản lý danh sách tối đa 10 sản phẩm đã xem bằng SharedPreferences (hỗ trợ lọc trùng, đẩy lên đầu, và xóa lịch sử).
-        - File đã sửa: [product_detail_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/product/presentation/screens/product_detail_screen.dart) tích hợp `ref.listen` thông minh tại hàm `build` ghi nhận sản phẩm ngay khi tải dữ liệu thành công.
-        - File đã sửa: [home_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/home/presentation/screens/home_screen.dart) hiển thị widget `_RecentlyViewedRow` dạng slide ngang premium ở cuối trang chủ cùng nút "Xóa lịch sử" tiện ích.
-    - **Cải tiến Luồng Hiển thị Lỗi Authentication (Đăng nhập, 2FA, Quên mật khẩu):**
-        - File đã sửa: [login_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/login_screen.dart), [two_factor_verify_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/two_factor_verify_screen.dart), và [forgot_password_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/auth/presentation/screens/forgot_password_screen.dart).
-        - Loại bỏ hoàn toàn các SnackBar và component AppErrorView khổng lồ làm méo mó và bung lệch giao diện đăng nhập cũ.
-        - Thay thế bằng Banner Error nhỏ nhắn viền mỏng đỏ pastel (errorContainer & onErrorContainer) vô cùng tinh tế, đặt gọn gàng phía trên nút bấm chính của Form giúp nâng cao trải nghiệm premium.
-    - **Sửa Lỗi Layout Làm Trắng Tinh Giao Diện (Sản phẩm yêu thích, Thông báo, Chatbot):**
-        - File đã sửa: [wishlist_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/wishlist/presentation/screens/wishlist_screen.dart), [notification_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/notifications/presentation/screens/notification_screen.dart), và [chatbot_screen.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/presentation/screens/chatbot_screen.dart).
-        - Nguyên nhân: `MobilePage` mặc định thiết lập `scrollable: true` (bọc child bên trong một `ListView`). Khi các trang con truyền vào một `ListView`, `GridView` hay một `Column` chứa `Expanded`, Flutter bị lỗi "Unbounded height" hoặc "RenderFlex non-zero flex" khiến giao diện bị crash và trắng tinh hoàn toàn trên máy ảo/thiết bị thực tế.
-        - Giải pháp: Khai báo `scrollable: false` cho `MobilePage` tại cả 3 trang trên, giúp chuyển sang cơ chế Layout không cố định chiều dọc dưới nền, giúp các scrollable/flex widget bên trong tự định vị kích thước và hoạt động cuộn hoàn hảo. Dọn dẹp RefreshIndicator thừa tại WishlistScreen.
-    - **Sửa Lỗi Parser Dữ liệu Lỗi Chatbot (type 'String' is not a subtype of type 'int' of 'index'):**
-        - File đã sửa: [chatbot_repository.dart](file:///d:/Sever/htdocs/PMPBDT/mobile_app/lib/features/chatbot/data/repositories/chatbot_repository.dart).
-        - Nguyên nhân: Khi backend gặp lỗi HTTP (ví dụ: mất kết nối, lỗi 500, lỗi PHP Warning/Fatal chèn HTML báo lỗi của Apache) và ném ra `DioException`, Dio trả về `e.response?.data` dưới dạng một chuỗi `String`. Câu lệnh parse lỗi cũ cố gắng truy cập khóa String `e.response?.data?['message']` trên kiểu dữ liệu `String`, dẫn đến lỗi của Dart che lấp toàn bộ lỗi thực tế của server.
-        - Giải pháp: Viết lại hàm `getAiResponse` xử lý parse dữ liệu động và xử lý `DioException` an toàn tuyệt đối. Nếu response hoặc error data là kiểu `String` thô, tự động bắt exception, decode nếu là JSON, cắt ngắn hoặc trích xuất trực tiếp chuỗi lỗi của server để hiển thị rõ ràng trên UI giúp người dùng tự khắc phục.
-
 ### Việc cần làm tiếp theo (TODO)
-1. **Hoàn thiện API Catalog & Checkout:** Đồng bộ hóa cho Mobile App.
-2. **Cải thiện Catalog Filter:** Thêm lọc theo đánh giá sao (vừa mới có dữ liệu reviews).
-3. **Đăng nhập bên thứ ba (Google OAuth):** Cấu hình client IDs và keystore SHA-1 để tích hợp thêm nút đăng nhập Google trên App di động.
-4. **Modal Đăng ký trả góp (Installment Requests):** Xây dựng bottom sheet đăng ký trả góp tại di động liên kết với API backend.
+1. **Trigger thông báo tự động:** Cần thêm logic ở Backend để tự động tạo thông báo khi trạng thái đơn hàng thay đổi.
+2. **Debug PayOS:** Quay lại xử lý khi người dùng sẵn sàng (đã hỗ trợ hiển thị Raw Response để tìm lỗi cụ thể).
+3. **Cải thiện Catalog Filter:** Thêm lọc theo đánh giá sao (vừa mới có dữ liệu reviews).

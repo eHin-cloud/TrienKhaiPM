@@ -28,12 +28,10 @@ class AdminService {
             $this->db->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$status, $id]);
             
             // Thông báo web
-            $stmtOrder = $this->db->prepare("SELECT user_id FROM orders WHERE id = ?");
-            $stmtOrder->execute([$id]);
-            $order = $stmtOrder->fetch();
+            $order = $this->db->query("SELECT user_id FROM orders WHERE id = $id")->fetch();
             if ($order) {
                 $statusText = ['pending'=>'chờ xử lý','processing'=>'đã được xác nhận','delivering'=>'đang giao','completed'=>'đã hoàn thành','cancelled'=>'đã hủy'][$status] ?? $status;
-                $this->createNotification((int)$order['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order');
+                $this->createNotification($order['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order');
             }
 
             $msg = "Cập nhật trạng thái đơn hàng thành công!";
@@ -88,6 +86,25 @@ class AdminService {
             $msg_type = 'success';
         }
 
+        // --- XỬ LÝ YÊU CẦU TRẢ GÓP ---
+        elseif ($action === 'update_installment_status') {
+            $id = $post['id'];
+            $status = $post['status'];
+            $admin_note = isset($post['admin_note']) ? trim($post['admin_note']) : '';
+            $this->db->prepare("UPDATE installment_requests SET status=?, admin_note=? WHERE id=?")->execute([$status, $admin_note, $id]);
+            
+            $stmt = $this->db->prepare("SELECT ir.*, p.name as product_name FROM installment_requests ir JOIN products p ON ir.product_id = p.id WHERE ir.id = ?");
+            $stmt->execute([$id]);
+            $ir = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($ir && $ir['user_id']) {
+                $st = ['pending'=>'chờ duyệt','approved'=>'được chấp nhận','rejected'=>'bị từ chối'][$status] ?? $status;
+                $this->createNotification($ir['user_id'], "Yêu cầu Trả Góp", "Yêu cầu trả góp cho sản phẩm $ir[product_name] đã $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
+            }
+
+            $msg = "Cập nhật yêu cầu trả góp thành công!";
+            $msg_type = 'success';
+        }
+
         // --- XỬ LÝ SẢN PHẨM ---
         elseif ($action === 'add_product' || $action === 'edit_product') {
             $id = $post['id'] ?? null;
@@ -113,45 +130,15 @@ class AdminService {
                 }
             }
 
-            // Xử lý upload nhiều ảnh phụ (more_images)
-            $more_images_arr = [];
-            
-            // 1. Lấy từ URL ảnh phụ (nếu có nhập)
-            if (!empty($post['more_images_urls'])) {
-                $urls = explode("\n", str_replace("\r", "", $post['more_images_urls']));
-                foreach($urls as $u) {
-                    $u = trim($u);
-                    if ($u) $more_images_arr[] = $u;
-                }
-            }
-
-            // 2. Xử lý upload file hàng loạt
-            if (isset($files['more_images_upload'])) {
-                $upload_dir = 'uploads/';
-                if (!file_exists($upload_dir)) mkdir($upload_dir, 0777, true);
-
-                foreach ($files['more_images_upload']['tmp_name'] as $key => $tmp_name) {
-                    if ($files['more_images_upload']['error'][$key] === UPLOAD_ERR_OK) {
-                        $file_name = time() . '_more_' . $key . '_' . basename($files['more_images_upload']['name'][$key]);
-                        $target_file = $upload_dir . $file_name;
-                        if (move_uploaded_file($tmp_name, $target_file)) {
-                            $more_images_arr[] = $target_file;
-                        }
-                    }
-                }
-            }
-            $more_images_json = !empty($more_images_arr) ? json_encode($more_images_arr, JSON_UNESCAPED_SLASHES) : null;
-
             if ($action === 'add_product') {
-                $stmt = $this->db->prepare("INSERT INTO products (name, category_id, brand_id, price, old_price, image, more_images, gift_text, tags, description, specifications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications]);
+                $stmt = $this->db->prepare("INSERT INTO products (name, category_id, brand_id, price, old_price, image, gift_text, tags, description, specifications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $gift_text, $tags, $description, $specifications]);
                 $msg = "Thêm sản phẩm thành công!";
             } else {
-                $stmt = $this->db->prepare("UPDATE products SET name=?, category_id=?, brand_id=?, price=?, old_price=?, image=?, more_images=?, gift_text=?, tags=?, description=?, specifications=? WHERE id=?");
-                $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications, $id]);
+                $stmt = $this->db->prepare("UPDATE products SET name=?, category_id=?, brand_id=?, price=?, old_price=?, image=?, gift_text=?, tags=?, description=?, specifications=? WHERE id=?");
+                $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $gift_text, $tags, $description, $specifications, $id]);
                 $msg = "Cập nhật sản phẩm thành công!";
             }
-
             $msg_type = 'success';
         } elseif ($action === 'delete_product') {
             $id = $post['id'];
@@ -232,9 +219,11 @@ class AdminService {
                 if ($action === 'add_category') {
                     $this->db->prepare("INSERT INTO categories (name, icon) VALUES (?, ?)")->execute([$name, $icon]);
                     $msg = "Thêm danh mục thành công!";
+                    $this->autoTranslateCategory($name);
                 } else {
                     $this->db->prepare("UPDATE categories SET name=?, icon=? WHERE id=?")->execute([$name, $icon, $id]);
                     $msg = "Cập nhật danh mục thành công!";
+                    $this->autoTranslateCategory($name);
                 }
                 $msg_type = 'success';
             } elseif ($action === 'delete_category') {
@@ -319,17 +308,12 @@ class AdminService {
             $status_filter = $getParams['status'] ?? 'all';
             $sql = "SELECT * FROM orders";
             $conditions = [];
-            $params = [];
 
             if ($search) {
-                $conditions[] = "(fullname LIKE ? OR phone LIKE ? OR id = ?)";
-                $params[] = "%$search%";
-                $params[] = "%$search%";
-                $params[] = $search;
+                $conditions[] = "(fullname LIKE '%$search%' OR phone LIKE '%$search%' OR id = '$search')";
             }
             if ($status_filter !== 'all') {
-                $conditions[] = "status = ?";
-                $params[] = $status_filter;
+                $conditions[] = "status = '$status_filter'";
             }
 
             if (!empty($conditions)) {
@@ -337,9 +321,7 @@ class AdminService {
             }
             $sql .= " ORDER BY id DESC";
 
-            $stmtItems = $this->db->prepare($sql);
-            $stmtItems->execute($params);
-            $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
             // Nạp chi tiết các sản phẩm
             $all_details = $this->db->query("SELECT od.*, p.name, p.image FROM order_details od JOIN products p ON od.product_id = p.id")->fetchAll(PDO::FETCH_ASSOC);
@@ -361,15 +343,9 @@ class AdminService {
 
         } elseif ($page === 'products') {
             $sql = "SELECT p.*, c.name as cat_name, b.name as brand_name FROM products p LEFT JOIN categories c ON p.category_id=c.id LEFT JOIN brands b ON p.brand_id=b.id";
-            $params = [];
-            if ($search) {
-                $sql .= " WHERE p.name LIKE ?";
-                $params[] = "%$search%";
-            }
+            if ($search) $sql .= " WHERE p.name LIKE '%$search%'";
             $sql .= " ORDER BY p.id DESC";
-            $stmtProducts = $this->db->prepare($sql);
-            $stmtProducts->execute($params);
-            $items = $stmtProducts->fetchAll(PDO::FETCH_ASSOC);
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'users' && $userRole === 'admin') {
             $items = $this->userRepo->findAll($search);
@@ -380,21 +356,15 @@ class AdminService {
             $offset = ($page_num - 1) * $limit;
 
             $whereSql = "";
-            $params = [];
             if ($search) {
-                $whereSql = " WHERE u.username LIKE ? OR u.fullname LIKE ? OR DATE(lh.login_time) = ?";
-                $params = ["%$search%", "%$search%", $search];
+                $whereSql = " WHERE u.username LIKE '%$search%' OR u.fullname LIKE '%$search%' OR DATE(lh.login_time) = '$search'";
             }
 
             $countSql = "SELECT COUNT(*) FROM login_history lh JOIN users u ON lh.user_id = u.id" . $whereSql;
-            $stmtCount = $this->db->prepare($countSql);
-            $stmtCount->execute($params);
-            $total_records = (int)$stmtCount->fetchColumn();
+            $total_records = (int)$this->db->query($countSql)->fetchColumn();
             
             $sql = "SELECT lh.*, u.username, u.fullname, u.is_banned FROM login_history lh JOIN users u ON lh.user_id = u.id" . $whereSql . " ORDER BY lh.login_time DESC LIMIT $limit OFFSET $offset";
-            $stmtItems = $this->db->prepare($sql);
-            $stmtItems->execute($params);
-            $items = $stmtItems->fetchAll(PDO::FETCH_ASSOC);
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
             $pagination = [
                 'current_page' => $page_num,
@@ -406,36 +376,18 @@ class AdminService {
 
         } elseif ($page === 'categories' && $userRole === 'admin') {
             $sql = "SELECT * FROM categories";
-            $params = [];
-            if ($search) {
-                $sql .= " WHERE name LIKE ?";
-                $params[] = "%$search%";
-            }
-            $stmtCat = $this->db->prepare($sql);
-            $stmtCat->execute($params);
-            $items = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+            if ($search) $sql .= " WHERE name LIKE '%$search%'";
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'brands' && $userRole === 'admin') {
             $sql = "SELECT * FROM brands";
-            $params = [];
-            if ($search) {
-                $sql .= " WHERE name LIKE ?";
-                $params[] = "%$search%";
-            }
-            $stmtBrand = $this->db->prepare($sql);
-            $stmtBrand->execute($params);
-            $items = $stmtBrand->fetchAll(PDO::FETCH_ASSOC);
+            if ($search) $sql .= " WHERE name LIKE '%$search%'";
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'vouchers' && $userRole === 'admin') {
             $sql = "SELECT * FROM vouchers";
-            $params = [];
-            if ($search) {
-                $sql .= " WHERE code LIKE ?";
-                $params[] = "%$search%";
-            }
-            $stmtVoucher = $this->db->prepare($sql);
-            $stmtVoucher->execute($params);
-            $items = $stmtVoucher->fetchAll(PDO::FETCH_ASSOC);
+            if ($search) $sql .= " WHERE code LIKE '%$search%'";
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'homepage') {
             $site_settings = getSiteSettings($this->db);
@@ -446,6 +398,13 @@ class AdminService {
 
         } elseif ($page === 'returns') {
             $items = getAllReturns($this->db);
+        } elseif ($page === 'installments') {
+            $sql = "SELECT ir.*, p.name as product_name, p.image as product_image FROM installment_requests ir JOIN products p ON ir.product_id = p.id";
+            if ($search) {
+                $sql .= " WHERE ir.fullname LIKE '%$search%' OR ir.phone LIKE '%$search%' OR p.name LIKE '%$search%'";
+            }
+            $sql .= " ORDER BY ir.id DESC";
+            $items = $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($page === 'dashboard') {
             return $this->getDashboardData();
         } elseif ($page === 'revenue') {
@@ -488,51 +447,6 @@ class AdminService {
         try {
             $stmt = $this->db->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
             $stmt->execute([$userId, $title, $message, $type]);
-
-            // Gửi FCM Push Notification cho thiết bị di động
-            $stmtUser = $this->db->prepare("SELECT fcm_token FROM users WHERE id = ?");
-            $stmtUser->execute([$userId]);
-            $user = $stmtUser->fetch();
-            if ($user && !empty($user['fcm_token'])) {
-                $this->sendPushNotification($user['fcm_token'], $title, $message);
-            }
-        } catch (\Exception $e) {}
-    }
-
-    private function sendPushNotification(string $fcmToken, string $title, string $message): void {
-        try {
-            $logPath = __DIR__ . '/../../scratch/fcm_push_logs.txt';
-            if (!file_exists(dirname($logPath))) {
-                mkdir(dirname($logPath), 0777, true);
-            }
-            $logMessage = "[" . date('Y-m-d H:i:s') . "] FCM PUSH TO: $fcmToken\nTITLE: $title\nBODY: $message\n---------------------------------\n";
-            file_put_contents($logPath, $logMessage, FILE_APPEND);
-
-            // Đoạn mã chuẩn bị cho Production gửi lên Google FCM v1 API
-            /*
-            $url = 'https://fcm.googleapis.com/v1/projects/YOUR_PROJECT_ID/messages:send';
-            $headers = [
-                'Authorization: Bearer ' . $this->getGoogleAccessToken(),
-                'Content-Type: application/json'
-            ];
-            $payload = [
-                'message' => [
-                    'token' => $fcmToken,
-                    'notification' => [
-                        'title' => $title,
-                        'body' => $message
-                    ]
-                ]
-            ];
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-            $result = curl_exec($ch);
-            curl_close($ch);
-            */
         } catch (\Exception $e) {}
     }
 
@@ -551,9 +465,7 @@ class AdminService {
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = date('Y-m-d', strtotime("-$i days"));
-            $stmtRev = $this->db->prepare("SELECT SUM(total_price) FROM orders WHERE status = 'completed' AND DATE(created_at) = ?");
-            $stmtRev->execute([$date]);
-            $revenue = $stmtRev->fetchColumn() ?: 0;
+            $revenue = $this->db->query("SELECT SUM(total_price) FROM orders WHERE status = 'completed' AND DATE(created_at) = '$date'")->fetchColumn() ?: 0;
             $chartData[] = [
                 'date' => date('d/m', strtotime($date)),
                 'revenue' => (int)$revenue
@@ -594,5 +506,61 @@ class AdminService {
             'monthly' => $monthlyRevenue,
             'transactions' => $recentTransactions
         ];
+    }
+
+    /**
+     * TỰ ĐỘNG DỊCH DANH MỤC SANG TIẾNG ANH & CẬP NHẬT FILE NGÔN NGỮ
+     */
+    private function autoTranslateCategory(string $viName): void {
+        try {
+            // 1. Dịch từ Tiếng Việt sang Tiếng Anh bằng Google Translate API miễn phí
+            $url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" . urlencode($viName);
+            
+            $options = [
+                "http" => [
+                    "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36\r\n"
+                ]
+            ];
+            $context = stream_context_create($options);
+            $response = @file_get_contents($url, false, $context);
+            if ($response === false) {
+                return;
+            }
+            
+            $resData = json_decode($response, true);
+            $enName = $resData[0][0][0] ?? $viName;
+            
+            // 2. Đường dẫn tới file ngôn ngữ
+            $viFile = __DIR__ . '/../../core/lang/vi.php';
+            $enFile = __DIR__ . '/../../core/lang/en.php';
+            
+            // Cập nhật file vi.php
+            if (file_exists($viFile)) {
+                $viContent = file_get_contents($viFile);
+                if (strpos($viContent, "'$viName'") === false && strpos($viContent, '"' . $viName . '"') === false) {
+                    $pattern = "/'categories_map'\s*=>\s*\[/";
+                    $replacement = "'categories_map' => [\n        '$viName' => '$viName',";
+                    $newContent = preg_replace($pattern, $replacement, $viContent, 1);
+                    if ($newContent !== null) {
+                        file_put_contents($viFile, $newContent);
+                    }
+                }
+            }
+            
+            // Cập nhật file en.php
+            if (file_exists($enFile)) {
+                $enContent = file_get_contents($enFile);
+                if (strpos($enContent, "'$viName'") === false && strpos($enContent, '"' . $viName . '"') === false) {
+                    $pattern = "/'categories_map'\s*=>\s*\[/";
+                    $replacement = "'categories_map' => [\n        '$viName' => '$enName',";
+                    $newContent = preg_replace($pattern, $replacement, $enContent, 1);
+                    if ($newContent !== null) {
+                        file_put_contents($enFile, $newContent);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Tránh làm lỗi luồng chính nếu API lỗi
+        }
     }
 }

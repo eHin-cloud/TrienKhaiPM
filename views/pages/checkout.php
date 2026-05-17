@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_order'])) {
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
     $note = trim($_POST['note']);
-    $payment_method = $_POST['payment_method'] ?? 'cod'; // Phương thức: 'qr' hoặc 'cod'
+    $payment_method = $_POST['payment_method'] ?? 'qr'; // Phương thức: 'qr' hoặc 'cod'
 
     // Validate dữ liệu bắt buộc
     if (!empty($fullname) && !empty($phone) && !empty($address)) {
@@ -233,7 +233,7 @@ require_once __DIR__ . '/../partials/header.php';
                         <h3 class="font-bold text-gray-800"><?= __("receiver_info") ?></h3>
                         <?php if (!empty($saved_addresses)): ?>
                             <button type="button" onclick="openAddressPicker()" class="text-xs text-blue-600 font-bold hover:underline">
-                                <i class="fa-solid fa-address-book mr-1"></i> Chọn từ địa chỉ đã lưu
+                                <i class="fa-solid fa-address-book mr-1"></i> <?= __("select_saved_address") ?>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -250,7 +250,7 @@ require_once __DIR__ . '/../partials/header.php';
                         <div class="col-span-full">
                             <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("phone") ?> *</label>
                             <!-- Validate pattern 10 chữ số -->
-                            <input type="tel" name="phone" id="checkout-phone" required pattern="[0-9]{10}" placeholder="VD: 0901234567"
+                            <input type="tel" name="phone" id="checkout-phone" required pattern="[0-9]{10}" placeholder="<?= __("phone_placeholder") ?>"
                                 value="<?= htmlspecialchars($default_addr['phone'] ?? ($currentUser['phone'] ?? '')) ?>"
                                 class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
                         </div>
@@ -261,14 +261,14 @@ require_once __DIR__ . '/../partials/header.php';
                         <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("detailed_address") ?> *</label>
                         <input type="text" name="address" id="checkout-address" required
                             value="<?= htmlspecialchars($default_addr['address'] ?? ($currentUser['address'] ?? '')) ?>"
-                            placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."
+                            placeholder="<?= __("address_placeholder") ?>"
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
                     </div>
 
                     <!-- Ghi chú (tùy chọn) -->
                     <div class="mb-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("order_note") ?></label>
-                        <textarea name="note" rows="3" placeholder="Ghi chú thêm về thời gian giao hàng, chỉ dẫn địa chỉ..."
+                        <textarea name="note" rows="3" placeholder="<?= __("order_note_placeholder") ?>"
                             class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"></textarea>
                     </div>
                 </div>
@@ -277,11 +277,12 @@ require_once __DIR__ . '/../partials/header.php';
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
                     <h3 class="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><?= __("payment_method") ?></h3>
 
+                    <?php $activeMethod = $_POST['payment_method'] ?? 'qr'; ?>
+
                     <!-- Lựa chọn 1: Chuyển khoản QR (khuyên dùng - checked mặc định) -->
-                    <label
-                        class="flex items-start gap-3 p-4 border border-blue-200 bg-blue-50 rounded-lg mb-3 cursor-pointer transition relative group">
-                        <input type="radio" name="payment_method" value="qr" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'qr') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
-                    accent-primary">
+                    <label id="payment-label-qr"
+                        class="flex items-start gap-3 p-4 border rounded-lg mb-3 cursor-pointer transition relative group <?= $activeMethod === 'qr' ? 'border-blue-200 bg-blue-50' : 'border-gray-200 hover:bg-gray-50' ?>">
+                        <input type="radio" name="payment_method" value="qr" <?= $activeMethod === 'qr' ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary accent-primary">
                         <div class="flex-1">
                             <div class="font-bold text-gray-800 flex items-center gap-2"><?= __("qr_payment") ?> <span
                                     class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse"><?= __("recommended") ?></span></div>
@@ -296,10 +297,9 @@ require_once __DIR__ . '/../partials/header.php';
                     </label>
 
                     <!-- Lựa chọn 2: Thanh toán khi nhận hàng (COD) -->
-                    <label
-                        class="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                        <input type="radio" name="payment_method" value="cod" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'cod') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
-                    accent-primary">
+                    <label id="payment-label-cod"
+                        class="flex items-start gap-3 p-4 border rounded-lg cursor-pointer transition <?= $activeMethod === 'cod' ? 'border-blue-200 bg-blue-50' : 'border-gray-200 hover:bg-gray-50' ?>">
+                        <input type="radio" name="payment_method" value="cod" <?= $activeMethod === 'cod' ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary accent-primary">
                         <div class="flex-1">
                             <div class="font-bold text-gray-800"><?= __("cod_payment") ?></div>
                             <div class="text-sm text-gray-600 mt-1"><?= __("cod_desc") ?></div>
@@ -340,13 +340,13 @@ require_once __DIR__ . '/../partials/header.php';
                         <div class="flex gap-2">
                             <input type="text" id="voucherCodeInput" value="<?= htmlspecialchars($applied_voucher_code) ?>"
                                 class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary outline-none uppercase"
-                                placeholder="Nhập mã...">
+                                placeholder="<?= __("enter_coupon") ?>">
                             <button type="button" onclick="applyVoucher()"
                                 class="bg-gray-800 text-white px-4 shrink-0 rounded font-bold text-sm hover:bg-gray-700 transition"><?= __("apply") ?></button>
                         </div>
                         <p id="voucherMessage"
                             class="text-xs mt-2 <?= $applied_discount > 0 ? 'text-green-600 font-bold' : 'hidden' ?>">
-                            <?= $applied_discount > 0 ? 'Mã đã được áp dụng!' : '' ?>
+                            <?= $applied_discount > 0 ? __("coupon_applied") : '' ?>
                         </p>
                     </div>
 
@@ -408,7 +408,7 @@ require_once __DIR__ . '/../partials/header.php';
         const bundleDiscount = parseFloat(document.getElementById('bundleValStr').dataset.value || 0);
 
         if (!code) {
-            msgEl.textContent = 'Vui lòng nhập mã giảm giá!';
+            msgEl.textContent = '<?= __("please_enter_coupon") ?>';
             msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
             return;
         }
@@ -446,7 +446,7 @@ require_once __DIR__ . '/../partials/header.php';
             })
             .catch(err => {
                 console.error('Error applying voucher:', err);
-                msgEl.textContent = 'Đã xảy ra lỗi hệ thống khi áp dụng mã.';
+                msgEl.textContent = '<?= __("coupon_error") ?>';
                 msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
             });
     }
@@ -456,7 +456,7 @@ require_once __DIR__ . '/../partials/header.php';
 <div id="addressPickerModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
     <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
         <div class="p-5 border-b flex justify-between items-center bg-gray-50">
-            <h3 class="font-bold text-gray-800">Chọn địa chỉ nhận hàng</h3>
+            <h3 class="font-bold text-gray-800"><?= __("choose_shipping_address") ?></h3>
             <button onclick="closeAddressPicker()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
         </div>
         <div class="p-4 max-h-[400px] overflow-y-auto space-y-3">
@@ -469,7 +469,7 @@ require_once __DIR__ . '/../partials/header.php';
                             <span class="text-gray-400">|</span>
                             <span class="text-gray-600"><?= htmlspecialchars($addr['phone']) ?></span>
                             <?php if ($addr['is_default']): ?>
-                                <span class="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Mặc định</span>
+                                <span class="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase"><?= __("default") ?></span>
                             <?php endif; ?>
                         </div>
                         <p class="text-xs text-gray-500 line-clamp-2"><?= htmlspecialchars($addr['address']) ?></p>
@@ -478,7 +478,7 @@ require_once __DIR__ . '/../partials/header.php';
             <?php endif; ?>
         </div>
         <div class="p-4 border-t bg-gray-50 text-center">
-            <a href="profile.php?tab=addresses" class="text-sm text-blue-600 font-bold hover:underline">+ Thêm địa chỉ mới</a>
+            <a href="profile.php?tab=addresses" class="text-sm text-blue-600 font-bold hover:underline"><?= __("add_new_address_link") ?></a>
         </div>
     </div>
 </div>
@@ -505,6 +505,22 @@ require_once __DIR__ . '/../partials/header.php';
         
         closeAddressPicker();
     }
+
+    // --- CHUYỂN ĐỔI GIAO DIỆN PHƯƠNG THỨC THANH TOÁN ---
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const labelQr = document.getElementById('payment-label-qr');
+            const labelCod = document.getElementById('payment-label-cod');
+            
+            if (this.value === 'qr') {
+                if (labelQr) labelQr.className = "flex items-start gap-3 p-4 border border-blue-200 bg-blue-50 rounded-lg mb-3 cursor-pointer transition relative group";
+                if (labelCod) labelCod.className = "flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition";
+            } else {
+                if (labelQr) labelQr.className = "flex items-start gap-3 p-4 border border-gray-200 rounded-lg mb-3 cursor-pointer transition relative group hover:bg-gray-50";
+                if (labelCod) labelCod.className = "flex items-start gap-3 p-4 border border-blue-200 bg-blue-50 rounded-lg cursor-pointer transition";
+            }
+        });
+    });
 </script>
 
 <?php require_once __DIR__ . '/../partials/footer.php'; ?>

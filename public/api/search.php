@@ -8,26 +8,6 @@ require_once __DIR__ . '/../../core/api.php';
 require_once __DIR__ . '/../../core/lang.php';
 
 $keyword = trim((string)($_GET['keyword'] ?? ''));
-$cat_id = (int)($_GET['cat_id'] ?? 0);
-
-// Nếu không có từ khóa nhưng có cat_id -> Trả về sản phẩm gợi ý theo danh mục
-if (empty($keyword) && $cat_id > 0) {
-    $stmt = $db->prepare("
-        SELECT id, name, price, old_price, image 
-        FROM products 
-        WHERE category_id = ? 
-        ORDER BY rate_star DESC, id DESC
-        LIMIT 10
-    ");
-    $stmt->execute([$cat_id]);
-    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    api_json_response(true, 'Gợi ý theo danh mục', [
-        'products' => $products, 
-        'categories' => [],
-        'is_suggestion' => true
-    ]);
-}
 
 if (empty($keyword)) {
     api_json_response(true, 'Thành công', ['products' => [], 'categories' => []]);

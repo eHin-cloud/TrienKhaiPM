@@ -38,28 +38,33 @@ switch ($action) {
         $productId = (int)($data['product_id'] ?? 0);
         $rating = (int)($data['rating'] ?? 5);
         $comment = trim($data['comment'] ?? '');
+        $parentId = isset($data['parent_id']) ? (int)$data['parent_id'] : null;
 
         if ($productId <= 0 || empty($comment)) {
             api_json_response(false, 'Vui lòng nhập đầy đủ thông tin.', [], 422);
         }
 
-        // Kiểm tra xem đã đánh giá chưa (optional, tùy logic app)
-        $stmt = $db->prepare("SELECT id FROM reviews WHERE product_id = ? AND user_id = ?");
-        $stmt->execute([$productId, $userId]);
-        if ($stmt->fetch()) {
-            api_json_response(false, 'Bạn đã đánh giá sản phẩm này rồi.', [], 400);
+        // Kiểm tra xem đã đánh giá chưa (chỉ áp dụng cho review gốc, không áp dụng cho reply)
+        if (!$parentId) {
+            $stmt = $db->prepare("SELECT id FROM reviews WHERE product_id = ? AND user_id = ? AND parent_id IS NULL");
+            $stmt->execute([$productId, $userId]);
+            if ($stmt->fetch()) {
+                api_json_response(false, 'Bạn đã đánh giá sản phẩm này rồi.', [], 400);
+            }
         }
 
-        $stmt = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$productId, $userId, $rating, $comment]);
+        $stmt = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment, parent_id) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$productId, $userId, $rating, $comment, $parentId]);
 
-        // Cập nhật trung bình sao trong bảng products
-        $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ?");
-        $avgStmt->execute([$productId]);
-        $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
-        
-        $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")
-           ->execute([round($avgData['avg_rating'], 1), $avgData['total'], $productId]);
+        // Cập nhật trung bình sao trong bảng products (chỉ khi là review gốc)
+        if (!$parentId) {
+            $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ? AND parent_id IS NULL");
+            $avgStmt->execute([$productId]);
+            $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+            
+            $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")
+               ->execute([round($avgData['avg_rating'], 1), $avgData['total'], $productId]);
+        }
 
         api_json_response(true, 'Đã gửi đánh giá của bạn. Cảm ơn bạn!');
 

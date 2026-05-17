@@ -6,12 +6,13 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../core/database.php';
 require_once __DIR__ . '/../../core/security.php';
 require_once __DIR__ . '/../../core/api.php';
+require_once __DIR__ . '/../../core/lang.php';
 
 $authUser = api_authenticated_user();
 $userId = (int) ($authUser['user_id'] ?? 0);
 
 if ($userId <= 0) {
-    api_json_response(false, 'Vui lòng đăng nhập để sử dụng tính năng này.', [], 401);
+    api_json_response(false, __('wishlist_login_required'), [], 401);
 }
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -61,12 +62,12 @@ switch ($action) {
             // Nếu đã có thì xóa
             $stmt = $db->prepare('DELETE FROM wishlist WHERE user_id = ? AND product_id = ?');
             $stmt->execute([$userId, $productId]);
-            api_json_response(true, 'Đã xóa khỏi danh sách yêu thích.', ['in_wishlist' => false]);
+            api_json_response(true, __('wishlist_removed'), ['in_wishlist' => false]);
         } else {
             // Nếu chưa có thì thêm
             $stmt = $db->prepare('INSERT INTO wishlist (user_id, product_id) VALUES (?, ?)');
             $stmt->execute([$userId, $productId]);
-            api_json_response(true, 'Đã thêm vào danh sách yêu thích.', ['in_wishlist' => true]);
+            api_json_response(true, __('wishlist_added'), ['in_wishlist' => true]);
         }
 
     case 'check':
@@ -76,6 +77,18 @@ switch ($action) {
         $inWishlist = (bool) $stmt->fetch();
         
         api_json_response(true, 'Kiểm tra trạng thái yêu thích.', ['in_wishlist' => $inWishlist]);
+
+    case 'clear':
+        if ($method !== 'POST') {
+            api_json_response(false, __('invalid_method'), [], 405);
+        }
+        try {
+            $stmt = $db->prepare('DELETE FROM wishlist WHERE user_id = ?');
+            $stmt->execute([$userId]);
+            api_json_response(true, __('wishlist_cleared_success'));
+        } catch (Exception $e) {
+            api_json_response(false, __('error') . ': ' . $e->getMessage());
+        }
 
     default:
         api_json_response(false, 'Hành động không hợp lệ.', [], 400);

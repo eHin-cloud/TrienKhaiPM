@@ -141,6 +141,14 @@ $currentTab = 'login_history';
                     class="flex items-center p-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50">
                     <i class="fas fa-shopping-bag w-6"></i> <span><?= __('order_history') ?></span>
                 </a>
+                <a href="profile.php?tab=addresses"
+                    class="flex items-center p-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50">
+                    <i class="fas fa-map-marker-alt w-6"></i> <span><?= __('address_book') ?></span>
+                </a>
+                <a href="profile.php?tab=notifications"
+                    class="flex items-center p-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50">
+                    <i class="fas fa-bell w-6"></i> <span><?= __('notifications') ?></span>
+                </a>
                 <a href="profile.php?tab=wishlist"
                     class="flex items-center p-3 rounded-lg transition-colors text-gray-600 hover:bg-gray-50">
                     <i class="fas fa-heart w-6"></i> <span><?= __('wishlist') ?></span>

@@ -77,25 +77,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_review'])) {
         $media_json = !empty($media_paths) ? json_encode($media_paths) : null;
 
         // --- CHÈN DATABASE & UPDATE TỔNG ---
-        // Xác thực logic: Giá trị đánh giá phải nằm trong ngưỡng [1,5] sao
-        if ($rating > 0 && $rating <= 5 && !empty($comment)) {
-            $stmtRev = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment, media) VALUES (?, ?, ?, ?, ?)");
-            if ($stmtRev->execute([$id, $user_id, $rating, $comment, $media_json])) {
+        $parent_id = isset($_POST['parent_id']) && !empty($_POST['parent_id']) ? (int)$_POST['parent_id'] : null;
 
-                // Thực thi truy xuất DB để tính lại trung bình cộng tổng số thực tế
-                $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ?");
-                $avgStmt->execute([$id]);
-                $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+        // Xác thực logic: Giá trị đánh giá phải nằm trong ngưỡng [1,5] sao (nếu không phải reply)
+        if (!empty($comment)) {
+            $stmtRev = $db->prepare("INSERT INTO reviews (product_id, user_id, rating, comment, media, parent_id) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmtRev->execute([$id, $user_id, $rating, $comment, $media_json, $parent_id])) {
 
-                // Cập nhật giá trị đã tính toán trở lại bảng cha `products` để không phải truy vấn lúc show list home
-                $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")->execute([round($avgData['avg_rating'], 1), $avgData['total'], $id]);
+                // Chỉ tính lại trung bình nếu là review gốc (không phải reply)
+                if (!$parent_id) {
+                    // Thực thi truy xuất DB để tính lại trung bình cộng tổng số thực tế
+                    $avgStmt = $db->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM reviews WHERE product_id = ? AND parent_id IS NULL");
+                    $avgStmt->execute([$id]);
+                    $avgData = $avgStmt->fetch(PDO::FETCH_ASSOC);
+
+                    // Cập nhật giá trị đã tính toán trở lại bảng cha `products` để không phải truy vấn lúc show list home
+                    $db->prepare("UPDATE products SET rate_star = ?, total_reviews = ? WHERE id = ?")->execute([round($avgData['avg_rating'], 1), $avgData['total'], $id]);
+                }
 
                 // Load lại component review sau khi xong
+                if (isset($_POST['ajax']) && $_POST['ajax'] == 1) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => 'Cảm ơn quý khách đã comment!']);
+                    exit;
+                }
+                $_SESSION['review_success_msg'] = "Cảm ơn quý khách đã comment!";
                 header("Location: product_detail.php?id=$id#reviews");
                 exit;
             }
         }
     }
+}
+
+// Chế độ chỉ lấy danh sách đánh giá (Dùng cho AJAX cập nhật UI không reload)
+if (isset($_GET['only_reviews']) && $_GET['only_reviews'] == 1) {
+    $reviews = getProductReviews($db, $id);
+    if (empty($reviews)) {
+        echo '<p class="text-center text-gray-500 italic py-4">' . __("no_reviews") . '</p>';
+    } else {
+        $totalReviews = count($reviews);
+        foreach ($reviews as $index => $rev) {
+            echo '<div class="review-item ' . ($index >= 2 ? 'hidden' : '') . '" data-index="' . $index . '">';
+            echo renderReviewItem($rev, $id);
+            echo '</div>';
+        }
+        if ($totalReviews > 2) {
+            echo '<div class="text-center mt-6" id="load-more-reviews-container">';
+            echo '<button onclick="loadMoreReviews()" class="px-8 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary hover:text-white transition shadow-sm">';
+            echo 'Xem thêm ' . ($totalReviews - 2) . ' đánh giá khác';
+            echo '</button></div>';
+        }
+    }
+    exit;
 }
 
 /**
@@ -179,28 +212,142 @@ $cross_sell_products = $productService->getCrossSellProducts($id, 6);
 $reviews = getProductReviews($db, $id);
 $reviewStats = getReviewStats($reviews);
 
+/**
+ * Hàm đệ quy hiển thị đánh giá và phản hồi
+ */
+function renderReviewItem($rev, $productId, $level = 0) {
+    global $id; // ID sản phẩm từ trang cha
+    $is_admin = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+    $is_owner = isset($_SESSION['user_id']) && $_SESSION['user_id'] == $rev['user_id'];
+    
+    ob_start(); ?>
+    <div class="<?= $level === 0 ? 'border-b border-gray-100 py-6 last:border-0' : 'mt-4 border-t border-gray-50 pt-4 pb-2' ?>">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-2">
+            <div class="font-bold <?= $level === 0 ? 'text-[14px]' : 'text-[13px]' ?> flex items-center gap-2">
+                <span class="<?= $level === 0 ? 'w-8 h-8 text-xs' : 'w-6 h-6 text-[10px]' ?> bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
+                    <?= mb_substr($rev['fullname'], 0, 1) ?>
+                </span>
+                <span class="text-gray-800"><?= htmlspecialchars($rev['fullname']) ?></span>
+                <span class="text-[11px] text-gray-400 font-normal ml-1">• <?= date('H:i d/m/Y', strtotime($rev['created_at'])) ?></span>
+            </div>
+            <div class="flex items-center gap-3">
+                <?php if ($is_owner || $is_admin): ?>
+                    <button onclick="confirmDeleteReview(<?= $rev['id'] ?>)" class="text-gray-300 hover:text-red-500 transition text-[12px]">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <form id="delete-review-form-<?= $rev['id'] ?>" method="POST" action="product_detail.php?id=<?= $id ?>" class="hidden">
+                        <?= csrf_input_field() ?>
+                        <input type="hidden" name="delete_review" value="1">
+                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
+                    </form>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Rating (Chỉ hiện cho review gốc) -->
+        <?php if ($level === 0): ?>
+            <div class="flex items-center gap-2 mb-2 pl-10">
+                <div class="flex text-yellow-400 text-[12px] gap-0.5">
+                    <?php for ($i = 1; $i <= 5; $i++) echo "<i class='fa-solid fa-star " . ($i <= $rev['rating'] ? '' : 'text-gray-200') . "'></i>"; ?>
+                </div>
+                <span class="text-xs font-medium text-gray-500">
+                    <?php
+                    $labels = [1 => __("very_bad"), 2 => __("bad"), 3 => __("normal"), 4 => __("good"), 5 => __("excellent")];
+                    echo $labels[$rev['rating']] ?? '';
+                    ?>
+                </span>
+            </div>
+        <?php endif; ?>
+
+        <!-- Nội dung -->
+        <p class="text-[14px] <?= $level === 0 ? 'pl-10' : 'pl-8' ?> text-gray-700 leading-relaxed">
+            <?= nl2br(htmlspecialchars($rev['comment'])) ?>
+        </p>
+
+        <!-- Media (Chỉ hiện cho review gốc nếu có) -->
+        <?php if ($level === 0): 
+            $media = isset($rev['media']) ? json_decode($rev['media'], true) : [];
+            if (!empty($media)): ?>
+                <div class="flex flex-wrap gap-2 mt-3 pl-10">
+                    <?php foreach ($media as $file): 
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        $is_video = in_array($ext, ['mp4', 'webm', 'mov']); ?>
+                        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group" onclick="openMediaViewer('<?= $file ?>', <?= $is_video ? 'true' : 'false' ?>)">
+                            <?php if ($is_video): ?>
+                                <video src="<?= $file ?>" class="w-full h-full object-cover"></video>
+                                <div class="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition">
+                                    <i class="fa-solid fa-play text-white text-lg"></i>
+                                </div>
+                            <?php else: ?>
+                                <img src="<?= $file ?>" class="w-full h-full object-cover group-hover:scale-105 transition">
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; 
+        endif; ?>
+
+        <!-- Nút Phản hồi & Form -->
+        <div class="<?= $level === 0 ? 'pl-10' : 'pl-8' ?> mt-3">
+            <button onclick="toggleReplyForm(<?= $rev['id'] ?>, '<?= addslashes($rev['fullname']) ?>')" class="text-primary text-[13px] font-bold hover:underline flex items-center gap-1 opacity-80 hover:opacity-100 transition">
+                <i class="fa-solid fa-reply"></i> <?= __("reply") ?>
+            </button>
+
+            <div id="reply-form-<?= $rev['id'] ?>" class="hidden bg-gray-50 p-4 rounded-xl border border-gray-200 mt-3 max-w-xl shadow-sm">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <form method="POST" action="product_detail.php?id=<?= $id ?>#reviews">
+                        <?= csrf_input_field() ?>
+                        <input type="hidden" name="parent_id" value="<?= $rev['id'] ?>">
+                        <input type="hidden" name="rating" value="5">
+                        <textarea name="comment" required rows="<?= $level === 0 ? '4' : '3' ?>" 
+                            class="w-full p-3 text-[14px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none mb-2 resize-none shadow-inner"
+                            placeholder="<?= __("reply_placeholder") ?>"></textarea>
+                        <div class="flex justify-end gap-2">
+                            <button type="button" onclick="toggleReplyForm(<?= $rev['id'] ?>)" class="px-3 py-1.5 text-gray-500 text-xs font-medium hover:bg-gray-200 rounded-md transition"><?= __("cancel") ?></button>
+                            <button type="submit" name="submit_review" class="bg-primary text-white px-5 py-1.5 rounded-md text-xs font-bold hover:bg-blue-800 transition shadow-sm">
+                                <?= __("send") ?>
+                            </button>
+                        </div>
+                    </form>
+                <?php else: ?>
+                    <div class="text-center py-2">
+                        <p class="text-xs text-gray-500 mb-2"><?= __("login_to_review") ?></p>
+                        <button onclick="document.getElementById('loginModal').classList.remove('hidden')" class="text-primary font-bold text-xs hover:underline"><?= __("login_now") ?></button>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Các phản hồi con (Chỉ hiện ở cấp gốc) -->
+            <?php if ($level === 0 && !empty($rev['replies'])): ?>
+                <?php 
+                $replyCount = count($rev['replies']);
+                if ($replyCount >= 2): 
+                ?>
+                    <div class="mt-3">
+                        <button onclick="toggleReplies(<?= $rev['id'] ?>)" id="btn-show-replies-<?= $rev['id'] ?>" 
+                            class="text-[12px] text-primary font-bold hover:underline flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-full transition">
+                            <i class="fa-solid fa-caret-down"></i> <?= sprintf(__("view_more_replies"), $replyCount) ?>
+                        </button>
+                        <div id="replies-container-<?= $rev['id'] ?>" class="hidden">
+                            <?php foreach ($rev['replies'] as $reply) echo renderReviewItem($reply, $productId, 1); ?>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="mt-2">
+                        <?php foreach ($rev['replies'] as $reply) echo renderReviewItem($reply, $productId, 1); ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php return ob_get_clean();
+}
+
 // Thiết lập Meta SEO cho trang chi tiết sản phẩm
 $meta_title = $product['name'] . " - Điện Máy PRO";
 $meta_desc = mb_substr(strip_tags($product['description']), 0, 160) . "...";
 $meta_image = $product['image'];
-
-/**
- * XỬ LÝ DANH SÁCH ẢNH (GALLERY)
- * - Ảnh đầu tiên là ảnh chính (cột image).
- * - Các ảnh bổ sung nằm trong cột more_images (JSON array).
- */
-$product_images = [$product['image']];
-if (!empty($product['more_images'])) {
-    $extra_images = json_decode($product['more_images'], true);
-    if (is_array($extra_images)) {
-        foreach($extra_images as $img) {
-            if ($img !== $product['image']) {
-                $product_images[] = $img;
-            }
-        }
-    }
-}
-
 
 require_once __DIR__ . '/../partials/header.php';
 ?>
@@ -241,44 +388,16 @@ require_once __DIR__ . '/../partials/header.php';
 
         <!-- CỘT TRÁI -->
         <div class="lg:col-span-7 flex flex-col gap-4">
-            <!-- Khu vực hiển thị ảnh (Gallery) -->
-            <div class="flex flex-col gap-4">
-                <!-- Ảnh chính -->
-                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-center h-[350px] md:h-[450px] bg-white relative overflow-hidden group">
-                    <img id="main-product-image" src="<?= asset($product['image']) ?>" 
-                         class="max-w-full max-h-full object-contain transition-all duration-500 ease-in-out group-hover:scale-105" 
-                         alt="<?= htmlspecialchars($product['name']) ?>"
-                         style="transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;">
-                    
-                    <?php if ($product['old_price']):
-
-                        $disc = round((($product['old_price'] - $product['price']) / $product['old_price']) * 100); ?>
-                        <div class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
-                            -<?= $disc ?>%
-                        </div>
-                    <?php endif; ?>
-
-                    <!-- Nút xem full ảnh -->
-                    <button onclick="openMediaViewer(document.getElementById('main-product-image').src, false)" 
-                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur shadow-md rounded-full flex items-center justify-center text-gray-600 hover:text-primary hover:bg-white transition opacity-0 group-hover:opacity-100">
-                        <i class="fa-solid fa-expand"></i>
-                    </button>
-                </div>
-
-                <!-- Danh sách ảnh thu nhỏ (Thumbnails) -->
-                <?php if (count($product_images) > 1): ?>
-                <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar" id="thumbnail-container">
-                    <?php foreach ($product_images as $index => $img_url): ?>
-                    <div class="thumbnail-item shrink-0 w-20 h-20 border-2 <?= $index === 0 ? 'border-primary' : 'border-gray-100' ?> rounded-lg p-1 cursor-pointer hover:border-primary transition bg-white"
-                         onclick="changeMainImage('<?= asset($img_url) ?>', this, true)">
-                        <img src="<?= asset($img_url) ?>" class="w-full h-full object-contain" alt="thumbnail <?= $index + 1 ?>">
-                    </div>
-                    <?php endforeach; ?>
-                </div>
+            <div
+                class="border border-gray-200 rounded-lg p-4 flex items-center justify-center h-[350px] md:h-[450px] bg-white relative">
+                <img src="<?= $product['image'] ?>" class="max-w-full max-h-full object-contain">
+                <?php if ($product['old_price']):
+                    $disc = round((($product['old_price'] - $product['price']) / $product['old_price']) * 100); ?>
+                    <div
+                        class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                        -<?= $disc ?>%</div>
                 <?php endif; ?>
-
             </div>
-
 
             <div
                 class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px] text-gray-700 bg-white p-4 border border-gray-200 rounded-lg">
@@ -349,7 +468,7 @@ require_once __DIR__ . '/../partials/header.php';
                 </div>
                 <div class="flex gap-2">
                     <button type="button"
-                        onclick="document.getElementById('installmentModal').classList.remove('hidden')"
+                        onclick="openInstallmentModal()"
                         class="flex-1 bg-[#2e7dd6] text-white rounded-lg py-2.5 hover:bg-[#2368b8] transition shadow-sm flex flex-col items-center justify-center">
                         <span class="font-medium text-[15px] mb-0.5"><?= __("buy_installment") ?> <i
                                 class="fa-solid fa-angle-right text-[12px]"></i></span>
@@ -384,16 +503,16 @@ require_once __DIR__ . '/../partials/header.php';
             <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("highlights") ?></h2>
             <div id="desc-container" class="relative overflow-hidden" style="max-height: 350px;">
                 <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed text-[15px] text-justify">
-                    <?= $product['description'] ? $product['description'] : '<p>Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>' ?>
-                    <img src="<?= asset($product['image']) ?>"
-                        class="w-full max-w-[500px] mx-auto my-6 rounded-lg border border-gray-100"
-                        alt="<?= $product['name'] ?>">
+                    <?= translate_html_content($product['description'] ? $product['description'] : '<p>Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>', 'prod_desc_' . $product['id']) ?>
+                    <img src="<?= $product['image'] ?>"
+                         class="w-full max-w-[500px] mx-auto my-6 rounded-lg border border-gray-100"
+                         alt="<?= $product['name'] ?>">
                 </div>
                 <div id="desc-gradient"
-                    class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
+                     class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
             </div>
             <button id="btn-read-more" onclick="toggleDescription()"
-                class="mt-4 w-full text-primary border border-primary hover:bg-blue-50 py-2 rounded-lg text-[14px] font-medium transition"><?= __("read_more") ?></button>
+                    class="mt-4 w-full text-primary border border-primary hover:bg-blue-50 py-2 rounded-lg text-[14px] font-medium transition"><?= __("read_more") ?></button>
         </div>
 
         <div class="lg:col-span-5">
@@ -401,7 +520,7 @@ require_once __DIR__ . '/../partials/header.php';
                 <h2 class="text-[18px] font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200"><?= __("specifications") ?>
                 </h2>
                 <div class="text-[14px] text-gray-700 specs-table overflow-hidden" style="max-height: 300px;">
-                    <?= $product['specifications'] ? $product['specifications'] : '<p>Chưa cập nhật thông số.</p>' ?>
+                    <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>' . __("no_specifications") . '</p>', 'prod_specs_' . $product['id']) ?>
                 </div>
                 <style>
                     .specs-table ul {
@@ -435,7 +554,7 @@ require_once __DIR__ . '/../partials/header.php';
          ĐÁNH GIÁ VÀ NHẬN XÉT SẢN PHẨM 
          ========================================================= -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-8 mt-8" id="reviews">
-        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("order_history") ?> & <?= __("detail") ?>
+        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("reviews_comments") ?>
             <?= htmlspecialchars($product['name']) ?></h2>
 
         <!-- PHẦN TỔNG HỢP ĐÁNH GIÁ -->
@@ -467,7 +586,6 @@ require_once __DIR__ . '/../partials/header.php';
                     ?>
                     <div class="flex items-center gap-2 mb-1.5">
                         <span class="text-xs font-bold text-gray-600 w-8 text-right"><?= $s ?> <i
-
                                 class="fa-solid fa-star text-yellow-400 text-[10px]"></i></span>
                         <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
                             <div class="h-full rounded-full transition-all duration-500 <?= $s >= 4 ? 'bg-green-400' : ($s === 3 ? 'bg-yellow-400' : 'bg-orange-400') ?>"
@@ -493,7 +611,7 @@ require_once __DIR__ . '/../partials/header.php';
         <div id="review-form-container"
             class="hidden mb-8 max-w-2xl mx-auto bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
             <?php if (isset($_SESSION['user_id'])): ?>
-                <form method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
+                <form id="main-review-form" method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
                     <?= csrf_input_field() ?>
                     <h4 class="font-bold mb-4 text-center text-gray-800"><?= __("invite_review") ?></h4>
 
@@ -507,8 +625,8 @@ require_once __DIR__ . '/../partials/header.php';
                     <p class="text-center text-sm text-gray-500 mb-4" id="rating-text"><?= __("excellent") ?></p>
 
                     <input type="hidden" name="rating" id="input_rating" value="5">
-                    <textarea name="comment" required rows="3"
-                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none mb-3 text-sm resize-none"
+                    <textarea name="comment" required rows="5"
+                        class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none mb-4 text-sm resize-none shadow-sm"
                         placeholder="<?= __("review_placeholder") ?>"></textarea>
 
                     <!-- Upload ảnh/video -->
@@ -550,77 +668,25 @@ require_once __DIR__ . '/../partials/header.php';
         </div>
 
         <!-- DANH SÁCH ĐÁNH GIÁ -->
-        <div>
+        <div id="reviews-list-container">
             <?php if (empty($reviews)): ?>
                 <p class="text-center text-gray-500 italic py-4"><?= __("no_reviews") ?></p>
-<?php else:
-                foreach ($reviews as $rev): ?>
-                    <div class="border-b border-gray-100 py-5 last:border-0">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-bold text-[14px] flex items-center gap-2">
-                                <span
-                                    class="w-8 h-8 bg-primary/10 text-primary rounded-full flex items-center justify-center text-xs font-bold"><?= mb_substr($rev['fullname'], 0, 1) ?></span>
-                                <?= htmlspecialchars($rev['fullname']) ?>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span
-                                    class="text-xs text-gray-400"><?= date('d/m/Y H:i', strtotime($rev['created_at'])) ?></span>
-                                <?php if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] == $rev['user_id'] || $_SESSION['role'] === 'admin')): ?>
-                                    <button onclick="confirmDeleteReview(<?= $rev['id'] ?>)"
-                                        class="text-gray-300 hover:text-red-500 transition text-sm" title="Xóa đánh giá">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                    <form id="delete-review-form-<?= $rev['id'] ?>" method="POST"
-                                        action="product_detail.php?id=<?= $id ?>" class="hidden">
-                                        <?= csrf_input_field() ?>
-                                        <input type="hidden" name="delete_review" value="1">
-                                        <input type="hidden" name="review_id" value="<?= $rev['id'] ?>">
-                                    </form>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 mb-2 pl-10">
-                            <div class="flex text-yellow-400 text-[12px] gap-0.5">
-                                <?php for ($i = 1; $i <= 5; $i++)
-                                    echo "<i class='fa-solid fa-star " . ($i <= $rev['rating'] ? '' : 'text-gray-200') . "'></i>"; ?>
-                            </div>
-                            <span class="text-xs font-medium text-gray-500">
-                                <?php
-                                $labels = [1 => __("very_bad"), 2 => __("bad"), 3 => __("normal"), 4 => __("good"), 5 => __("excellent")];
-                                echo $labels[$rev['rating']] ?? '';
-                                ?>
-                            </span>
-                        </div>
-                        <p class="text-[14px] text-gray-700 pl-10 leading-relaxed">
-                            <?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
-
-                        <?php
-                        // Hiển thị ảnh/video đính kèm
-                        $media = isset($rev['media']) ? json_decode($rev['media'], true) : [];
-                        if (!empty($media)): ?>
-                            <div class="flex flex-wrap gap-2 mt-3 pl-10">
-                                <?php foreach ($media as $idx => $file):
-                                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-                                    $is_video = in_array($ext, ['mp4', 'webm', 'mov']);
-                                    ?>
-                                    <?php if ($is_video): ?>
-                                        <div class="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200 cursor-pointer group"
-                                            onclick="openMediaViewer('<?= $file ?>', true)">
-                                            <video src="<?= $file ?>" class="w-full h-full object-cover"></video>
-                                            <div
-                                                class="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/50 transition">
-                                                <i class="fa-solid fa-play text-white text-lg"></i>
-                                            </div>
-                                        </div>
-                                    <?php else: ?>
-                                        <img src="<?= $file ?>" onclick="openMediaViewer('<?= $file ?>', false)"
-                                            class="w-20 h-20 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition hover:shadow-md">
-                                    <?php endif; ?>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
+            <?php else:
+                $totalReviews = count($reviews);
+                foreach ($reviews as $index => $rev): ?>
+                    <div class="review-item <?= $index >= 2 ? 'hidden' : '' ?>" data-index="<?= $index ?>">
+                        <?= renderReviewItem($rev, $id) ?>
                     </div>
-                <?php endforeach; endif; ?>
+                <?php endforeach; ?>
+                
+                <?php if ($totalReviews > 2): ?>
+                    <div class="text-center mt-6" id="load-more-reviews-container">
+                        <button onclick="loadMoreReviews()" class="px-8 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary hover:text-white transition shadow-sm">
+                            <?= sprintf(__("view_more_reviews"), $totalReviews - 2) ?>
+                        </button>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -727,52 +793,482 @@ require_once __DIR__ . '/../partials/header.php';
         </div>
         <div class="p-6 overflow-y-auto specs-table">
             <h4 class="font-bold text-primary mb-3"><?= htmlspecialchars($product['name']) ?></h4>
-            <?= $product['specifications'] ?>
+            <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>' . __("no_specifications") . '</p>', 'prod_specs_' . $product['id']) ?>
         </div>
     </div>
 </div>
 
 <!-- MODAL TRẢ GÓP -->
-<div id="installmentModal"
-    class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4">
-    <div class="bg-white rounded-xl w-full max-w-[400px] flex flex-col relative shadow-2xl">
-        <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
-            <h3 class="font-bold text-lg text-gray-800"><?= __("buy_installment") ?> </h3>
-            <button onclick="document.getElementById('installmentModal').classList.add('hidden')"
-                class="text-gray-400 hover:text-red-500 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"><i
-                    class="fa-solid fa-xmark text-xl"></i></button>
+<div id="installmentModal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4 py-8 overflow-y-auto">
+    <div class="bg-white rounded-2xl w-full max-w-[750px] flex flex-col relative shadow-2xl border border-gray-100 max-h-[90vh] overflow-hidden transition-all duration-300 transform scale-95 opacity-0" id="installmentModalContainer">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+            <h3 class="font-extrabold text-xl text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-credit-card text-primary text-lg"></i>
+                <?= __("installment_info") ?>
+            </h3>
+            <button onclick="closeInstallmentModal()" class="text-gray-400 hover:text-red-500 transition w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
 
-        <form id="installmentForm" class="p-5" onsubmit="submitInstallment(event)">
-            <input type="hidden" name="product_id" value="<?= $id ?>">
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("fullname") ?> *</label>
-                <input type="text" name="fullname" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary"
-                    value="<?= isset($_SESSION['fullname']) ? htmlspecialchars($_SESSION['fullname']) : '' ?>">
+        <!-- Scrollable Body -->
+        <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            
+            <!-- Product Brief -->
+            <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                <div class="w-16 h-16 shrink-0 bg-white rounded-lg p-1 border border-gray-100 flex items-center justify-center">
+                    <img src="<?= htmlspecialchars($product['image']) ?>" class="w-full h-full object-contain" alt="<?= htmlspecialchars($product['name']) ?>">
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm md:text-base line-clamp-1"><?= htmlspecialchars($product['name']) ?></h4>
+                    <p class="text-lg font-black text-red-600 mt-0.5" id="installmentProductPrice" data-price="<?= $product['price'] ?>">
+                        <?= number_format($product['price']) ?>đ
+                    </p>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("phone") ?> *</label>
-                <input type="tel" name="phone" required pattern="[0-9]{10}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Nhập số điện thoại...">
+
+            <!-- Tabs at top -->
+            <div class="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-xl mb-6 shrink-0">
+                <!-- Tab 1: Finance Company -->
+                <button onclick="switchInstallmentTab(1)" id="inst-tab-1" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("pay_finance_company") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("pay_finance_company_desc") ?></span>
+                </button>
+                <!-- Tab 2: Credit Card -->
+                <button onclick="switchInstallmentTab(2)" id="inst-tab-2" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("pay_credit_card") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("pay_credit_card_desc") ?></span>
+                </button>
+                <!-- Tab 3: Buy Now Pay Later -->
+                <button onclick="switchInstallmentTab(3)" id="inst-tab-3" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("buy_now_pay_later") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("buy_now_pay_later_desc") ?></span>
+                </button>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("desired_term") ?></label>
-                <select name="term"
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary">
-                    <option value="Gói 3 tháng (Lãi suất 0%)">Gói 3 tháng (Lãi suất 0%)</option>
-                    <option value="Gói 6 tháng (Lãi suất 5%)">Gói 6 tháng (Lãi suất 5%)</option>
-                    <option value="Gói 9 tháng (Lãi suất 10%)">Gói 9 tháng (Lãi suất 10%)</option>
-                    <option value="Gói 12 tháng (Lãi suất 20%)">Gói 12 tháng (Lãi suất 20%)</option>
-                </select>
+
+            <!-- TAB 1: Finance Company Content -->
+            <div id="inst-content-1" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Choose Finance Company -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_finance_company") ?></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="selectFinanceCompany('Shinhan Finance')" id="comp-Shinhan" class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Shinhan Finance
+                            </button>
+                            <button onclick="selectFinanceCompany('Home Credit')" id="comp-Home" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Home Credit
+                            </button>
+                            <button onclick="selectFinanceCompany('HD Saison')" id="comp-HD" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                HD Saison
+                            </button>
+                            <button onclick="selectFinanceCompany('Mirae Asset')" id="comp-Mirae" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Mirae Asset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Choose Term -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_installment_term") ?></label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="selectFinanceTerm(3)" id="term-3" class="border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                3 <?= __("months_suffix") ?>
+                            </button>
+                            <button onclick="selectFinanceTerm(4)" id="term-4" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                4 <?= __("months_suffix") ?>
+                            </button>
+                            <button onclick="selectFinanceTerm(6)" id="term-6" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                6 <?= __("months_suffix") ?>
+                            </button>
+                            <button onclick="selectFinanceTerm(9)" id="term-9" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                9 <?= __("months_suffix") ?>
+                            </button>
+                            <button onclick="selectFinanceTerm(12)" id="term-12" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                12 <?= __("months_suffix") ?>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finance Calculations Table -->
+                <div class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("company") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-company">Shinhan Finance</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("installment_price") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-price"><?= number_format($product['price']) ?>đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("prepayment") ?> (30%)</span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-prepay">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("interest_rate") ?></span>
+                        <span class="text-sm font-bold text-green-600 text-right">0%</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("required_papers") ?></span>
+                        <span class="text-xs font-bold text-gray-600 text-right"><?= __("required_papers_val") ?></span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("monthly_installment") ?></span>
+                        <span class="text-sm font-bold text-red-600 text-right" id="calc-monthly">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("principal_interest") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-total-monthly">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("insurance_fee") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all bg-gray-50">
+                        <span class="text-sm text-gray-600 font-black"><?= __("total_payment") ?></span>
+                        <span class="text-sm font-black text-gray-800 text-right" id="calc-total">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 p-3 hover:bg-white transition-all bg-red-50/20">
+                        <span class="text-sm text-gray-600 font-black"><?= __("difference") ?></span>
+                        <span class="text-sm font-black text-red-600 text-right" id="calc-diff">0đ</span>
+                    </div>
+                </div>
+                <p class="text-center text-[10px] text-gray-400 mt-1 italic"><?= __("installment_disclaimer") ?></p>
             </div>
-            <button type="submit"
-                class="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-blue-800 transition shadow"><?= __("confirm_registration") ?></button>
-            <p class="text-center text-[11px] text-gray-500 mt-3"><?= __("callback_hint") ?></p>
-        </form>
+
+            <!-- TAB 2: Credit Card Content -->
+            <div id="inst-content-2" class="hidden space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_installment_method") ?></label>
+                    <div class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-between font-bold text-sm text-gray-800 select-none">
+                        <span><?= __("pay_via_onepay") ?></span>
+                        <div class="flex gap-1 shrink-0">
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">Visa</span>
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">Master</span>
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">JCB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. Select bank -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_bank") ?></label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button onclick="selectCreditBank('Vietcombank')" id="bank-Vietcombank" class="border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none">
+                            Vietcombank
+                        </button>
+                        <button onclick="selectCreditBank('Techcombank')" id="bank-Techcombank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            Techcombank
+                        </button>
+                        <button onclick="selectCreditBank('Sacombank')" id="bank-Sacombank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            Sacombank
+                        </button>
+                        <button onclick="selectCreditBank('ACB')" id="bank-ACB" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            ACB
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Select card type -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_card_type") ?></label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectCreditCard('Visa')" id="card-Visa" class="border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none">
+                            Visa
+                        </button>
+                        <button onclick="selectCreditCard('MasterCard')" id="card-MasterCard" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            MasterCard
+                        </button>
+                        <button onclick="selectCreditCard('JCB')" id="card-JCB" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            JCB
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Select Term and Rate -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_term_rate") ?></label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button onclick="selectCreditTerm(3)" id="cterm-3" class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">3 <?= __("months_suffix") ?></span>
+                            <span class="text-[10px] text-green-600 font-bold">0% <?= __("interest_rate") ?></span>
+                        </button>
+                        <button onclick="selectCreditTerm(6)" id="cterm-6" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-855">6 <?= __("months_suffix") ?></span>
+                            <span class="text-[10px] text-green-600 font-bold">0% <?= __("interest_rate") ?></span>
+                        </button>
+                        <button onclick="selectCreditTerm(9)" id="cterm-9" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-855">9 <?= __("months_suffix") ?></span>
+                            <span class="text-[10px] text-green-600 font-bold">0% <?= __("interest_rate") ?></span>
+                        </button>
+                        <button onclick="selectCreditTerm(12)" id="cterm-12" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-855">12 <?= __("months_suffix") ?></span>
+                            <span class="text-[10px] text-green-600 font-bold">0% <?= __("interest_rate") ?></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: Buy Now Pay Later Content -->
+            <div id="inst-content-3" class="hidden space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_installment_method") ?></label>
+                    <div class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-between font-bold text-sm text-gray-800 select-none">
+                        <span>Kredivo</span>
+                        <span class="bg-red-100 text-red-600 font-black rounded px-2 py-0.5 text-xs">Buy Now Pay Later</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 border border-gray-100 rounded-xl p-5">
+                    <h5 class="font-extrabold text-gray-800 text-base mb-2"><?= __("buy_now_pay_later") ?> Kredivo</h5>
+                    <p class="text-sm text-gray-600 leading-relaxed"><?= __("kredivo_desc") ?></p>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="mt-8 border-t border-gray-100 pt-6 space-y-4">
+                <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1"><?= __("contact_info") ?></h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1"><?= __("fullname") ?> *</label>
+                        <input type="text" id="inst-fullname" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-medium" value="<?= isset($_SESSION['fullname']) ? htmlspecialchars($_SESSION['fullname']) : '' ?>" placeholder="<?= __("fullname") ?>">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1"><?= __("phone") ?> *</label>
+                        <input type="tel" id="inst-phone" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-medium" placeholder="VD: 0987654321">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Old to New Trade-In Switch (Common under all tabs) -->
+            <div class="mt-4 space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer select-none group">
+                    <input type="checkbox" id="inst-trade-in" class="w-5 h-5 accent-primary rounded cursor-pointer transition">
+                    <span class="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-all">
+                        <?= __("trade_in_prompt") ?>
+                    </span>
+                </label>
+            </div>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50 shrink-0">
+            <button onclick="closeInstallmentModal()" class="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-100 transition shadow-sm bg-white min-w-[120px]">
+                <?= __("close") ?>
+            </button>
+            <button onclick="submitNewInstallment()" class="flex-1 px-8 py-3 bg-red-600 text-white rounded-xl font-black text-sm hover:bg-red-700 transition shadow-lg shadow-red-200 text-center uppercase tracking-wider">
+                <?= __("confirm_installment") ?>
+            </button>
+        </div>
+
     </div>
 </div>
+
+<script>
+    let currentTab = 1;
+    let selectedCompany = 'Shinhan Finance';
+    let selectedTerm = 3;
+    let selectedBank = 'Vietcombank';
+    let selectedCreditCard = 'Visa';
+    let selectedCreditTerm = 3;
+
+    function openInstallmentModal() {
+        const modal = document.getElementById('installmentModal');
+        const container = document.getElementById('installmentModalContainer');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('scale-95', 'opacity-0');
+            container.classList.add('scale-100', 'opacity-100');
+        }, 10);
+        recalcInstallment();
+        
+        // Auto close when clicking outside the modal content
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                closeInstallmentModal();
+            }
+        };
+    }
+
+    function closeInstallmentModal() {
+        const modal = document.getElementById('installmentModal');
+        const container = document.getElementById('installmentModalContainer');
+        container.classList.remove('scale-100', 'opacity-100');
+        container.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function switchInstallmentTab(tabNum) {
+        currentTab = tabNum;
+        for (let i = 1; i <= 3; i++) {
+            const tabEl = document.getElementById('inst-tab-' + i);
+            const contentEl = document.getElementById('inst-content-' + i);
+            if (i === tabNum) {
+                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent";
+                contentEl.classList.remove('hidden');
+            } else {
+                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent";
+                contentEl.classList.add('hidden');
+            }
+        }
+        recalcInstallment();
+    }
+
+    function selectFinanceCompany(compName) {
+        selectedCompany = compName;
+        const companies = ['Shinhan Finance', 'Home Credit', 'HD Saison', 'Mirae Asset'];
+        const compMap = {
+            'Shinhan Finance': 'Shinhan',
+            'Home Credit': 'Home',
+            'HD Saison': 'HD',
+            'Mirae Asset': 'Mirae'
+        };
+        companies.forEach(c => {
+            const btn = document.getElementById('comp-' + compMap[c]);
+            if (c === compName) {
+                btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 transition-all select-none h-12";
+            } else {
+                btn.className = "border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12";
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectFinanceTerm(months) {
+        selectedTerm = months;
+        const terms = [3, 4, 6, 9, 12];
+        terms.forEach(t => {
+            const btn = document.getElementById('term-' + t);
+            if (t === months) {
+                btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
+            } else {
+                btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectCreditBank(bankName) {
+        selectedBank = bankName;
+        const banks = ['Vietcombank', 'Techcombank', 'Sacombank', 'ACB'];
+        banks.forEach(b => {
+            const btn = document.getElementById('bank-' + b);
+            if (b === bankName) {
+                btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+            } else {
+                btn.className = "border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+            }
+        });
+    }
+
+    function selectCreditCard(cardName) {
+        selectedCreditCard = cardName;
+        const cards = ['Visa', 'MasterCard', 'JCB'];
+        cards.forEach(c => {
+            const btn = document.getElementById('card-' + c);
+            if (c === cardName) {
+                btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+            } else {
+                btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+            }
+        });
+    }
+
+    function selectCreditTerm(months) {
+        selectedCreditTerm = months;
+        const terms = [3, 6, 9, 12];
+        terms.forEach(t => {
+            const btn = document.getElementById('cterm-' + t);
+            if (t === months) {
+                btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+            } else {
+                btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+            }
+        });
+    }
+
+    function recalcInstallment() {
+        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
+        document.getElementById('calc-company').innerText = selectedCompany;
+        
+        const prepayRatio = 0.3;
+        const prepayAmount = Math.round(price * prepayRatio);
+        document.getElementById('calc-prepay').innerText = prepayAmount.toLocaleString('vi-VN') + 'đ';
+        
+        const remainingPrice = price - prepayAmount;
+        const monthlyAmt = Math.round(remainingPrice / selectedTerm);
+        document.getElementById('calc-monthly').innerText = monthlyAmt.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('calc-total-monthly').innerText = monthlyAmt.toLocaleString('vi-VN') + 'đ';
+        
+        const totalToPay = prepayAmount + (monthlyAmt * selectedTerm);
+        document.getElementById('calc-total').innerText = totalToPay.toLocaleString('vi-VN') + 'đ';
+        
+        const difference = totalToPay - price;
+        document.getElementById('calc-diff').innerText = difference.toLocaleString('vi-VN') + 'đ';
+    }
+
+    function submitNewInstallment() {
+        const fullname = document.getElementById('inst-fullname').value.trim();
+        const phone = document.getElementById('inst-phone').value.trim();
+
+        if (!fullname) {
+            Swal.fire('<?php echo __('warning'); ?>', '<?php echo __('please_enter_fullname') ?? 'Vui lòng nhập họ tên' ?>', 'warning');
+            return;
+        }
+        if (!phone || !/^[0-9]{10}$/.test(phone)) {
+            Swal.fire('<?php echo __('warning'); ?>', '<?php echo __('please_enter_valid_phone') ?? 'Vui lòng nhập số điện thoại 10 số' ?>', 'warning');
+            return;
+        }
+
+        let termText = '';
+        const tradeInCheckbox = document.getElementById('inst-trade-in');
+        const isTradeIn = tradeInCheckbox.checked ? ' (Thu cũ lên đời)' : '';
+
+        if (currentTab === 1) {
+            termText = `Công ty tài chính: ${selectedCompany}, Kỳ hạn: ${selectedTerm} tháng${isTradeIn}`;
+        } else if (currentTab === 2) {
+            termText = `Thẻ tín dụng: ${selectedBank} - ${selectedCreditCard}, Kỳ hạn: ${selectedCreditTerm} tháng${isTradeIn}`;
+        } else {
+            termText = `Mua trước trả sau: Kredivo${isTradeIn}`;
+        }
+
+        const formData = new FormData();
+        formData.append('product_id', <?= $id ?>);
+        formData.append('term', termText);
+        formData.append('fullname', fullname);
+        formData.append('phone', phone);
+        formData.append('csrf_token', csrfToken);
+
+        fetch(getApiUrl('save_installment.php'), {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeInstallmentModal();
+                Swal.fire({
+                    title: '<?php echo __('notification'); ?>',
+                    text: '<?php echo __('installment_success_swal'); ?>',
+                    icon: 'success',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire('<?php echo __('warning'); ?>', data.message || 'Lỗi đăng ký trả góp.', 'error');
+            }
+        })
+        .catch(err => {
+            Swal.fire('<?php echo __('warning'); ?>', 'Không thể gửi yêu cầu trả góp.', 'error');
+        });
+    }
+</script>
 
 <script>
     /**
@@ -809,35 +1305,188 @@ require_once __DIR__ . '/../partials/header.php';
     }
 
     /**
-     * CHỌN SỐ SAO CẢM NHẬN (TỪ 1 ĐẾN 5)
-     * Nhận giá trị nguyên (rating), cập nhật màu sắc sao tương ứng, gán text và gắn vào input hidden.
+     * ẨN / HIỆN FORM PHẢN HỒI ĐÁNH GIÁ
      */
-    const ratingLabels = { 1: 'Rất tệ', 2: 'Tệ', 3: 'Bình thường', 4: 'Tốt', 5: 'Tuyệt vời' };
-    function setRating(rating) {
-        const inputRating = document.getElementById('input_rating');
-        const ratingText = document.getElementById('rating-text');
-        
-        if (inputRating) inputRating.value = rating;
-        if (ratingText) ratingText.innerText = ratingLabels[rating];
-
-        for (let i = 1; i <= 5; i++) {
-            let star = document.getElementById('star_' + i);
-            if (star) {
-                if (i <= rating) {
-                    star.classList.remove('text-gray-300');
-                    star.classList.add('text-yellow-400');
-                } else {
-                    star.classList.remove('text-yellow-400');
-                    star.classList.add('text-gray-300');
+    function toggleReplyForm(reviewId, userName = '') {
+        const form = document.getElementById('reply-form-' + reviewId);
+        if (form) {
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                const textarea = form.querySelector('textarea');
+                if (textarea) {
+                    if (userName) {
+                        textarea.value = '@' + userName + ' ';
+                    }
+                    textarea.focus();
                 }
             }
         }
     }
-    // Chỉ gọi setRating nếu có các ngôi sao đánh giá (tức là user đã login và form hiển thị)
-    if (document.getElementById('star_1')) {
-        setRating(5);
+
+    /**
+     * ẨN / HIỆN DANH SÁCH PHẢN HỒI (KHI CÓ NHIỀU PHẢN HỒI)
+     */
+    function toggleReplies(reviewId) {
+        const container = document.getElementById('replies-container-' + reviewId);
+        const btn = document.getElementById('btn-show-replies-' + reviewId);
+        if (container && btn) {
+            container.classList.remove('hidden');
+            btn.classList.add('hidden'); // Ẩn nút sau khi đã mở
+        }
     }
 
+    /**
+     * TẢI THÊM ĐÁNH GIÁ (HIỆN CÁC ĐÁNH GIÁ ĐANG ẨN)
+     */
+    function loadMoreReviews() {
+        const hiddenReviews = document.querySelectorAll('.review-item.hidden');
+        hiddenReviews.forEach(el => el.classList.remove('hidden'));
+        const btnContainer = document.getElementById('load-more-reviews-container');
+        if (btnContainer) btnContainer.remove();
+    }
+
+    /**
+     * TẢI LẠI DANH SÁCH ĐÁNH GIÁ QUA AJAX (KHÔNG RELOAD TRANG)
+     */
+    async function refreshReviewsList() {
+        const container = document.getElementById('reviews-list-container');
+        if (!container) return;
+        try {
+            const response = await fetch(`product_detail.php?id=<?= $id ?>&only_reviews=1`);
+            const html = await response.text();
+            container.innerHTML = html;
+        } catch (error) {
+            console.error('Lỗi khi tải lại danh sách đánh giá:', error);
+        }
+    }
+
+    /**
+     * XỬ LÝ GỬI ĐÁNH GIÁ/PHẢN HỒI QUA AJAX
+     */
+    async function handleReviewSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        formData.append('ajax', '1');
+        formData.append('submit_review', '1');
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // Hiển thị thông báo cảm ơn - Dạng pill sang xịn mịn tích hợp Nyan Cat ở vị trí checkmark
+                Swal.fire({
+                    html: `
+                        <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+                            <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+                            <span class="text-[14px] md:text-[14px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+                        </div>
+                    `,
+                    background: 'transparent',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    backdrop: `rgba(0, 0, 0, 0.25)`, 
+                    position: 'top',
+                    customClass: {
+                        popup: 'bg-transparent border-0 p-0 shadow-none'
+                    },
+                    showClass: {
+                        popup: 'animate__animated animate__fadeInDown'
+                    },
+                    hideClass: {
+                        popup: 'animate__animated animate__fadeOutUp'
+                    }
+                });
+
+                // Reset form và ẩn đi (nếu là form phản hồi)
+                form.reset();
+                if (form.closest('[id^="reply-form-"]')) {
+                    form.closest('[id^="reply-form-"]').classList.add('hidden');
+                }
+
+                // Cập nhật lại danh sách đánh giá
+                await refreshReviewsList();
+            }
+        } catch (error) {
+            console.error('Lỗi khi gửi đánh giá:', error);
+            Swal.fire('<?= __("error") ?>', '<?= __("review_submit_error") ?>', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+        }
+    }
+
+    // Gắn sự kiện AJAX cho tất cả các form đánh giá (bao gồm cả các form mới được render qua AJAX)
+    document.addEventListener('submit', function(e) {
+        if (e.target && (e.target.id === 'main-review-form' || e.target.closest('[id^="reply-form-"]'))) {
+            handleReviewSubmit(e);
+        }
+    });
+
+    /**
+     * HIỆN THÔNG BÁO CẢM ƠN SAU KHI ĐÁNH GIÁ THÀNH CÔNG (Dành cho trường hợp reload truyền thống nếu có)
+     */
+    <?php if (isset($_SESSION['review_success_msg'])): ?>
+        Swal.fire({
+            html: `
+                <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+                    <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+                    <span class="text-[14px] md:text-[15px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+                </div>
+            `,
+            background: 'transparent',
+            showConfirmButton: false,
+            timer: 3500,
+            backdrop: `rgba(0, 0, 0, 0.25)`, 
+            position: 'top',
+            customClass: {
+                popup: 'bg-transparent border-0 p-0 shadow-none'
+            },
+            showClass: {
+                popup: 'animate__animated animate__fadeInDown'
+            },
+            hideClass: {
+                popup: 'animate__animated animate__fadeOutUp'
+            }
+        });
+        <?php unset($_SESSION['review_success_msg']); ?>
+    <?php endif; ?>
+
+    /**
+     * CHỌN SỐ SAO CẢM NHẬN (TỪ 1 ĐẾN 5)
+     * Nhận giá trị nguyên (rating), cập nhật màu sắc sao tương ứng, gán text và gắn vào input hidden.
+     */
+    const ratingLabels = { 
+        1: '<?= __("very_bad") ?>', 
+        2: '<?= __("bad") ?>', 
+        3: '<?= __("normal") ?>', 
+        4: '<?= __("good") ?>', 
+        5: '<?= __("excellent") ?>' 
+    };
+    function setRating(rating) {
+        document.getElementById('input_rating').value = rating;
+        document.getElementById('rating-text').innerText = ratingLabels[rating];
+        for (let i = 1; i <= 5; i++) {
+            let star = document.getElementById('star_' + i);
+            if (i <= rating) {
+                star.classList.remove('text-gray-300');
+                star.classList.add('text-yellow-400');
+            } else {
+                star.classList.remove('text-yellow-400');
+                star.classList.add('text-gray-300');
+            }
+        }
+    }
+    setRating(5);
 
     /**
      * PREVIEW FILE MEDIA (ẢNH/VIDEO) TRƯỚC KHI UPLOAD
@@ -850,13 +1499,15 @@ require_once __DIR__ . '/../partials/header.php';
         preview.innerHTML = '';
 
         if (input.files.length > 5) {
-            alert('Tối đa 5 file!');
+            alert('<?= __("max_files_warning") ?>');
             input.value = '';
             return;
         }
 
         if (input.files.length > 0) {
-            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">Đã chọn ' + input.files.length + ' file</p><p class="text-xs text-gray-400 mt-1">Bấm lại để thay đổi</p>';
+            const filesSelectedText = '<?= __("files_selected") ?>'.replace('%s', input.files.length);
+            const changeMediaText = '<?= __("change_media") ?>';
+            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">' + filesSelectedText + '</p><p class="text-xs text-gray-400 mt-1">' + changeMediaText + '</p>';
         }
 
         Array.from(input.files).forEach((file, idx) => {
@@ -927,11 +1578,11 @@ require_once __DIR__ . '/../partials/header.php';
                 <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fa-solid fa-trash-can text-red-500 text-2xl"></i>
                 </div>
-                <h3 class="font-bold text-gray-800 text-lg mb-2">Xóa đánh giá?</h3>
-                <p class="text-sm text-gray-500 mb-5">Đánh giá của bạn sẽ bị xóa vĩnh viễn và không thể khôi phục.</p>
+                <h3 class="font-bold text-gray-800 text-lg mb-2"><?= __("delete_review_title") ?></h3>
+                <p class="text-sm text-gray-500 mb-5"><?= __("delete_review_warning") ?></p>
                 <div class="flex gap-3">
-                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition">Hủy</button>
-                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md">Xóa</button>
+                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition"><?= __("cancel") ?></button>
+                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md"><?= __("confirm_delete") ?></button>
                 </div>
             </div>
         `;
@@ -943,111 +1594,6 @@ require_once __DIR__ . '/../partials/header.php';
 
         document.body.appendChild(overlay);
     }
-
-    /**
-     * AUTO SLIDE LOGIC
-     * Tự động chuyển ảnh sau mỗi 5 giây
-     */
-    const allProductImages = <?= json_encode(array_map('asset', $product_images), JSON_UNESCAPED_SLASHES) ?>;
-
-    let currentImgIndex = 0;
-    let slideInterval = null;
-
-
-    /**
-     * THAY ĐỔI ẢNH CHÍNH KHI CLICK THUMBNAIL
-     * Cập nhật src của ảnh chính và đổi style viền cho thumbnail đang chọn.
-     * Áp dụng hiệu ứng Fade + Blur + Scale chuyên nghiệp.
-     */
-    function changeMainImage(src, thumbElement, isManual = false) {
-        const mainImg = document.getElementById('main-product-image');
-        if (!mainImg || mainImg.src === src) return;
-
-        // Bước 1: Hiệu ứng thoát (Exit animation)
-        mainImg.style.opacity = '0';
-        mainImg.style.transform = 'scale(0.95) translateY(10px)';
-        mainImg.style.filter = 'blur(10px)';
-        
-        // Bước 2: Thay đổi nguồn ảnh sau khi ảnh cũ đã mờ đi
-        setTimeout(() => {
-            mainImg.src = src;
-            
-            // Bước 3: Hiệu ứng vào (Entrance animation)
-            mainImg.onload = () => {
-                mainImg.style.opacity = '1';
-                mainImg.style.transform = 'scale(1) translateY(0)';
-                mainImg.style.filter = 'blur(0)';
-            };
-        }, 300);
-
-        // Cập nhật class border cho thumbnails
-        document.querySelectorAll('.thumbnail-item').forEach(el => {
-            el.classList.remove('border-primary', 'shadow-md', 'scale-105');
-            el.classList.add('border-gray-100', 'opacity-60');
-        });
-        
-        if (thumbElement) {
-            thumbElement.classList.remove('border-gray-100', 'opacity-60');
-            thumbElement.classList.add('border-primary', 'shadow-md', 'scale-105');
-        }
-
-        // Nếu người dùng click thủ công, reset lại auto-slide để tránh bị nhảy hình đột ngột
-        if (isManual) {
-            const index = allProductImages.indexOf(src);
-            if (index !== -1) currentImgIndex = index;
-            resetAutoSlide();
-        }
-    }
-
-
-    function startAutoSlide() {
-        if (allProductImages.length <= 1) {
-            console.log("Gallery: Chỉ có 1 ảnh, không chạy auto slide.");
-            return;
-        }
-        
-        console.log("Gallery: Khởi động auto slide với " + allProductImages.length + " ảnh.");
-        
-        if (slideInterval) clearInterval(slideInterval);
-        
-        slideInterval = setInterval(() => {
-            currentImgIndex = (currentImgIndex + 1) % allProductImages.length;
-            const nextSrc = allProductImages[currentImgIndex];
-            const thumbnails = document.querySelectorAll('.thumbnail-item');
-            
-            console.log("Gallery: Tự động chuyển sang ảnh index " + currentImgIndex);
-            
-            if (thumbnails[currentImgIndex]) {
-                changeMainImage(nextSrc, thumbnails[currentImgIndex], false);
-                
-                // Tự động cuộn thanh thumbnail nếu ảnh bị khuất (Cách cuộn an toàn không nhảy trang)
-                const container = document.getElementById('thumbnail-container');
-                if (container) {
-                    const thumb = thumbnails[currentImgIndex];
-                    const scrollPos = thumb.offsetLeft - (container.offsetWidth / 2) + (thumb.offsetWidth / 2);
-                    container.scrollTo({ 
-                        left: scrollPos, 
-                        behavior: 'smooth' 
-                    });
-                }
-            }
-
-        }, 5000);
-    }
-
-    function resetAutoSlide() {
-        console.log("Gallery: Reset auto slide do tương tác người dùng.");
-        clearInterval(slideInterval);
-        startAutoSlide();
-    }
-
-    // Khởi chạy ngay lập tức
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        startAutoSlide();
-    } else {
-        document.addEventListener('DOMContentLoaded', startAutoSlide);
-    }
-
 </script>
 
 <script>

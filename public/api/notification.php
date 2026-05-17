@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../core/database.php';
 require_once __DIR__ . '/../../core/security.php';
 require_once __DIR__ . '/../../core/api.php';
+require_once __DIR__ . '/../../core/lang.php';
 
 $authUser = api_authenticated_user();
 $userId = (int) ($authUser['user_id'] ?? 0);
@@ -27,6 +28,9 @@ switch ($action) {
         foreach ($items as &$item) {
             $item['id'] = (int) $item['id'];
             $item['is_read'] = (bool) $item['is_read'];
+            // Tự động dịch nội dung thông báo động sang Tiếng Anh & cache file tĩnh
+            $item['title'] = translate_html_content($item['title'], 'noti_title_' . $item['id']);
+            $item['message'] = translate_html_content($item['message'], 'noti_msg_' . $item['id']);
         }
         
         // Đếm số thông báo chưa đọc
