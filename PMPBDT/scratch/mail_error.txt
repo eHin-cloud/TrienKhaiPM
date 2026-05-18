@@ -1,0 +1,1 @@
+Gửi mail thất bại do thiếu thông tin: to_email=kaitoprozz@gmail.com, SMTP_USERNAME=rỗng, SMTP_PASSWORD=rỗng, SMTP_FROM_EMAIL=rỗng
