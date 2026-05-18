@@ -117,7 +117,7 @@ require_once __DIR__ . '/../partials/header.php';
                         <!-- Thông tin sản phẩm: Tên, Giá, Nút tăng giảm số lượng -->
                         <div class="flex-1 flex flex-col justify-between">
                             <a href="product_detail.php?id=<?= $item['product_id'] ?>" class="font-medium text-gray-800 hover:text-primary pr-8 line-clamp-2 leading-snug">
-                                <?= htmlspecialchars($item['name']) ?>
+                                <?= htmlspecialchars(getCurrentLang() === 'en' ? translate_text($item['name'], 'prod_name_' . $item['product_id']) : $item['name']) ?>
                             </a>
                             <div class="text-danger font-bold text-lg mt-1"><?= number_format($item['price']) ?>đ</div>
                             
