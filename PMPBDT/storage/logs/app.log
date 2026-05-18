@@ -1,0 +1,928 @@
+[2026-05-15 14:16:32] [EXCEPTION] Exception: syntax error, unexpected end of file, expecting "elseif" or "else" or "endif"
+Stack trace: #0 {main}
+[2026-05-15 14:17:13] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 216
+[2026-05-15 14:17:13] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:17:14] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 216
+[2026-05-15 14:17:14] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:17:24] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 216
+[2026-05-15 14:17:24] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined variable $db in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 159
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined variable $db in D:\Sever\htdocs\PMPBDT\views\pages\compare.php on line 11
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 39) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:19:54] [PHP_ERROR] Error [2]: Cannot modify header information - headers already sent by (output started at D:\Sever\htdocs\PMPBDT\scripts\self_test.php:39) in D:\Sever\htdocs\PMPBDT\views\pages\profile.php on line 6
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\public\index.php on line 23
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: session_start(): Session cannot be started after headers have already been sent (sent from D:\Sever\htdocs\PMPBDT\scripts\self_test.php on line 40) in D:\Sever\htdocs\PMPBDT\core\security.php on line 25
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:08] [PHP_ERROR] Error [2]: Cannot modify header information - headers already sent by (output started at D:\Sever\htdocs\PMPBDT\scripts\self_test.php:40) in D:\Sever\htdocs\PMPBDT\views\pages\profile.php on line 6
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 39
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 110
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:20] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:21] [PHP_ERROR] Error [2]: Undefined array key "HTTP_HOST" in D:\Sever\htdocs\PMPBDT\views\api\sitemap.php on line 13
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 39
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 110
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:54] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 88
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:20:55] [PHP_ERROR] Error [2]: Undefined array key "HTTP_HOST" in D:\Sever\htdocs\PMPBDT\views\api\sitemap.php on line 13
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 95
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 95
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 39
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\pages\product_detail.php on line 110
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 95
+[2026-05-15 07:21:18] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\views\partials\header.php on line 47
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 95
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\core\security.php on line 95
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_URI" in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [8192]: parse_url(): Passing null to parameter #1 ($url) of type string is deprecated in D:\Sever\htdocs\PMPBDT\public\index.php on line 44
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "REQUEST_METHOD" in D:\Sever\htdocs\PMPBDT\public\index.php on line 58
+[2026-05-15 07:21:19] [PHP_ERROR] Error [2]: Undefined array key "HTTP_HOST" in D:\Sever\htdocs\PMPBDT\views\api\sitemap.php on line 13
+[2026-05-15 14:22:03] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 218
+[2026-05-15 14:22:03] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:26:23] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:26:23] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:26:27] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:26:27] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:26:28] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:26:28] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:26:53] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:26:53] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:27:00] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:27:00] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:27:01] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:27:01] [EXCEPTION] Exception: Using $this when not in object context
+Stack trace: #0 D:\Sever\htdocs\PMPBDT\public\index.php(124): require_once()
+#1 {main}
+[2026-05-15 14:28:07] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:28:07] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1287
+[2026-05-15 14:28:07] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1287
+[2026-05-15 14:28:07] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1295
+[2026-05-15 14:28:07] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1295
+[2026-05-15 14:32:04] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:32:04] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1291
+[2026-05-15 14:32:04] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1291
+[2026-05-15 14:32:04] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1299
+[2026-05-15 14:32:04] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1299
+[2026-05-15 14:32:20] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:32:20] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1291
+[2026-05-15 14:32:20] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1291
+[2026-05-15 14:32:20] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1299
+[2026-05-15 14:32:20] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1299
+[2026-05-15 14:36:33] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 223
+[2026-05-15 14:36:33] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-15 14:36:33] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-15 14:36:33] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-15 14:36:33] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Sever\htdocs\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 09:31:48] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:52] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:53] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:54] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:54] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:56] [PHP_ERROR] Error [8192]: App\Repository\WarrantyRepository::addWarrantyRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\WarrantyRepository.php on line 34
+[2026-05-16 09:31:56] [PHP_ERROR] Error [8192]: App\Repository\ReturnRepository::addReturnRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\ReturnRepository.php on line 33
+[2026-05-16 09:31:56] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:31:56] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:32:03] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:32:04] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:07] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:08] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:23] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:26] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:27] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:28] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:30] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:30] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:30] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\track_order.php(224): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:32] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:33] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:34] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:35] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 09:33:35] [EXCEPTION] Exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'dienmay.notifications' doesn't exist
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\partials\header.php(772): PDO->prepare()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\index.php(45): require_once('...')
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 10:00:25] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-16 10:00:36] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-16 10:00:38] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-16 10:00:40] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-16 10:02:49] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:02:49] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:02:49] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:02:49] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:02:49] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:02:49] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:02:58] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:02:58] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:02:58] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:02:58] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:02:58] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:02:58] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:02:58] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:02:58] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:02:58] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 34
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-16 10:03:00] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-16 10:03:05] [EXCEPTION] Exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'u.is_banned' in 'field list'
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Service\AdminService.php(346): PDO->query()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php(47): App\Service\AdminService->getPageData()
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-16 10:03:08] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:03:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:03:08] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:03:08] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:03:08] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 411
+[2026-05-16 10:03:08] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:03:08] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:03:08] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:03:08] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:04:35] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:04:35] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:04:35] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:04:35] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:04:35] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:04:35] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:04:45] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:16] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:16] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:23:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:23:17] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:17] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-16 10:23:17] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:17] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-16 10:23:17] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-16 10:23:17] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:23:30] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 561
+[2026-05-17 16:24:13] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-17 16:25:04] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:25:04] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:25:15] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:25:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:26:25] [PHP_ERROR] Error [8192]: App\Repository\WarrantyRepository::addWarrantyRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\WarrantyRepository.php on line 34
+[2026-05-17 16:26:25] [PHP_ERROR] Error [8192]: App\Repository\ReturnRepository::addReturnRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\ReturnRepository.php on line 33
+[2026-05-17 16:26:29] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:26:29] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:27:18] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:27:18] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:28:32] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:28:32] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:33:55] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:33:55] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:34:01] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:34:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:35:36] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:35:36] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:35:50] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:35:50] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:36:49] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:36:49] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:36:53] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:36:53] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:36:58] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:36:58] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:37:32] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:37:32] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:37:53] [EXCEPTION] Exception: Unclosed '[' on line 479 does not match '}'
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php(39): Composer\Autoload\ClassLoader->loadClass()
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-17 16:37:57] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:37:57] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:38:04] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:38:04] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:38:06] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:38:06] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:38:20] [EXCEPTION] Exception: Unclosed '[' on line 479 does not match '}'
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php(39): Composer\Autoload\ClassLoader->loadClass()
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-17 16:38:29] [EXCEPTION] Exception: Unclosed '[' on line 479 does not match '}'
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\vendor\composer\ClassLoader.php(427): {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}()
+#1 D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php(39): Composer\Autoload\ClassLoader->loadClass()
+#2 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once('...')
+#3 {main}
+[2026-05-17 16:39:11] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:11] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:11] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:11] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:11] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:39:11] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:39:12] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 16:41:17] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:41:17] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:41:23] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:41:23] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:42:15] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:42:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:44:26] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:44:26] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:44:31] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:44:31] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:46:34] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:46:34] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:46:37] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:46:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:05] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:09] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:09] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:16] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:16] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:25] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:28] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:48:34] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:48:34] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:50:52] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:50:52] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:50:54] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:50:54] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:51:28] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:51:28] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:53:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:21] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:53:21] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:56:23] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:56:23] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:56:32] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:56:32] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:56:42] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:56:42] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:58:01] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 16:58:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 16:58:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 16:58:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:03:23] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 54
+[2026-05-17 17:03:23] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:17:58] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:17:58] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:18:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:18:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:18:38] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:18:38] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:19:20] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:19:20] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:20:03] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:20:03] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:20:12] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:20:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:20:17] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:20:17] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:20:27] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 560
+[2026-05-17 17:22:46] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:22:46] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:23:52] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:23:57] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:24:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:24:04] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:24:06] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:26:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:26:36] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:27:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-17 17:30:32] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:30:32] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:34:09] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:34:09] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:34:20] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:34:20] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:34:47] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:34:47] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:36:53] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:36:53] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:37:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:37:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:37:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:37:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:37:19] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:37:19] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:37:22] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:37:22] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:37:33] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:37:33] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:41:56] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:41:56] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:42:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:42:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:43:09] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 17:43:09] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 223
+[2026-05-17 17:43:09] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 17:43:09] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1296
+[2026-05-17 17:43:09] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 17:43:09] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1304
+[2026-05-17 17:43:42] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:43:42] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:44:34] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:44:34] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:44:38] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:44:38] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:45:13] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:45:13] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:46:37] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:46:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:47:25] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:47:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:49:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:49:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:49:13] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:49:13] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:50:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:50:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:51:02] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:51:02] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:53:20] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:53:20] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:54:57] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:54:57] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:57:01] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 17:57:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 17:57:32] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-17 21:06:37] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 21:06:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-17 21:07:01] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-17 21:07:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:54:37] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:54:37] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:54:44] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:54:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:54:51] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:54:51] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:54:55] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:54:55] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:54:57] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:54:57] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:55:07] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:55:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 00:55:10] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 00:55:10] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 15:34:11] [PHP_ERROR] Error [8192]: App\Repository\WarrantyRepository::addWarrantyRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\WarrantyRepository.php on line 34
+[2026-05-18 15:34:11] [PHP_ERROR] Error [8192]: App\Repository\ReturnRepository::addReturnRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\ReturnRepository.php on line 33
+[2026-05-18 15:34:27] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 15:34:27] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 15:40:43] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 15:40:43] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 15:44:56] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 15:44:56] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 15:45:33] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 15:53:39] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 15:53:39] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 15:58:41] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 15:58:41] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:02:35] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:02:35] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:02:56] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:02:56] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:04:24] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:04:24] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:04:44] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:04:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:10:08] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:10:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:13:27] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:13:27] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:13:40] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:13:40] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:15:12] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:15:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:16:18] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:16:18] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:19:13] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:19:13] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:21:31] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:21:31] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:22:39] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:22:39] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:23:44] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:23:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:23:59] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:23:59] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:24:18] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:24:18] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:24:25] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:24:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:26:43] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:26:43] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:31:11] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:31:11] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:33:25] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:33:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:33:55] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:33:55] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:35:11] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:35:11] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:35:49] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:35:49] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:36:01] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:36:01] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:36:25] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:36:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:36:55] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:36:55] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:38:32] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:38:32] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:39:38] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:39:38] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:40:14] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:40:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:40:57] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:40:57] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:41:36] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:41:36] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:42:49] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:42:49] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:42:53] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:42:53] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:48:06] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:48:06] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:48:12] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:48:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:52:14] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:52:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 16:53:44] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 16:53:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:03:17] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:03:17] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:03:19] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:03:19] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:04:11] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:04:11] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:04:13] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:04:13] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:04:17] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:04:17] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:05:48] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:05:48] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:05:55] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:05:55] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:07:08] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:07:08] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:08:15] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:08:15] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:09:35] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:09:35] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:10:35] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:10:35] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:11:40] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:11:40] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:11:44] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:11:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:13:11] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:13:11] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:13:13] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:13:13] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:15:28] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 230
+[2026-05-18 17:15:28] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 230
+[2026-05-18 17:15:28] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1431
+[2026-05-18 17:15:28] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1431
+[2026-05-18 17:15:28] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1439
+[2026-05-18 17:15:28] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1439
+[2026-05-18 17:21:12] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:21:12] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:21:24] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:21:24] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:46] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:46] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:48] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:48] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:50] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:22:50] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\product_detail.php on line 364
+[2026-05-18 17:22:51] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:22:51] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:23:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:23:07] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:25:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:25:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:25:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:25:14] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:25:50] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: trim(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 62
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: Using null as an array offset is deprecated, use an empty string instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 58
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: trim(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\core\lang.php on line 62
+[2026-05-18 17:28:05] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\pages\profile.php on line 565
+[2026-05-18 17:36:13] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-18 17:38:21] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-18 17:38:56] [EXCEPTION] Exception: Call to undefined function curl_init()
+Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_once()
+#1 {main}
+[2026-05-18 17:39:21] [PHP_ERROR] Error [8192]: The predefined locally scoped $http_response_header variable is deprecated, call http_get_last_response_headers() instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\chatbot.php on line 167
+[2026-05-18 17:43:08] [PHP_ERROR] Error [2]: file_get_contents(https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=AIzaSyDxLs_QcSyy4952IeUVNzH2weAq0BTlvE8): Failed to open stream: HTTP request failed! in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\chatbot.php on line 164
+[2026-05-18 19:27:16] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:27:16] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:27:16] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1505
+[2026-05-18 19:27:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1505
+[2026-05-18 19:27:16] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1513
+[2026-05-18 19:27:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1513
+[2026-05-18 19:35:19] [PHP_ERROR] Error [8192]: App\Repository\WarrantyRepository::addWarrantyRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\WarrantyRepository.php on line 34
+[2026-05-18 19:35:22] [PHP_ERROR] Error [8192]: App\Repository\ReturnRepository::addReturnRequest(): Implicitly marking parameter $mediaJson as nullable is deprecated, the explicit nullable type must be used instead in D:\Xampp\htdocs\PMPBDT\PMPBDT\src\Repository\ReturnRepository.php on line 33
+[2026-05-18 19:35:24] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:35:24] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:35:24] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:35:24] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:35:24] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-18 19:35:24] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-18 19:35:25] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:35:25] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:35:25] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:35:25] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:35:25] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-18 19:35:25] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 34
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: strtotime(): Passing null to parameter #1 ($datetime) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 42
+[2026-05-18 19:35:28] [PHP_ERROR] Error [8192]: fputcsv(): the $escape parameter must be provided as its default value will change in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\api\export_revenue.php on line 38
+[2026-05-18 19:37:16] [PHP_ERROR] Error [2]: Undefined variable $search in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:37:16] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 237
+[2026-05-18 19:37:16] [PHP_ERROR] Error [2]: Undefined variable $categories in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:37:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
+[2026-05-18 19:37:16] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-18 19:37:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
