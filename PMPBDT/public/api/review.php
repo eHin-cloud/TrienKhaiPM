@@ -49,7 +49,7 @@ try {
             // Kiểm tra xem đã đánh giá chưa (chỉ áp dụng cho review gốc, không áp dụng cho reply)
             if (!$parentId) {
                 $stmt = $db->prepare("SELECT id FROM reviews WHERE product_id = ? AND user_id = ? AND parent_id IS NULL");
-                $stmt->execute([productId, $userId]);
+                $stmt->execute([$productId, $userId]);
                 if ($stmt->fetch()) {
                     api_json_response(false, 'Bạn đã đánh giá sản phẩm này rồi.', [], 400);
                 }
