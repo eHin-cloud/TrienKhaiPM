@@ -1,11 +1,16 @@
 <?php
-require_once __DIR__ . '/../core/database.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+\App\Support\Env::load(__DIR__ . '/../.env');
+
 try {
-    $stmt = $db->query('DESCRIBE products');
-    $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    foreach ($columns as $col) {
-        echo "Field: {$col['Field']} | Type: {$col['Type']} | Null: {$col['Null']} | Key: {$col['Key']} | Default: " . json_encode($col['Default']) . " | Extra: {$col['Extra']}\n";
-    }
+    $db = \App\Database\DatabaseConnection::getInstance();
+    
+    // In cấu trúc bảng users
+    $createTable = $db->query("SHOW CREATE TABLE users")->fetch();
+    echo "CREATE TABLE USERS:\n";
+    echo $createTable['Create Table'] . "\n\n";
+    
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+    echo "ERROR: " . $e->getMessage() . "\n";
 }
+?>

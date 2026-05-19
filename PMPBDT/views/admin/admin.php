@@ -18,8 +18,8 @@ require_once __DIR__ . '/../../core/mail_helper.php';
  * @requires database.php
  */
 
-// Kiểm tra quyền truy cập (Chỉ Admin và Manager mới được vào)
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'manager'])) {
+// Kiểm tra quyền truy cập (Chỉ Admin, Manager và Nhân viên mới được vào)
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'manager', 'staff'])) {
     header("Location: index.php");
     exit;
 }
@@ -31,7 +31,10 @@ $page = isset($_GET['p']) ? $_GET['p'] : 'orders'; // Mặc định vào thẳng
 if (!can('dashboard') && $page === 'dashboard') {
     $page = 'orders';
 }
-if (!can('manage_users') && in_array($page, ['users', 'login_history'])) {
+if (!in_array($user_role, ['admin', 'manager']) && $page === 'revenue') {
+    $page = 'orders';
+}
+if (!can('manage_users') && in_array($page, ['users', 'login_history', 'notifications'])) {
     $page = 'orders';
 }
 if (!can('manage_categories') && in_array($page, ['categories', 'brands', 'vouchers', 'newsletters'])) {
@@ -189,17 +192,19 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             </button>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            <div class="text-xs text-slate-400 font-bold mb-4 uppercase tracking-wider">Hệ thống</div>
+            <?php if (in_array($user_role, ['admin', 'manager'])): ?>
+                <div class="text-xs text-slate-400 font-bold mb-4 uppercase tracking-wider">Hệ thống</div>
 
-            <a href="?p=dashboard"
-                class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
-                <i class="fa-solid fa-chart-line w-5"></i> Tổng quan
-            </a>
+                <a href="?p=dashboard"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'dashboard' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
+                    <i class="fa-solid fa-chart-line w-5"></i> Tổng quan
+                </a>
 
-            <a href="?p=revenue"
-                class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'revenue' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
-                <i class="fa-solid fa-wallet w-5"></i> Doanh thu
-            </a>
+                <a href="?p=revenue"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'revenue' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
+                    <i class="fa-solid fa-wallet w-5"></i> Doanh thu
+                </a>
+            <?php endif; ?>
 
             <div class="text-xs text-slate-400 font-bold mt-6 mb-4 uppercase tracking-wider">Quản lý Bán Hàng</div>
 
@@ -988,6 +993,8 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                                                 echo '<span class="bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Admin</span>';
                                             } elseif ($item['role'] == 'manager') {
                                                 echo '<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Quản lý</span>';
+                                            } elseif ($item['role'] == 'staff') {
+                                                echo '<span class="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Nhân viên</span>';
                                             } else {
                                                 echo '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Khách hàng</span>';
                                             }
@@ -2445,115 +2452,115 @@ extract($adminService->getPageData($page, $_GET, $user_role));
 
     <!-- MODAL SẢN PHẨM -->
     <div id="productModal"
-        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
-            <div
-                class="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex justify-between items-center z-10">
-                <h3 class="text-lg font-bold text-gray-800" id="productModalTitle">Thêm Sản Phẩm Mới</h3>
+        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative">
+            <div class="sticky top-0 bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0 z-10">
+                <h3 class="text-base font-black text-slate-800 flex items-center gap-2" id="productModalTitle">
+                    <i class="fa-solid fa-box text-blue-600"></i> Thêm Sản Phẩm Mới
+                </h3>
                 <button type="button" onclick="closeModal('productModal')"
-                    class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+                    class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" class="p-6">
+            <form method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto p-6 space-y-4">
                 <?= csrf_input_field() ?>
                 <input type="hidden" name="action" id="prod_action" value="add_product">
                 <input type="hidden" name="id" id="prod_id" value="">
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên sản phẩm *</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-tag text-blue-500 mr-1"></i> Tên sản phẩm *</label>
                         <input type="text" name="name" id="prod_name" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                            placeholder="Nhập tên sản phẩm...">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Danh mục *</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-list text-indigo-500 mr-1"></i> Danh mục *</label>
                         <select name="category_id" id="prod_category" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="searchable-select w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
                             <?php foreach ($categories as $c): ?>
-                                <option value="<?= $c['id'] ?>"><?= $c['name'] ?></option><?php endforeach; ?>
+                                <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Thương hiệu *</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-copyright text-purple-500 mr-1"></i> Thương hiệu *</label>
                         <select name="brand_id" id="prod_brand" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="searchable-select w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
                             <?php foreach ($brands as $b): ?>
-                                <option value="<?= $b['id'] ?>"><?= $b['name'] ?></option><?php endforeach; ?>
+                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Giá bán (VNĐ) *</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-money-bill-wave text-green-500 mr-1"></i> Giá bán (VNĐ) *</label>
                         <input type="number" name="price" id="prod_price" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                            placeholder="Nhập giá bán...">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Giá gốc (Bỏ trống nếu không
-                            giảm)</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-strikethrough text-slate-400 mr-1"></i> Giá gốc (Bỏ trống nếu không giảm)</label>
                         <input type="number" name="old_price" id="prod_old_price"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                            placeholder="Giá gốc chưa giảm...">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tải ảnh từ máy tính</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-cloud-arrow-up text-emerald-500 mr-1"></i> Tải ảnh từ máy tính</label>
                         <input type="file" name="image_upload" accept="image/*"
-                            class="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hoặc dùng URL Ảnh chính</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-link text-sky-500 mr-1"></i> Hoặc dùng URL Ảnh chính</label>
                         <input type="text" name="image" id="prod_image"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="https://...">
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                            placeholder="Dán liên kết ảnh chính (https://...)">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tải thêm nhiều ảnh phụ
-                            (Gallery)</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-images text-pink-500 mr-1"></i> Tải thêm nhiều ảnh phụ (Gallery)</label>
                         <input type="file" name="more_images_upload[]" accept="image/*" multiple
-                            class="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-gray-50">
-                        <p class="text-[10px] text-gray-400 mt-1 italic">* Giữ Ctrl/Shift để chọn nhiều ảnh</p>
+                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium">
+                        <p class="text-[10px] text-gray-400 mt-1 italic">* Giữ Ctrl hoặc Shift để chọn upload nhiều ảnh</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Hoặc nhập danh sách URL ảnh
-                            phụ</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-paperclip text-rose-500 mr-1"></i> Hoặc nhập danh sách URL ảnh phụ</label>
                         <textarea name="more_images_urls" id="prod_more_images_urls" rows="2"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                            placeholder="Mỗi URL ảnh một dòng..."></textarea>
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium resize-none"
+                            placeholder="Mỗi liên kết ảnh một dòng (https://...)"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Quà Tặng (Cách nhau bằng dấu ;
-                            )</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-gift text-red-500 mr-1"></i> Quà Tặng (Cách nhau bằng dấu ; )</label>
                         <input type="text" name="gift_text" id="prod_gift"
-                            class="w-full px-3 py-2 border border-gray-300 rounded outline-none"
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
                             placeholder="Tặng ABC; Giảm XYZ...">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Nhãn dán (Cách nhau bằng dấu
-                            phẩy)</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-tags text-teal-500 mr-1"></i> Nhãn dán (Cách nhau bằng dấu phẩy)</label>
                         <input type="text" name="tags" id="prod_tags"
-                            class="w-full px-3 py-2 border border-gray-300 rounded outline-none"
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
                             placeholder="Trả góp 0%, Mới 2024">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Số lượng tồn kho *</label>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-boxes-stacked text-amber-500 mr-1"></i> Số lượng tồn kho *</label>
                         <input type="number" name="stock" id="prod_stock" required min="0" value="100"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Nhập số lượng">
+                            class="w-full px-3 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium"
+                            placeholder="Số lượng sản phẩm trong kho...">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả bài viết chi tiết</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-align-left text-indigo-500 mr-1"></i> Mô tả bài viết chi tiết</label>
                         <textarea name="description" id="prod_desc"></textarea>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Thông số kỹ thuật</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5"><i class="fa-solid fa-gears text-purple-500 mr-1"></i> Thông số kỹ thuật</label>
                         <textarea name="specifications" id="prod_specs"></textarea>
                     </div>
                 </div>
 
-                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 shrink-0">
                     <button type="button" onclick="closeModal('productModal')"
-                        class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium transition">Hủy</button>
+                        class="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition">Hủy</button>
                     <button type="submit" onclick="tinymce.triggerSave();"
-                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition shadow-md">Lưu
-                        Sản Phẩm</button>
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md shadow-blue-100">Lưu Sản Phẩm</button>
                 </div>
             </form>
         </div>
@@ -2685,6 +2692,7 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                             <select name="role" id="usr_role" required
                                 class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
                                 <option value="customer">Khách hàng (Customer)</option>
+                                <option value="staff">Nhân viên (Staff)</option>
                                 <option value="manager">Quản lý (Manager)</option>
                                 <option value="admin">Quản trị viên (Admin)</option>
                             </select>
@@ -2887,6 +2895,15 @@ extract($adminService->getPageData($page, $_GET, $user_role));
 
     <!-- SCRIPTS JS -->
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Biến các thẻ select thông thường thành hộp tìm kiếm
+            document.querySelectorAll('.searchable-select').forEach((el) => {
+                new TomSelect(el, {
+                    create: false,
+                    sortField: { field: "text", direction: "asc" }
+                });
+            });
+        });
         <?php if ($msg): ?>
             Swal.fire({
                 icon: '<?= $msg_type ?>',
@@ -2898,6 +2915,17 @@ extract($adminService->getPageData($page, $_GET, $user_role));
         <?php endif; ?>
 
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- PREVIEW FILE BANNER ---
+        function previewBannerFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('previewBannerImg').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
 
         // --- SIDEBAR TOGGLE (Responsive) ---
         function toggleSidebar() {
@@ -3113,7 +3141,7 @@ extract($adminService->getPageData($page, $_GET, $user_role));
         // --- SCRIPTS CHO SẢN PHẨM ---
         function openProductModal() {
             document.getElementById('prod_action').value = 'add_product';
-            document.getElementById('productModalTitle').innerText = 'Thêm Sản Phẩm Mới';
+            document.getElementById('productModalTitle').innerHTML = '<i class="fa-solid fa-box text-blue-600"></i> Thêm Sản Phẩm Mới';
             document.getElementById('prod_id').value = '';
             document.getElementById('prod_name').value = '';
             document.getElementById('prod_price').value = '';
@@ -3123,6 +3151,15 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('prod_gift').value = '';
             document.getElementById('prod_tags').value = '';
             document.getElementById('prod_stock').value = '100';
+
+            // Reset Tom Select về phần tử đầu tiên nếu có
+            if (document.getElementById('prod_category').tomselect) {
+                document.getElementById('prod_category').tomselect.setValue(document.getElementById('prod_category').options[0]?.value || '');
+            }
+            if (document.getElementById('prod_brand').tomselect) {
+                document.getElementById('prod_brand').tomselect.setValue(document.getElementById('prod_brand').options[0]?.value || '');
+            }
+
             if (tinymce.get('prod_desc')) tinymce.get('prod_desc').setContent('');
             if (tinymce.get('prod_specs')) tinymce.get('prod_specs').setContent('');
 
@@ -3131,11 +3168,24 @@ extract($adminService->getPageData($page, $_GET, $user_role));
 
         function editProduct(product) {
             document.getElementById('prod_action').value = 'edit_product';
-            document.getElementById('productModalTitle').innerText = 'Sửa Sản Phẩm #' + product.id;
+            document.getElementById('productModalTitle').innerHTML = '<i class="fa-solid fa-box-open text-blue-600"></i> Sửa Sản Phẩm #' + product.id;
             document.getElementById('prod_id').value = product.id;
             document.getElementById('prod_name').value = product.name;
-            document.getElementById('prod_category').value = product.category_id;
-            document.getElementById('prod_brand').value = product.brand_id;
+
+            // Đồng bộ Tom Select cho Danh mục
+            if (document.getElementById('prod_category').tomselect) {
+                document.getElementById('prod_category').tomselect.setValue(product.category_id);
+            } else {
+                document.getElementById('prod_category').value = product.category_id;
+            }
+
+            // Đồng bộ Tom Select cho Thương hiệu
+            if (document.getElementById('prod_brand').tomselect) {
+                document.getElementById('prod_brand').tomselect.setValue(product.brand_id);
+            } else {
+                document.getElementById('prod_brand').value = product.brand_id;
+            }
+
             document.getElementById('prod_price').value = product.price;
             document.getElementById('prod_old_price').value = product.old_price;
             document.getElementById('prod_image').value = product.image;

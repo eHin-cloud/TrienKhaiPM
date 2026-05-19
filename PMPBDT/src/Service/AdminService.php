@@ -293,6 +293,43 @@ class AdminService
                 $msg = "Lỗi khi cập nhật tồn kho: " . $e->getMessage();
                 $msg_type = 'error';
             }
+        } elseif ($action === 'update_banner') {
+            // Xử lý upload ảnh banner nếu có file được chọn từ máy tính
+            if (isset($files['banner_image_upload']) && $files['banner_image_upload']['error'] !== UPLOAD_ERR_NO_FILE) {
+                if ($files['banner_image_upload']['error'] === UPLOAD_ERR_OK) {
+                    $upload_dir = 'uploads/';
+                    if (!file_exists($upload_dir)) {
+                        mkdir($upload_dir, 0777, true);
+                    }
+                    $file_name = time() . '_' . basename($files['banner_image_upload']['name']);
+                    $target_file = $upload_dir . $file_name;
+                    if (move_uploaded_file($files['banner_image_upload']['tmp_name'], $target_file)) {
+                        $post['banner_image'] = $target_file;
+                    } else {
+                        return ['msg' => 'Không thể lưu file ảnh banner tải lên. Vui lòng kiểm tra quyền thư mục máy chủ!', 'msg_type' => 'error'];
+                    }
+                } else {
+                    $upload_errors = [
+                        UPLOAD_ERR_INI_SIZE => 'Ảnh tải lên vượt quá dung lượng cho phép của máy chủ (upload_max_filesize).',
+                        UPLOAD_ERR_FORM_SIZE => 'Ảnh tải lên vượt quá dung lượng cho phép của form.',
+                        UPLOAD_ERR_PARTIAL => 'Ảnh chỉ được tải lên một phần.',
+                        UPLOAD_ERR_NO_TMP_DIR => 'Máy chủ thiếu thư mục tạm để tải ảnh.',
+                        UPLOAD_ERR_CANT_WRITE => 'Không thể ghi ảnh banner vào đĩa máy chủ.',
+                        UPLOAD_ERR_EXTENSION => 'Extension PHP đã chặn tải ảnh banner.'
+                    ];
+                    $err_msg = $upload_errors[$files['banner_image_upload']['error']] ?? 'Lỗi upload ảnh banner không xác định.';
+                    return ['msg' => $err_msg, 'msg_type' => 'error'];
+                }
+            }
+
+            $banner_fields = ['banner_badge', 'banner_title1', 'banner_title2', 'banner_subtitle', 'banner_image', 'banner_link', 'banner_product_1', 'banner_product_2', 'banner_product_3', 'banner_product_4'];
+            foreach ($banner_fields as $field) {
+                if (isset($post[$field])) {
+                    updateSiteSetting($this->db, $field, trim($post[$field]));
+                }
+            }
+            $msg = "Cập nhật banner trang chủ thành công!";
+            $msg_type = 'success';
         }
 
         // --- XỬ LÝ TÀI KHOẢN NGƯỜI DÙNG ---
@@ -467,17 +504,7 @@ class AdminService
                 $msg_type = 'success';
             }
 
-            // --- XỬ LÝ BANNER ---
-            elseif ($action === 'update_banner') {
-                $banner_fields = ['banner_badge', 'banner_title1', 'banner_title2', 'banner_subtitle', 'banner_image', 'banner_link', 'banner_product_1', 'banner_product_2', 'banner_product_3', 'banner_product_4'];
-                foreach ($banner_fields as $field) {
-                    if (isset($post[$field])) {
-                        updateSiteSetting($this->db, $field, trim($post[$field]));
-                    }
-                }
-                $msg = "Cập nhật banner trang chủ thành công!";
-                $msg_type = 'success';
-            }
+            
 
             // --- GỬI EMAIL CHIẾN DỊCH HÀNG LOẠT ---
             elseif ($action === 'send_bulk_email') {

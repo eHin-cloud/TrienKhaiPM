@@ -127,6 +127,9 @@ if (!function_exists('can')) {
             'manager' => [
                 'dashboard', 'manage_orders', 'manage_products'
             ],
+            'staff' => [
+                'manage_orders', 'manage_products'
+            ],
             'customer' => []
         ];
         

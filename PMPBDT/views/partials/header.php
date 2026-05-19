@@ -1136,8 +1136,8 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                         <!-- Dropdown menu (hiện khi hover) -->
                         <div
                             class="absolute right-0 top-full mt-0 w-[180px] bg-white border border-gray-200 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-                            <!-- Link Quản trị (chỉ hiện cho admin/manager) -->
-                            <?php if (in_array($_SESSION['role'], ['admin', 'manager'])): ?>
+                            <!-- Link Quản trị (chỉ hiện cho admin/manager/staff) -->
+                            <?php if (in_array($_SESSION['role'], ['admin', 'manager', 'staff'])): ?>
                                 <a href="admin.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"><i
                                         class="fa-solid fa-shield-halved text-danger mr-2"></i> <?= __('admin_panel') ?></a>
                             <?php endif; ?>
