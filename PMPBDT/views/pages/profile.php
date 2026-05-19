@@ -495,7 +495,10 @@ require_once __DIR__ . '/../partials/header.php';
                                                 </td>
                                                 <td class="p-3 text-center">
                                                     <a href="track_order.php?id=<?php echo $order['id']; ?>"
-                                                        class="text-blue-500 hover:underline text-sm"><?= __('view_detail') ?></a>
+                                                        onclick="event.preventDefault(); openOrderDetailDrawer(<?php echo $order['id']; ?>);"
+                                                        class="text-blue-500 hover:underline text-sm font-semibold flex items-center justify-center gap-1">
+                                                        <i class="fa-solid fa-eye text-[11px]"></i> <?= __('view_detail') ?>
+                                                    </a>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -698,6 +701,33 @@ require_once __DIR__ . '/../partials/header.php';
                         </div>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         DRAWER CHI TIẾT ĐƠN HÀNG (SLIDE-OVER PANEL)
+         ========================================== -->
+    <div id="order-detail-backdrop" class="fixed inset-0 z-[9990] bg-slate-900/50 backdrop-blur-sm opacity-0 pointer-events-none transition-all duration-300"></div>
+
+    <div id="order-detail-drawer" class="fixed inset-y-0 right-0 z-[10000] w-full max-w-md md:max-w-lg bg-white dark:bg-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col h-full border-l border-gray-100 dark:border-slate-700">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/30">
+            <div>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-wider"><?= __('my_orders') ?></span>
+                <h3 class="font-black text-xl text-slate-800 dark:text-white mt-0.5" id="order-drawer-title">Đơn hàng #...</h3>
+            </div>
+            <button onclick="closeOrderDetailDrawer()" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6" id="order-drawer-body">
+            <!-- Spinner -->
+            <div class="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+                <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-sm font-medium">Đang tải chi tiết đơn hàng...</p>
             </div>
         </div>
     </div>
@@ -1004,6 +1034,177 @@ require_once __DIR__ . '/../partials/header.php';
                 }
             });
         }
+
+        // ==========================================
+        // HÀM MỞ & ĐỒNG DRAWER CHI TIẾT ĐƠN HÀNG
+        // ==========================================
+        function openOrderDetailDrawer(orderId) {
+            const backdrop = document.getElementById('order-detail-backdrop');
+            const drawer = document.getElementById('order-detail-drawer');
+            const title = document.getElementById('order-drawer-title');
+            const body = document.getElementById('order-drawer-body');
+            
+            title.innerText = `Đơn hàng #${orderId}`;
+            
+            // Hiện skeleton
+            body.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+                    <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm font-medium">Đang tải chi tiết đơn hàng...</p>
+                </div>
+            `;
+            
+            // Kích hoạt animation slide-over
+            backdrop.classList.remove('opacity-0', 'pointer-events-none');
+            backdrop.classList.add('opacity-100');
+            drawer.classList.remove('translate-x-full');
+            
+            // Gọi AJAX API tải thông tin chi tiết
+            fetch(`order_details.php?id=${orderId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        const order = data.order;
+                        let step = 1;
+                        if (order.status === 'processing') step = 2;
+                        else if (order.status === 'delivering') step = 3;
+                        else if (order.status === 'completed') step = 4;
+                        
+                        let timelineHtml = '';
+                        if (order.status === 'cancelled') {
+                            timelineHtml = `
+                            <div class="bg-red-50 dark:bg-red-950/20 rounded-2xl p-5 border border-red-100 dark:border-red-900/30 text-center">
+                                <div class="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 flex items-center justify-center mx-auto text-xl mb-3">
+                                    <i class="fa-solid fa-ban"></i>
+                                </div>
+                                <h4 class="font-bold text-red-600 text-base mb-1">Đơn hàng đã bị hủy</h4>
+                                <p class="text-xs text-slate-500">Đơn hàng đã được hoàn trả hoặc bị hủy bởi khách hàng.</p>
+                            </div>
+                            `;
+                        } else {
+                            timelineHtml = `
+                            <div class="bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-5 border border-blue-100/50 dark:border-blue-900/20">
+                                <h4 class="font-bold text-slate-800 dark:text-slate-200 text-sm mb-4 flex items-center gap-2">
+                                    <i class="fa-solid fa-truck-fast text-blue-600"></i> Trạng thái đơn hàng
+                                </h4>
+                                <div class="relative pl-6 space-y-6 border-l-2 border-gray-200 dark:border-slate-700 ml-3">
+                                    <!-- Bước 1 -->
+                                    <div class="relative">
+                                        <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 ${step >= 1 ? 'bg-blue-600' : 'bg-gray-300'}"></div>
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white">Đặt hàng thành công</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">${order.created_at}</p>
+                                    </div>
+                                    <!-- Bước 2 -->
+                                    <div class="relative">
+                                        <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 ${step >= 2 ? 'bg-blue-600' : 'bg-gray-300'}"></div>
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white">Đã xác nhận & Thanh toán</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">${step >= 2 ? order.processing_at : 'Chờ xử lý thanh toán'}</p>
+                                    </div>
+                                    <!-- Bước 3 -->
+                                    <div class="relative">
+                                        <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 ${step >= 3 ? 'bg-blue-600' : 'bg-gray-300'}"></div>
+                                        <p class="text-sm font-bold text-slate-800 dark:text-white">Đang giao hàng</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">${step >= 3 ? order.delivering_at : 'Chuẩn bị đóng gói'}</p>
+                                    </div>
+                                    <!-- Bước 4 -->
+                                    <div class="relative">
+                                        <div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 ${step >= 4 ? 'bg-green-600' : 'bg-gray-300'}"></div>
+                                        <p class="text-sm font-bold ${step >= 4 ? 'text-green-600' : 'text-slate-800 dark:text-white'}">Giao hàng thành công</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">${step >= 4 ? order.completed_at : 'Chưa bàn giao'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+                        }
+                        
+                        let itemsHtml = '';
+                        order.items.forEach(item => {
+                            itemsHtml += `
+                            <div class="flex items-center gap-4 py-3 border-b border-gray-100 dark:border-slate-700 last:border-0">
+                                <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-xl object-cover bg-gray-50 border border-gray-100 dark:border-slate-700 flex-shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <h5 class="font-semibold text-slate-800 dark:text-white text-sm truncate hover:text-blue-600 transition-colors">
+                                        <a href="product_detail.php?id=${item.product_id}" target="_blank">${item.name}</a>
+                                    </h5>
+                                    <p class="text-xs text-slate-500 mt-1">${item.price_formatted} x ${item.quantity}</p>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <p class="font-bold text-slate-800 dark:text-white text-sm">${item.total}</p>
+                                </div>
+                            </div>
+                            `;
+                        });
+                        
+                        body.innerHTML = `
+                            <div class="flex justify-between items-center bg-gray-50 dark:bg-slate-900/20 p-4 rounded-2xl border border-gray-100 dark:border-slate-700">
+                                <span class="text-sm font-semibold text-slate-500">Mã đơn hàng:</span>
+                                <span class="font-bold text-slate-800 dark:text-white">#${order.id}</span>
+                            </div>
+                            
+                            ${timelineHtml}
+                            
+                            <div class="space-y-3">
+                                <h4 class="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-basket-shopping text-blue-600"></i> Danh sách sản phẩm
+                                </h4>
+                                <div class="border border-gray-100 dark:border-slate-700 rounded-2xl p-4 bg-white dark:bg-slate-800 shadow-sm divide-y divide-gray-100 dark:divide-slate-700">
+                                    ${itemsHtml}
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 bg-gray-50 dark:bg-slate-900/20 rounded-2xl p-5 border border-gray-100 dark:border-slate-700">
+                                <h4 class="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-2">
+                                    <i class="fa-solid fa-address-card text-blue-600"></i> Thông tin nhận hàng
+                                </h4>
+                                <div class="text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                                    <p><span class="font-semibold text-slate-800 dark:text-slate-200">Người nhận:</span> ${order.fullname}</p>
+                                    <p><span class="font-semibold text-slate-800 dark:text-slate-200">Số điện thoại:</span> ${order.phone}</p>
+                                    <p><span class="font-semibold text-slate-800 dark:text-slate-200">Địa chỉ:</span> ${order.address}</p>
+                                    <p><span class="font-semibold text-slate-800 dark:text-slate-200">Phương thức thanh toán:</span> ${order.payment_method}</p>
+                                    ${order.note ? `<p><span class="font-semibold text-slate-800 dark:text-slate-200">Ghi chú:</span> ${order.note}</p>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center py-4 border-t border-gray-100 dark:border-slate-700">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 text-base">Tổng số tiền:</span>
+                                <span class="font-black text-xl text-blue-600 dark:text-blue-400">${order.total_price_formatted}</span>
+                            </div>
+                        `;
+                    } else {
+                        body.innerHTML = `
+                            <div class="text-center py-20 text-red-500">
+                                <i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i>
+                                <p class="text-sm font-medium">Không thể tải thông tin đơn hàng này.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    body.innerHTML = `
+                        <div class="text-center py-20 text-red-500">
+                            <i class="fa-solid fa-circle-exclamation text-3xl mb-3"></i>
+                            <p class="text-sm font-medium">Lỗi kết nối máy chủ.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        function closeOrderDetailDrawer() {
+            const backdrop = document.getElementById('order-detail-backdrop');
+            const drawer = document.getElementById('order-detail-drawer');
+            
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0', 'pointer-events-none');
+            drawer.classList.add('translate-x-full');
+        }
+        
+        // Close when clicking backdrop
+        document.addEventListener('DOMContentLoaded', () => {
+            const backdrop = document.getElementById('order-detail-backdrop');
+            if (backdrop) {
+                backdrop.addEventListener('click', closeOrderDetailDrawer);
+            }
+        });
     </script>
 </body>
 

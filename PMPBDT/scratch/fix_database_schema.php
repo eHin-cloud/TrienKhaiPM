@@ -13,14 +13,16 @@ try {
     
     echo "CONNECTED SUCCESSFULY TO DATABASE: $dbname\n\n";
     
-    // 1. Describe products table
-    $stmt = $db->query("DESCRIBE products");
-    $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Thực thi thay đổi cấu trúc bảng products
+    echo "Altering products table to set default values for rate_star and total_reviews...\n";
     
-    echo "--- PRODUCTS SCHEMA ---\n";
-    foreach ($columns as $col) {
-        echo "Field: {$col['Field']} | Type: {$col['Type']} | Null: {$col['Null']} | Key: {$col['Key']} | Default: {$col['Default']} | Extra: {$col['Extra']}\n";
-    }
+    $db->exec("ALTER TABLE products MODIFY COLUMN rate_star DECIMAL(3,2) NOT NULL DEFAULT 0.00");
+    echo "- Set default 0.00 for rate_star successfully.\n";
+    
+    $db->exec("ALTER TABLE products MODIFY COLUMN total_reviews INT NOT NULL DEFAULT 0");
+    echo "- Set default 0 for total_reviews successfully.\n";
+    
+    echo "\nAll database alterations completed successfully!\n";
     
 } catch (Exception $e) {
     echo "ERROR: " . $e->getMessage() . "\n";

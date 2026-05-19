@@ -36,6 +36,18 @@ try {
         exit;
     }
     
+    // Kiểm tra thời gian bắt đầu hoạt động
+    if ($voucher['starts_at'] && strtotime($voucher['starts_at']) > time()) {
+        echo json_encode(['success' => false, 'message' => 'Mã giảm giá này chưa đến thời gian kích hoạt']);
+        exit;
+    }
+
+    // Kiểm tra thời gian hết hạn
+    if ($voucher['expires_at'] && strtotime($voucher['expires_at']) < time()) {
+        echo json_encode(['success' => false, 'message' => 'Mã giảm giá đã hết hạn sử dụng']);
+        exit;
+    }
+    
     // Kiểm tra tính toán số tiền giảm
     $discount_value = 0;
     if ($voucher['discount_type'] === 'percent') {

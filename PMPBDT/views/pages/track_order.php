@@ -123,45 +123,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($action === 'request_warranty') {
             $order_id = $_POST['order_id'];
             $product_id = $_POST['product_id'];
+            $error_type = trim($_POST['error_type'] ?? 'Khác');
             $reason = trim($_POST['reason']);
             
             if (empty($reason)) {
                 $action_msg = __("warranty_reason_empty");
             } else {
-                // Kiểm tra xem đơn hàng đã có yêu cầu trả hàng/hoàn tiền chưa để tránh xung đột logic
-                $stmt_check_return = $db->prepare("SELECT id FROM returns WHERE order_id = ?");
-                $stmt_check_return->execute([$order_id]);
-                if ($stmt_check_return->fetch()) {
-                    $action_success = false;
-                    $action_msg = __("warranty_conflict_return");
-                } else {
-                    // --- XỬ LÝ UPLOAD MEDIA ĐÍNH KÈM (tái sử dụng pattern từ product_detail.php) ---
-                    $media_json = processMediaUpload('warranty_media', 'uploads/warranties/');
-                    addWarrantyRequest($db, $order_id, $product_id, $user_id, $reason, $media_json);
-                    $action_success = true;
-                    $action_msg = __("warranty_request_success");
-                }
+                $final_reason = "[Lỗi: $error_type] $reason";
+                // --- XỬ LÝ UPLOAD MEDIA ĐÍNH KÈM (tái sử dụng pattern từ product_detail.php) ---
+                $media_json = processMediaUpload('warranty_media', 'uploads/warranties/');
+                addWarrantyRequest($db, $order_id, $product_id, $user_id, $final_reason, $media_json);
+                $action_success = true;
+                $action_msg = __("warranty_request_success");
             }
         } elseif ($action === 'request_return') {
             $order_id = $_POST['order_id'];
+            $return_type = trim($_POST['return_type'] ?? 'Lý do khác');
+            $bank_name = trim($_POST['bank_name'] ?? '');
+            $bank_account = trim($_POST['bank_account'] ?? '');
+            $bank_owner = trim($_POST['bank_owner'] ?? '');
             $reason = trim($_POST['reason']);
             
-            if (empty($reason)) {
-                $action_msg = __("return_reason_empty");
+            if (empty($reason) || empty($bank_name) || empty($bank_account) || empty($bank_owner)) {
+                $action_msg = "Vui lòng nhập đầy đủ lý do trả hàng và thông tin ngân hàng nhận hoàn tiền!";
             } else {
-                // Kiểm tra xem đơn hàng đã có sản phẩm nào yêu cầu bảo hành chưa để tránh xung đột logic
-                $stmt_check_warranty = $db->prepare("SELECT id FROM warranties WHERE order_id = ?");
-                $stmt_check_warranty->execute([$order_id]);
-                if ($stmt_check_warranty->fetch()) {
-                    $action_success = false;
-                    $action_msg = __("return_conflict_warranty");
-                } else {
-                    // --- XỬ LÝ UPLOAD MEDIA ĐÍNH KÈM ---
-                    $media_json = processMediaUpload('return_media', 'uploads/returns/');
-                    addReturnRequest($db, $order_id, $user_id, $reason, $media_json);
-                    $action_success = true;
-                    $action_msg = __("return_request_success");
-                }
+                $final_reason = "[Phân loại: $return_type]\nLý do: $reason\n\n--- THÔNG TIN NHẬN HOÀN TIỀN ---\nNgân hàng: $bank_name\nSTK: $bank_account\nChủ tài khoản: " . mb_strtoupper($bank_owner, 'UTF-8');
+                // --- XỬ LÝ UPLOAD MEDIA ĐÍNH KÈM ---
+                $media_json = processMediaUpload('return_media', 'uploads/returns/');
+                addReturnRequest($db, $order_id, $user_id, $final_reason, $media_json);
+                $action_success = true;
+                $action_msg = __("return_request_success");
             }
         }
     }
@@ -224,30 +215,12 @@ if ($search_query !== '') {
     $user_returns = getUserReturns($db, $_SESSION['user_id']);
 }
 
-$returned_order_ids = [];
-$warrantied_order_ids = [];
-
 /**
  * TRUY VẤN CHI TIẾT SẢN PHẨM CỦA ĐƠN HÀNG
  * Nếu đã lấy được danh sách orders (bất luận từ TH1 hay TH2), 
  * tiếp tục join vào bảng order_details và products để lấy thông tin, hình ảnh món hàng.
  */
 if (!empty($orders)) {
-    $order_ids = array_column($orders, 'id');
-    $in_clause = implode(',', array_map('intval', $order_ids));
-    
-    // Lấy tất cả ID đơn hàng đã có trong returns của các đơn hàng này
-    $stmt_ret_exist = $db->query("SELECT DISTINCT order_id FROM returns WHERE order_id IN ($in_clause)");
-    if ($stmt_ret_exist) {
-        $returned_order_ids = array_column($stmt_ret_exist->fetchAll(PDO::FETCH_ASSOC), 'order_id');
-    }
-    
-    // Lấy tất cả ID đơn hàng đã có trong warranties của các đơn hàng này
-    $stmt_war_exist = $db->query("SELECT DISTINCT order_id FROM warranties WHERE order_id IN ($in_clause)");
-    if ($stmt_war_exist) {
-        $warrantied_order_ids = array_column($stmt_war_exist->fetchAll(PDO::FETCH_ASSOC), 'order_id');
-    }
-
     foreach ($orders as &$order) {
         $stmt_details = $db->prepare("SELECT od.*, p.name, p.image FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = ?");
         $stmt_details->execute([$order['id']]);
@@ -282,76 +255,404 @@ function getStatusUI($status)
 }
 ?>
 
-<div class="container mx-auto px-4 py-10 max-w-5xl min-h-[60vh]">
-    <!-- TIÊU ĐỀ TRANG -->
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-extrabold text-primary mb-3"><?= __("track_order_title") ?></h1>
-        <p class="text-gray-600"><?= __("track_order_desc") ?></p>
-    </div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
 
-    <!-- FORM TÌM KIẾM -->
-    <div
-        class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8 max-w-2xl mx-auto relative z-10 overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
-        <form action="track_order.php" method="GET" class="flex flex-col md:flex-row gap-3">
-            <div class="flex-1 relative">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+    .track-page { font-family: 'Be Vietnam Pro', sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+    /* ===== HERO SECTION ===== */
+    .track-hero {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+        padding: 48px 16px 80px;
+        position: relative;
+        overflow: hidden;
+    }
+    .track-hero::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .track-hero-orb-1 {
+        position: absolute; width: 400px; height: 400px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%);
+        top: -100px; right: -100px; pointer-events: none;
+    }
+    .track-hero-orb-2 {
+        position: absolute; width: 300px; height: 300px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(236,72,153,0.10) 0%, transparent 70%);
+        bottom: -50px; left: -50px; pointer-events: none;
+    }
+    .track-hero-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+        color: #a5b4fc; font-size: 11px; font-weight: 700;
+        padding: 5px 14px; border-radius: 100px;
+        letter-spacing: 1.5px; text-transform: uppercase;
+        backdrop-filter: blur(8px); margin-bottom: 16px;
+    }
+    .track-hero h1 {
+        font-size: clamp(26px, 5vw, 42px); font-weight: 900;
+        color: #fff; margin: 0 0 12px;
+        line-height: 1.15; letter-spacing: -0.5px;
+    }
+    .track-hero h1 span { color: #818cf8; }
+    .track-hero p { color: rgba(255,255,255,0.55); font-size: 14px; margin: 0; }
+
+    /* ===== SEARCH BOX NÂNG CAO ===== */
+    .search-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        padding: 24px;
+        max-width: 680px;
+        margin: -40px auto 0;
+        position: relative; z-index: 10;
+    }
+    .search-label {
+        font-size: 12px; font-weight: 700; color: #64748b;
+        text-transform: uppercase; letter-spacing: 1px;
+        margin-bottom: 12px; display: block;
+    }
+    .search-input-wrap { display: flex; gap: 10px; }
+    .search-input {
+        flex: 1; padding: 14px 18px 14px 46px;
+        border: 2px solid #e2e8f0; border-radius: 14px;
+        font-size: 14px; font-weight: 600; color: #1e293b;
+        background: #f8fafc; outline: none;
+        transition: all 0.2s;
+        font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .search-input:focus {
+        border-color: #6366f1; background: #fff;
+        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+    }
+    .search-input-icon {
+        position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+        color: #94a3b8; font-size: 16px;
+    }
+    .search-btn {
+        padding: 14px 28px; border-radius: 14px;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: #fff; font-weight: 800; font-size: 14px;
+        border: none; cursor: pointer; white-space: nowrap;
+        box-shadow: 0 4px 15px rgba(99,102,241,0.35);
+        transition: all 0.2s; font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .search-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+    .search-hint { margin-top: 10px; font-size: 12px; color: #94a3b8; text-align: center; }
+    .search-hint span { color: #6366f1; font-weight: 600; }
+
+    /* ===== TABS ===== */
+    .tabs-bar {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 20px; overflow: hidden;
+    }
+    .tabs-scroll { display: flex; overflow-x: auto; scrollbar-width: none; }
+    .tabs-scroll::-webkit-scrollbar { display: none; }
+    .tab-item {
+        flex: 1; min-width: 110px; padding: 14px 12px;
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        font-size: 12px; font-weight: 700; color: #94a3b8;
+        text-decoration: none; position: relative;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s; white-space: nowrap;
+    }
+    .tab-item:hover { color: #6366f1; background: #f8f7ff; }
+    .tab-item.active { color: #6366f1; border-bottom-color: #6366f1; background: #fafaff; }
+    .tab-item.active-amber { color: #f59e0b; border-bottom-color: #f59e0b; background: #fffbf0; }
+    .tab-item.active-blue { color: #3b82f6; border-bottom-color: #3b82f6; background: #eff6ff; }
+    .tab-item.active-indigo { color: #6366f1; border-bottom-color: #6366f1; background: #eef2ff; }
+    .tab-item.active-emerald { color: #10b981; border-bottom-color: #10b981; background: #ecfdf5; }
+    .tab-item.active-rose { color: #f43f5e; border-bottom-color: #f43f5e; background: #fff1f2; }
+    .tab-item.active-orange { color: #f97316; border-bottom-color: #f97316; background: #fff7ed; }
+    .tab-item.active-purple { color: #a855f7; border-bottom-color: #a855f7; background: #faf5ff; }
+    .tab-badge {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 20px; height: 18px; padding: 0 6px;
+        border-radius: 100px; font-size: 10px; font-weight: 800;
+        background: #f1f5f9; color: #64748b;
+    }
+    .tab-item.active .tab-badge { background: #6366f1; color: #fff; }
+    .tab-item.active-amber .tab-badge { background: #f59e0b; color: #fff; }
+    .tab-item.active-blue .tab-badge { background: #3b82f6; color: #fff; }
+    .tab-item.active-indigo .tab-badge { background: #6366f1; color: #fff; }
+    .tab-item.active-emerald .tab-badge { background: #10b981; color: #fff; }
+    .tab-item.active-rose .tab-badge { background: #f43f5e; color: #fff; }
+    .tab-item.active-orange .tab-badge { background: #f97316; color: #fff; }
+    .tab-item.active-purple .tab-badge { background: #a855f7; color: #fff; }
+
+    /* ===== ORDER CARD ===== */
+    .order-card {
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        overflow: hidden; margin-bottom: 16px;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .order-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.10); transform: translateY(-2px); }
+    .order-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 8px;
+    }
+    .order-store-info { display: flex; align-items: center; gap: 8px; }
+    .order-store-icon {
+        width: 32px; height: 32px; border-radius: 8px;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 14px; flex-shrink: 0;
+    }
+    .order-store-name { font-weight: 800; font-size: 14px; color: #1e293b; }
+    .order-store-sub { font-size: 11px; color: #94a3b8; }
+    .order-status-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 100px;
+        font-size: 11px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* Delivery progress bar (Shopee style) */
+    .delivery-progress {
+        padding: 16px 20px;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fafafa;
+    }
+    .progress-steps {
+        display: flex; align-items: center; position: relative;
+    }
+    .progress-step {
+        flex: 1; display: flex; flex-direction: column; align-items: center;
+        gap: 6px; position: relative; z-index: 1;
+    }
+    .progress-step-dot {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: #e2e8f0; border: 3px solid #e2e8f0;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px; color: #94a3b8; transition: all 0.3s;
+    }
+    .progress-step.done .progress-step-dot {
+        background: #6366f1; border-color: #6366f1; color: #fff;
+    }
+    .progress-step.active .progress-step-dot {
+        background: #fff; border-color: #6366f1; color: #6366f1;
+        box-shadow: 0 0 0 6px rgba(99,102,241,0.12);
+        animation: pulseStep 2s infinite;
+    }
+    .progress-step.rejected .progress-step-dot {
+        background: #fee2e2; border-color: #f43f5e; color: #f43f5e;
+    }
+    .progress-step-label {
+        font-size: 10px; font-weight: 700; color: #94a3b8;
+        text-align: center; line-height: 1.3;
+    }
+    .progress-step.done .progress-step-label { color: #6366f1; }
+    .progress-step.active .progress-step-label { color: #1e293b; }
+    .progress-connector {
+        flex: 1; height: 3px; background: #e2e8f0;
+        margin: 0; position: relative; top: -14px; z-index: 0;
+        transition: background 0.4s;
+    }
+    .progress-connector.done { background: linear-gradient(90deg, #6366f1, #818cf8); }
+    @keyframes pulseStep {
+        0%,100% { box-shadow: 0 0 0 4px rgba(99,102,241,0.12); }
+        50% { box-shadow: 0 0 0 10px rgba(99,102,241,0.06); }
+    }
+
+    /* Order body */
+    .order-body { padding: 16px 20px; }
+    .order-products { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .order-product-item {
+        display: flex; gap: 12px; align-items: center;
+        padding: 10px; border-radius: 12px; background: #f8fafc;
+        transition: background 0.2s;
+    }
+    .order-product-item:hover { background: #f0f4ff; }
+    .order-product-img {
+        width: 60px; height: 60px; border-radius: 10px;
+        object-fit: contain; background: #fff;
+        border: 1px solid #e2e8f0; flex-shrink: 0; padding: 4px;
+    }
+    .order-product-name {
+        font-size: 13px; font-weight: 700; color: #1e293b;
+        margin-bottom: 4px; line-height: 1.3;
+    }
+    .order-product-name a { color: inherit; text-decoration: none; }
+    .order-product-name a:hover { color: #6366f1; }
+    .order-product-meta { font-size: 12px; color: #64748b; }
+    .order-product-price { font-size: 14px; font-weight: 800; color: #1e293b; margin-left: auto; flex-shrink: 0; }
+
+    /* Order footer */
+    .order-footer {
+        padding: 12px 20px;
+        border-top: 1px solid #f1f5f9;
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 10px;
+        background: #fafafa;
+    }
+    .order-total-label { font-size: 12px; color: #64748b; font-weight: 600; }
+    .order-total-amount { font-size: 20px; font-weight: 900; color: #f43f5e; }
+    .order-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-action {
+        padding: 8px 18px; border-radius: 10px;
+        font-size: 12px; font-weight: 800;
+        border: none; cursor: pointer; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        transition: all 0.2s; font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    .btn-pay { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff; box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+    .btn-pay:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(245,158,11,0.4); color: #fff; }
+    .btn-cancel { background: #fff; color: #f43f5e; border: 1.5px solid #fecdd3; }
+    .btn-cancel:hover { background: #fff1f2; }
+    .btn-return { background: #fff; color: #10b981; border: 1.5px solid #a7f3d0; }
+    .btn-return:hover { background: #ecfdf5; }
+    .btn-warranty { background: #fff; color: #f59e0b; border: 1.5px solid #fde68a; }
+    .btn-warranty:hover { background: #fffbeb; }
+
+    /* Info row */
+    .order-info-row {
+        display: flex; align-items: flex-start; gap: 8px;
+        font-size: 12px; color: #64748b;
+        padding: 2px 0;
+    }
+    .order-info-row i { color: #94a3b8; width: 14px; margin-top: 1px; flex-shrink: 0; }
+    .order-info-row span { font-weight: 600; color: #334155; }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center; padding: 60px 24px;
+        background: #fff; border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .empty-icon {
+        width: 100px; height: 100px; border-radius: 50%;
+        margin: 0 auto 20px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 40px;
+    }
+    .empty-state h3 { font-size: 18px; font-weight: 800; color: #1e293b; margin: 0 0 8px; }
+    .empty-state p { font-size: 14px; color: #64748b; margin: 0 0 24px; }
+    .btn-shop {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 12px 28px; border-radius: 12px;
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+        color: #fff; font-weight: 800; font-size: 14px;
+        text-decoration: none; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+        transition: all 0.2s;
+    }
+    .btn-shop:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); color: #fff; }
+
+    /* Toast */
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .animate-slide-up { animation: slideUp 0.4s ease-out; }
+
+    /* Timeline (reuse) */
+    .timeline-container {
+        display: flex; align-items: flex-start;
+        justify-content: space-between; padding: 8px 0; position: relative;
+    }
+    .timeline-step { display: flex; flex-direction: column; align-items: center; flex: 1; position: relative; z-index: 1; }
+    .timeline-dot {
+        width: 42px; height: 42px; border-radius: 50%;
+        background: #f3f4f6; border: 3px solid #e5e7eb;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 14px; color: #9ca3af; position: relative; z-index: 2;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .timeline-line {
+        position: absolute; top: 21px; left: calc(50% + 21px);
+        width: calc(100% - 42px); height: 3px;
+        background: #e5e7eb; z-index: 0; transition: background 0.5s ease;
+    }
+    .timeline-line.done { background: linear-gradient(90deg, #6366f1, #818cf8); }
+    .timeline-label { margin-top: 10px; font-size: 11px; font-weight: 600; color: #9ca3af; text-align: center; max-width: 100px; line-height: 1.3; }
+    .timeline-step.done .timeline-dot { background: linear-gradient(135deg, #6366f1, #4f46e5); border-color: #a5b4fc; color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,0.3); }
+    .timeline-step.done .timeline-label { color: #4f46e5; }
+    .timeline-step.active .timeline-dot { animation: pulseActive 2s infinite; box-shadow: 0 0 0 6px rgba(99,102,241,0.15); }
+    @keyframes pulseActive { 0%,100% { box-shadow: 0 0 0 4px rgba(99,102,241,0.15); } 50% { box-shadow: 0 0 0 10px rgba(99,102,241,0.08); } }
+    .timeline-step.done:last-child .timeline-dot { background: linear-gradient(135deg, #22c55e, #16a34a); border-color: #86efac; box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
+    .timeline-step.done:last-child .timeline-label { color: #15803d; }
+    .timeline-step.rejected .timeline-dot { background: linear-gradient(135deg, #ef4444, #dc2626) !important; border-color: #fca5a5 !important; color: #fff !important; box-shadow: 0 2px 8px rgba(239,68,68,0.3) !important; }
+    .timeline-step.rejected .timeline-label { color: #dc2626 !important; }
+    @media (max-width: 500px) {
+        .timeline-container { flex-direction: column; align-items: flex-start; gap: 0; padding-left: 20px; }
+        .timeline-step { flex-direction: row; align-items: center; gap: 12px; padding-bottom: 0; }
+        .timeline-dot { width: 36px; height: 36px; font-size: 12px; flex-shrink: 0; }
+        .timeline-line { position: absolute; top: 36px; left: 18px; width: 3px !important; height: 28px; }
+        .timeline-label { margin-top: 0; text-align: left; max-width: none; font-size: 12px; }
+    }
+    /* Warranty/Return cards */
+    .wr-card { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 16px; }
+    .wr-card-header { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .wr-card-body { padding: 16px 18px; }
+    .media-thumb-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .media-thumb { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer; position: relative; }
+    .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; }
+    .media-thumb-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    .media-thumb:hover .media-thumb-overlay { opacity: 1; }
+    /* hide scrollbar */
+    .hide-scrollbar { scrollbar-width: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    /* Old classes hidden */
+    .ambient-glow-1, .ambient-glow-2, .glowing-input:focus { display: none; }
+</style>
+
+<!-- ===== HERO SECTION ===== -->
+<div class="track-hero">
+    <div class="track-hero-orb-1"></div>
+    <div class="track-hero-orb-2"></div>
+    <div style="max-width:900px;margin:0 auto;text-align:center;position:relative;z-index:1">
+        <div class="track-hero-badge"><i class="fa-solid fa-truck-fast"></i> <?= __("track_order") ?></div>
+        <h1><?= __("track_order_title") ?> <span>📦</span></h1>
+        <p><?= __("track_order_desc") ?></p>
+    </div>
+</div>
+
+<div style="max-width:900px;margin:0 auto;padding:0 16px">
+    <!-- SEARCH CARD -->
+    <div class="search-card">
+        <span class="search-label"><i class="fa-solid fa-magnifying-glass mr-1"></i> Tra cứu đơn hàng</span>
+        <form action="track_order.php" method="GET">
+            <div class="search-input-wrap">
+                <div style="flex:1;position:relative">
+                    <i class="fa-solid fa-hashtag search-input-icon"></i>
+                    <input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>"
+                        placeholder="<?= __("track_order_placeholder") ?>"
+                        class="search-input" style="width:100%">
                 </div>
-                <input type="text" name="q" value="<?= htmlspecialchars($search_query) ?>"
-                    placeholder="<?= __("track_order_placeholder") ?>"
-                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none transition font-medium text-gray-800">
+                <button type="submit" class="search-btn">
+                    <i class="fa-solid fa-magnifying-glass-location"></i> <?= __("track_now") ?>
+                </button>
             </div>
-            <button type="submit"
-                class="bg-primary text-white font-bold px-8 py-3 rounded-lg hover:bg-blue-800 transition shadow-md whitespace-nowrap">
-                <?= __("track_now") ?>
-            </button>
         </form>
+        <p class="search-hint"><i class="fa-solid fa-circle-info mr-1"></i> Nhập <span>mã đơn hàng</span> hoặc <span>số điện thoại</span> để tra cứu</p>
     </div>
 
-    <!-- TABS PHÂN LOẠI TRẠNG THÁI 
-         Chỉ hiển thị khi: 
-         1. Người dùng không dùng chức năng tìm kiếm chủ động ($search_query rỗng).
-         2. Người dùng đã đăng nhập (có SESSION user_id). 
-    -->
+    <div style="padding:24px 0">
+
+    <!-- TABS -->
     <?php if ($search_query === '' && isset($_SESSION['user_id'])): ?>
-        <div class="bg-white border-b border-gray-200 mb-6 sticky top-[60px] z-40 shadow-sm rounded-t-xl overflow-hidden">
-            <div class="flex overflow-x-auto hide-scrollbar text-[14px] font-medium">
-                <!-- Tab: Tất cả đơn hàng -->
-                <a href="?status=all"
-                    class="flex-1 min-w-[100px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'all' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("all_orders") ?> (<?= $total_my_orders ?? 0 ?>)
+        <div class="tabs-bar" style="position:sticky;top:60px;z-index:40;margin-bottom:20px">
+            <div class="tabs-scroll">
+                <?php
+                $tabs = [
+                    ['href'=>'?status=all',       'icon'=>'fa-receipt',            'label'=>__("all_orders"),  'count'=>$total_my_orders??0,            'cls'=>$status_filter==='all'        ?'active':''],
+                    ['href'=>'?status=pending',    'icon'=>'fa-clock',              'label'=>__("pending"),    'count'=>$status_counts['pending']??0,   'cls'=>$status_filter==='pending'    ?'active-amber':''],
+                    ['href'=>'?status=processing', 'icon'=>'fa-money-check-dollar', 'label'=>__("paid"),      'count'=>$status_counts['processing']??0,'cls'=>$status_filter==='processing' ?'active-blue':''],
+                    ['href'=>'?status=delivering', 'icon'=>'fa-truck-fast',         'label'=>__("delivering"), 'count'=>$status_counts['delivering']??0,'cls'=>$status_filter==='delivering' ?'active-indigo':''],
+                    ['href'=>'?status=completed',  'icon'=>'fa-box-open',           'label'=>__("completed"),  'count'=>$status_counts['completed']??0, 'cls'=>$status_filter==='completed'  ?'active-emerald':''],
+                    ['href'=>'?status=cancelled',  'icon'=>'fa-ban',                'label'=>__("cancelled"),  'count'=>$status_counts['cancelled']??0, 'cls'=>$status_filter==='cancelled'  ?'active-rose':''],
+                    ['href'=>'?status=warranties', 'icon'=>'fa-wrench',             'label'=>__("warranty"),   'count'=>count($user_warranties??[]),    'cls'=>$status_filter==='warranties' ?'active-orange':''],
+                    ['href'=>'?status=returns',    'icon'=>'fa-right-left',         'label'=>__("returns"),    'count'=>count($user_returns??[]),       'cls'=>$status_filter==='returns'    ?'active-purple':''],
+                ];
+                foreach ($tabs as $t): ?>
+                <a href="<?= $t['href'] ?>" class="tab-item <?= $t['cls'] ?>">
+                    <i class="fa-solid <?= $t['icon'] ?> text-[15px]"></i>
+                    <?= $t['label'] ?>
+                    <span class="tab-badge"><?= $t['count'] ?></span>
                 </a>
-                <a href="?status=pending"
-                    class="flex-1 min-w-[100px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'pending' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("pending") ?> (<?= $status_counts['pending'] ?? 0 ?>)
-                </a>
-                <a href="?status=processing"
-                    class="flex-1 min-w-[130px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'processing' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("paid") ?> (<?= $status_counts['processing'] ?? 0 ?>)
-                </a>
-                <a href="?status=delivering"
-                    class="flex-1 min-w-[100px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'delivering' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("delivering") ?> (<?= $status_counts['delivering'] ?? 0 ?>)
-                </a>
-                <a href="?status=completed"
-                    class="flex-1 min-w-[100px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'completed' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("completed") ?> (<?= $status_counts['completed'] ?? 0 ?>)
-                </a>
-                <a href="?status=cancelled"
-                    class="flex-1 min-w-[100px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'cancelled' ? 'border-primary text-primary font-bold bg-blue-50/50' : 'border-transparent text-gray-500 hover:text-primary hover:bg-gray-50' ?>">
-                    <?= __("cancelled") ?> (<?= $status_counts['cancelled'] ?? 0 ?>)
-                </a>
-                <!-- TAB MỚI: LỊch sử Bảo hành -->
-                <a href="?status=warranties"
-                    class="flex-1 min-w-[130px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'warranties' ? 'border-yellow-500 text-yellow-600 font-bold bg-yellow-50/50' : 'border-transparent text-gray-500 hover:text-yellow-600 hover:bg-yellow-50/30' ?>">
-                    <i class="fa-solid fa-wrench text-[11px] mr-1"></i><?= __("warranty") ?> (<?= count($user_warranties ?? []) ?>)
-                </a>
-                <!-- TAB MỚI: LỊch sử Đổi trả -->
-                <a href="?status=returns"
-                    class="flex-1 min-w-[130px] text-center py-4 border-b-2 transition whitespace-nowrap <?= $status_filter === 'returns' ? 'border-purple-500 text-purple-600 font-bold bg-purple-50/50' : 'border-transparent text-gray-500 hover:text-purple-600 hover:bg-purple-50/30' ?>">
-                    <i class="fa-solid fa-right-left text-[11px] mr-1"></i><?= __("returns") ?> (<?= count($user_returns ?? []) ?>)
-                </a>
+                <?php endforeach; ?>
             </div>
         </div>
     <?php endif; ?>
@@ -363,12 +664,12 @@ function getStatusUI($status)
     <!-- === TAB: LỊCH SỬ BẢO HÀNH (Timeline) === -->
     <?php if ($status_filter === 'warranties' && isset($_SESSION['user_id'])): ?>
         <?php if (empty($user_warranties)): ?>
-            <div class="bg-white p-10 rounded-xl border border-gray-200 text-center shadow-sm">
-                <div class="w-24 h-24 bg-yellow-50 text-yellow-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+            <div class="empty-state">
+                <div class="empty-icon" style="background:#fff7ed;color:#f97316">
                     <i class="fa-solid fa-wrench"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2"><?= __("no_warranty_requests") ?></h3>
-                <p class="text-gray-500 mb-6"><?= __("no_warranty_desc") ?></p>
+                <h3><?= __("no_warranty_requests") ?></h3>
+                <p><?= __("no_warranty_desc") ?></p>
             </div>
         <?php else: ?>
             <div class="space-y-5">
@@ -481,12 +782,12 @@ function getStatusUI($status)
     <!-- === TAB: LỊCH SỬ ĐỔI TRẢ (Timeline) === -->
     <?php elseif ($status_filter === 'returns' && isset($_SESSION['user_id'])): ?>
         <?php if (empty($user_returns)): ?>
-            <div class="bg-white p-10 rounded-xl border border-gray-200 text-center shadow-sm">
-                <div class="w-24 h-24 bg-purple-50 text-purple-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+            <div class="empty-state">
+                <div class="empty-icon" style="background:#faf5ff;color:#a855f7">
                     <i class="fa-solid fa-right-left"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2"><?= __("no_return_requests") ?></h3>
-                <p class="text-gray-500 mb-6"><?= __("no_return_desc") ?></p>
+                <h3><?= __("no_return_requests") ?></h3>
+                <p><?= __("no_return_desc") ?></p>
             </div>
         <?php else: ?>
             <div class="space-y-5">
@@ -595,146 +896,144 @@ function getStatusUI($status)
     <?php elseif ($search_query !== '' || isset($_SESSION['user_id'])): ?>
 
         <?php if (empty($orders)): ?>
-            <div class="bg-white p-10 rounded-xl border border-gray-200 text-center shadow-sm">
-                <div
-                    class="w-24 h-24 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+            <div class="empty-state">
+                <div class="empty-icon" style="background:#f0f4ff;color:#6366f1">
                     <i class="fa-solid fa-box-open"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2"><?= __("no_orders") ?></h3>
-                <p class="text-gray-500 mb-6"><?= $error ? $error : __("no_orders_status") ?></p>
-                <a href="index.php"
-                    class="inline-block bg-primary text-white font-bold px-8 py-3 rounded-lg hover:bg-blue-800 transition shadow-md">
-                    <?= __("continue_shopping") ?>
+                <h3><?= __("no_orders") ?></h3>
+                <p><?= $error ? $error : __("no_orders_status") ?></p>
+                <a href="index.php" class="btn-shop">
+                    <i class="fa-solid fa-bag-shopping"></i> <?= __("continue_shopping") ?>
                 </a>
             </div>
 
         <?php else: ?>
             <?php if ($search_query !== ''): ?>
-                <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">
-                    <?= __("search_results_found") ?> <?= count($orders) ?> <?= __("orders_count") ?>
-                </h3>
+                <div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
+                    <i class="fa-solid fa-list-check mr-1"></i> <?= __("search_results_found") ?> <b style="color:#6366f1"><?= count($orders) ?></b> <?= __("orders_count") ?>
+                </div>
             <?php endif; ?>
 
-            <div class="space-y-6">
+            <div style="display:flex;flex-direction:column;gap:16px">
                 <?php foreach ($orders as $order):
                     $ui = getStatusUI($order['status']);
-                    ?>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition hover:shadow-md">
-                        <!-- Header Đơn Hàng -->
-                        <div
-                            class="bg-gray-50 p-4 md:p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                    $prog_statuses = ['pending','processing','delivering','completed'];
+                    $curr_idx = array_search($order['status'], $prog_statuses);
+                    $is_cancelled = $order['status'] === 'cancelled';
+                    $sbadge = match($order['status']) {
+                        'pending'    => ['bg'=>'#fff8e1','color'=>'#f59e0b','dot'=>'#f59e0b'],
+                        'processing' => ['bg'=>'#eff6ff','color'=>'#3b82f6','dot'=>'#3b82f6'],
+                        'delivering' => ['bg'=>'#eef2ff','color'=>'#6366f1','dot'=>'#6366f1'],
+                        'completed'  => ['bg'=>'#ecfdf5','color'=>'#10b981','dot'=>'#10b981'],
+                        'cancelled'  => ['bg'=>'#fff1f2','color'=>'#f43f5e','dot'=>'#f43f5e'],
+                        default      => ['bg'=>'#f8fafc','color'=>'#64748b','dot'=>'#94a3b8'],
+                    };
+                ?>
+                <div class="order-card">
+                    <!-- Card Header -->
+                    <div class="order-card-header">
+                        <div class="order-store-info">
+                            <div class="order-store-icon"><i class="fa-solid fa-store"></i></div>
                             <div>
-                                <div class="flex items-center gap-3 mb-1">
-                                    <span class="font-bold text-gray-800 text-lg"><?= __("order") ?> #<?= $order['id'] ?></span>
-                                    <span
-                                        class="<?= $ui['bg'] ?> <?= $ui['text'] ?> <?= $ui['border'] ?> border px-2.5 py-1 rounded text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                                        <i class="fa-solid <?= $ui['icon'] ?>"></i> <?= $ui['label'] ?>
-                                    </span>
-                                </div>
-                                <div class="text-sm text-gray-500">
-                                    <?= __("ordered_at") ?>: <b
-                                        class="text-gray-700"><?= date('H:i - d/m/Y', strtotime($order['created_at'])) ?></b>
-                                </div>
-                            </div>
-                            <div class="text-left md:text-right">
-                                <div class="text-sm text-gray-500 mb-1"><?= __("total_price") ?>:</div>
-                                <div class="font-extrabold text-danger text-xl"><?= number_format($order['total_price']) ?>đ</div>
+                                <div class="order-store-name"><?= __("order") ?> #<?= $order['id'] ?></div>
+                                <div class="order-store-sub"><i class="fa-regular fa-calendar mr-1"></i><?= date('H:i · d/m/Y', strtotime($order['created_at'])) ?></div>
                             </div>
                         </div>
-
-                        <div class="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                            <!-- CỘT 1: Thông Tin Nhận Hàng (Tên, SĐT, Địa chỉ, Ghi chú) -->
-                            <div class="md:col-span-1 space-y-3 text-sm">
-                                <h4 class="font-bold text-gray-800 border-b border-gray-100 pb-2"><i
-                                        class="fa-solid fa-address-card text-primary mr-1"></i> <?= __("shipping_info") ?></h4>
-                                <p><span class="text-gray-500 inline-block w-20"><?= __("fullname") ?>:</span> <b
-                                        class="text-gray-800"><?= htmlspecialchars($order['fullname']) ?></b></p>
-                                <p><span class="text-gray-500 inline-block w-20"><?= __("phone") ?>:</span> <b
-                                        class="text-gray-800"><?= htmlspecialchars($order['phone']) ?></b></p>
-                                <p class="flex"><span class="text-gray-500 inline-block w-20 shrink-0"><?= __("address") ?>:</span> <span
-                                        class="text-gray-800 leading-snug"><?= htmlspecialchars($order['address']) ?></span></p>
-                                <?php if ($order['note']): ?>
-                                    <p class="flex"><span class="text-gray-500 inline-block w-20 shrink-0"><?= __("note") ?>:</span> <span
-                                            class="text-gray-600 bg-yellow-50 px-2 py-1 rounded w-full border border-yellow-100 leading-snug"><?= htmlspecialchars($order['note']) ?></span>
-                                    </p>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- CỘT 2 & 3: Danh Sách Sản Phẩm (Hình ảnh, Tên, Số lượng, Giá) -->
-                            <div class="md:col-span-2">
-                                <h4 class="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-3"><i
-                                        class="fa-solid fa-box-open text-primary mr-1"></i> <?= __("ordered_products") ?></h4>
-                                <div class="space-y-3 max-h-[250px] overflow-y-auto pr-2 hide-scrollbar">
-                                    <?php foreach ($order['details'] as $item): ?>
-                                        <div class="flex items-start gap-3 bg-white p-2 rounded-lg border border-gray-100">
-                                            <div
-                                                class="w-16 h-16 shrink-0 bg-gray-50 border border-gray-200 rounded p-1 flex justify-center items-center">
-                                                <img src="<?= htmlspecialchars($item['image']) ?>"
-                                                    class="max-w-full max-h-full object-contain">
-                                            </div>
-                                            <div class="flex-1 flex flex-col justify-between py-1">
-                                                <a href="product_detail.php?id=<?= $item['product_id'] ?>"
-                                                    class="font-medium text-[13px] text-gray-800 hover:text-primary leading-tight mb-1 line-clamp-2">
-                                                    <?= htmlspecialchars($item['name']) ?>
-                                                </a>
-                                                <div class="flex justify-between items-center text-sm">
-                                                    <span class="text-gray-500 font-medium"><?= __("qty") ?>: <?= $item['quantity'] ?></span>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="font-bold text-gray-800"><?= number_format($item['price']) ?>đ</span>
-                                                        <?php if ($order['status'] === 'completed'): ?>
-                                                            <?php if (in_array($order['id'], $returned_order_ids)): ?>
-                                                                <span class="text-[11px] text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded font-bold uppercase tracking-wide animate-pulse" title="Đơn hàng đang yêu cầu trả hàng hoàn tiền (không thể bảo hành)"><i class="fa-solid fa-ban mr-1"></i>Đang trả hàng</span>
-                                                            <?php else: ?>
-                                                                <button type="button" onclick="openWarrantyModal(<?= $order['id'] ?>, <?= $item['product_id'] ?>)" class="text-[11px] bg-white border border-gray-300 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-50 hover:text-blue-600 transition" title="<?= __("warranty") ?>"><i class="fa-solid fa-wrench"></i> <?= __("warranty") ?></button>
-                                                            <?php endif; ?>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- VÙNG NÚT THAO TÁC (Tùy theo trạng thái đơn hàng) -->
-
-                        <!-- Nếu đơn hàng đang chờ xử lý: Cho phép Thanh toán QR hoặc Hủy đơn -->
-                        <?php if ($order['status'] === 'pending'): ?>
-                            <div
-                                class="bg-blue-50 px-5 py-3 border-t border-blue-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <span class="text-[13px] text-blue-800"><i class="fa-solid fa-circle-info mr-1"></i> <?= __("pending_order_hint") ?></span>
-                                <div class="flex items-center gap-2 shrink-0">
-                                    <a href="payment.php?order_id=<?= $order['id'] ?>"
-                                        class="text-[12px] bg-primary text-white px-4 py-1.5 rounded font-bold hover:bg-blue-800 transition shadow-sm whitespace-nowrap"><?= __("pay_qr") ?></a>
-                                    <button type="button" onclick="openCancelModal(<?= $order['id'] ?>)"
-                                        class="text-[12px] bg-white text-red-600 border border-red-300 px-4 py-1.5 rounded font-bold hover:bg-red-50 transition shadow-sm whitespace-nowrap"><i
-                                            class="fa-solid fa-xmark mr-1"></i><?= __("cancel_order") ?></button>
-                                </div>
-                            </div>
-
-                            <!-- Nếu đơn hàng đã bị hủy: Hiển thị thông báo khuyến khích đặt lại -->
-                        <?php elseif ($order['status'] === 'cancelled'): ?>
-                            <div class="bg-gray-50 px-5 py-3 border-t border-gray-200 text-center">
-                                <span class="text-[13px] text-gray-500"><i class="fa-solid fa-clock-rotate-left mr-1"></i> <?= __("cancelled_order_hint") ?></span>
-                            </div>
-
-                            <!-- Nếu đơn hàng đã giao thành công: Cho phép đổi trả/hoàn tiền -->
-                        <?php elseif ($order['status'] === 'completed'): ?>
-                            <div class="bg-green-50 px-5 py-3 border-t border-green-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                <?php if (in_array($order['id'], $warrantied_order_ids)): ?>
-                                    <span class="text-[13px] text-yellow-800 font-bold"><i class="fa-solid fa-circle-exclamation mr-1 text-yellow-600"></i> Đơn hàng đang có sản phẩm yêu cầu bảo hành (không thể trả hàng).</span>
-                                <?php else: ?>
-                                    <span class="text-[13px] text-green-800"><i class="fa-solid fa-box-check mr-1"></i> <?= __("completed_order_hint") ?></span>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <button type="button" onclick="openReturnModal(<?= $order['id'] ?>)" class="text-[12px] bg-white text-gray-700 border border-gray-300 px-4 py-1.5 rounded font-bold hover:bg-gray-100 transition shadow-sm whitespace-nowrap"><i class="fa-solid fa-right-left mr-1"></i><?= __("return_refund") ?></button>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-
+                        <span class="order-status-badge" style="background:<?= $sbadge['bg'] ?>;color:<?= $sbadge['color'] ?>">
+                            <span class="status-dot" style="background:<?= $sbadge['dot'] ?>"></span>
+                            <?= $ui['label'] ?>
+                        </span>
                     </div>
+
+                    <!-- Delivery Progress Bar -->
+                    <?php if (!$is_cancelled): ?>
+                    <div class="delivery-progress">
+                        <div class="progress-steps">
+                            <?php
+                            $psteps = [
+                                ['icon'=>'fa-clipboard-check',    'label'=>__("pending")],
+                                ['icon'=>'fa-money-check-dollar', 'label'=>__("paid")],
+                                ['icon'=>'fa-truck-fast',         'label'=>__("delivering")],
+                                ['icon'=>'fa-box-open',           'label'=>__("completed")],
+                            ];
+                            foreach ($psteps as $pi => $ps):
+                                $is_done   = ($curr_idx !== false && $pi <= $curr_idx);
+                                $is_active = ($curr_idx !== false && $pi === $curr_idx);
+                                $pcls = $is_active ? 'active' : ($is_done ? 'done' : '');
+                            ?>
+                            <div class="progress-step <?= $pcls ?>">
+                                <div class="progress-step-dot"><i class="fa-solid <?= $ps['icon'] ?>"></i></div>
+                                <div class="progress-step-label"><?= $ps['label'] ?></div>
+                            </div>
+                            <?php if ($pi < count($psteps)-1): ?>
+                            <div class="progress-connector <?= ($curr_idx !== false && $pi < $curr_idx) ? 'done' : '' ?>"></div>
+                            <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Products -->
+                    <div class="order-body">
+                        <div class="order-products">
+                            <?php foreach ($order['details'] as $item): ?>
+                            <div class="order-product-item">
+                                <img src="<?= htmlspecialchars($item['image']) ?>" class="order-product-img" alt="">
+                                <div style="flex:1;min-width:0">
+                                    <div class="order-product-name">
+                                        <a href="product_detail.php?id=<?= $item['product_id'] ?>">
+                                            <?= htmlspecialchars(getCurrentLang() === 'en' ? translate_text($item['name'], 'prod_name_' . $item['product_id']) : $item['name']) ?>
+                                        </a>
+                                    </div>
+                                    <div class="order-product-meta"><?= __("qty") ?>: <?= $item['quantity'] ?></div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                                    <div class="order-product-price"><?= number_format($item['price']) ?>đ</div>
+                                    <?php if ($order['status'] === 'completed'): ?>
+                                    <button type="button" onclick="openWarrantyModal(<?= $order['id'] ?>, <?= $item['product_id'] ?>)" class="btn-action btn-warranty" style="font-size:11px;padding:5px 12px">
+                                        <i class="fa-solid fa-wrench"></i> <?= __("warranty") ?>
+                                    </button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <!-- Shipping info compact -->
+                        <div style="background:#f8fafc;border-radius:12px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12px;color:#64748b">
+                            <span><i class="fa-solid fa-user mr-1" style="color:#6366f1"></i><b style="color:#334155"><?= htmlspecialchars($order['fullname']) ?></b></span>
+                            <span><i class="fa-solid fa-phone mr-1" style="color:#6366f1"></i><?= htmlspecialchars($order['phone']) ?></span>
+                            <span style="flex:1;min-width:200px"><i class="fa-solid fa-location-dot mr-1" style="color:#6366f1"></i><?= htmlspecialchars($order['address']) ?></span>
+                        </div>
+                    </div>
+
+                    <!-- Footer: Total + Actions -->
+                    <div class="order-footer">
+                        <div>
+                            <div class="order-total-label"><?= __("total_price") ?></div>
+                            <div class="order-total-amount"><?= number_format($order['total_price']) ?>đ</div>
+                        </div>
+                        <div class="order-actions">
+                            <?php if ($order['status'] === 'pending'): ?>
+                                <a href="payment.php?order_id=<?= $order['id'] ?>" class="btn-action btn-pay">
+                                    <i class="fa-solid fa-credit-card"></i> <?= __("pay_qr") ?>
+                                </a>
+                                <button type="button" onclick="openCancelModal(<?= $order['id'] ?>)" class="btn-action btn-cancel">
+                                    <i class="fa-solid fa-xmark"></i> <?= __("cancel_order") ?>
+                                </button>
+                            <?php elseif ($order['status'] === 'completed'): ?>
+                                <button type="button" onclick="openReturnModal(<?= $order['id'] ?>)" class="btn-action btn-return">
+                                    <i class="fa-solid fa-right-left"></i> <?= __("return_refund") ?>
+                                </button>
+                            <?php elseif ($order['status'] === 'cancelled'): ?>
+                                <button type="button"
+                                    onclick="reorderItems(this, <?= htmlspecialchars(json_encode(array_map(fn($i) => (int)$i['product_id'], $order['details']))) ?>)"
+                                    class="btn-action btn-pay" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                                    <i class="fa-solid fa-rotate-right"></i> <?= __("reorder") ?>
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -776,7 +1075,67 @@ function getStatusUI($status)
             <span class="font-medium"><?= htmlspecialchars($cancel_error) ?></span>
         </div>
     <?php endif; ?>
+</div><!-- end inner padding div -->
+</div><!-- end max-width wrapper -->
+
+<!-- ========== REORDER TOAST ========== -->
+<div id="reorderToast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;
+    background:#6366f1;color:#fff;padding:14px 20px;border-radius:14px;
+    box-shadow:0 8px 30px rgba(99,102,241,0.35);font-size:14px;font-weight:600;
+    display:flex;align-items:center;gap:10px;max-width:320px;opacity:0;transition:opacity .3s">
+    <i class="fa-solid fa-cart-shopping text-lg"></i>
+    <span id="reorderToastMsg">Đang thêm vào giỏ hàng...</span>
 </div>
+
+<script>
+async function reorderItems(btn, productIds) {
+    // Disable button
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang thêm...';
+
+    const toast = document.getElementById('reorderToast');
+    const toastMsg = document.getElementById('reorderToastMsg');
+    toast.style.display = 'flex';
+    setTimeout(() => toast.style.opacity = '1', 10);
+    toastMsg.textContent = 'Đang thêm ' + productIds.length + ' sản phẩm...';
+
+    let added = 0;
+    for (const id of productIds) {
+        try {
+            const res = await fetch('add_to_cart.php', {
+                method: 'POST',
+                headers: {'Content-Type':'application/x-www-form-urlencoded'},
+                body: 'ajax=1&id=' + id
+            });
+            const data = await res.json();
+            if (data.success) {
+                added++;
+                // Update cart badge
+                const badge = document.querySelector('.cart-count, [data-cart-count], #cart-count, .badge-cart');
+                if (badge && data.cart_count !== undefined) badge.textContent = data.cart_count;
+            } else if (data.message === 'not_logged_in') {
+                toastMsg.textContent = 'Vui lòng đăng nhập để mua lại!';
+                setTimeout(() => { toast.style.opacity='0'; setTimeout(()=>toast.style.display='none',400); }, 2500);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> <?= __("reorder") ?>';
+                return;
+            }
+        } catch(e) {}
+    }
+
+    toastMsg.textContent = '✓ Đã thêm ' + added + '/' + productIds.length + ' sản phẩm vào giỏ hàng!';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Đã thêm vào giỏ';
+    btn.style.background = '#10b981';
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.style.display = 'none', 400);
+    }, 3000);
+
+    // Redirect to cart after short delay
+    setTimeout(() => { window.location.href = 'cart.php'; }, 1200);
+}
+</script>
 
 <!-- =========================================================
      MODAL XÁC NHẬN HỦY ĐƠN
@@ -832,20 +1191,45 @@ function getStatusUI($status)
             <input type="hidden" name="order_id" id="warrantyOrderId">
             <input type="hidden" name="product_id" id="warrantyProductId">
             <div class="mb-4 text-left">
+                <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-3 mb-4 flex gap-3 items-start">
+                    <i class="fa-solid fa-shield-halved text-blue-500 text-xl mt-0.5"></i>
+                    <div>
+                        <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wide mb-0.5"><?= __('warranty_policy_title') ?></h4>
+                        <p class="text-[11px] text-blue-600 leading-tight"><?= __('warranty_policy_desc') ?></p>
+                    </div>
+                </div>
+
+                <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide"><?= __('error_type_label') ?> <span class="text-red-500">*</span></label>
+                <div class="relative mb-4">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-layer-group text-gray-400"></i>
+                    </div>
+                    <select name="error_type" class="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white shadow-sm appearance-none cursor-pointer transition hover:border-blue-300" required>
+                        <option value="" disabled selected><?= __('error_type_placeholder') ?></option>
+                        <option value="<?= __('err_hardware') ?>"><?= __('err_hardware') ?></option>
+                        <option value="<?= __('err_software') ?>"><?= __('err_software') ?></option>
+                        <option value="<?= __('err_physical') ?>"><?= __('err_physical') ?></option>
+                        <option value="<?= __('err_other') ?>"><?= __('err_other') ?></option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
+                    </div>
+                </div>
+
                 <label class="block text-sm font-bold text-gray-700 mb-1"><?= __("error_description") ?> <span class="text-red-500">*</span></label>
                 <textarea name="reason" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="<?= __("error_desc_placeholder") ?>" required></textarea>
             </div>
             <!-- Upload bằng chứng ảnh/video -->
             <div class="mb-4 text-left">
-                <label class="block text-sm font-bold text-gray-700 mb-1"><i class="fa-solid fa-camera mr-1 text-blue-500"></i>Đính kèm bằng chứng <span class="text-xs font-normal text-gray-400">(tối đa 5 file, ≤20MB/file)</span></label>
+                <label class="block text-sm font-bold text-gray-700 mb-1"><i class="fa-solid fa-camera mr-1 text-blue-500"></i><?= __("media_upload_label") ?></label>
                 <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition relative">
                     <input type="file" name="warranty_media[]" multiple accept="image/*,video/mp4,video/webm" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewModalMedia(this, 'warranty-preview')">
                     <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 mb-1"></i>
-                    <p class="text-xs text-gray-500">Kéo thả hoặc <span class="text-blue-600 font-medium">bấm để chọn</span> ảnh/video</p>
+                    <p class="text-xs text-gray-500"><?= __("drag_drop_text_1") ?> <span class="text-blue-600 font-medium"><?= __("drag_drop_text_2") ?></span> <?= __("drag_drop_text_3") ?></p>
                 </div>
                 <div id="warranty-preview" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">Gửi Yêu Cầu</button>
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition"><?= __("submit_request") ?></button>
         </form>
     </div>
 </div>
@@ -859,28 +1243,68 @@ function getStatusUI($status)
         <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl mb-4">
             <i class="fa-solid fa-right-left"></i>
         </div>
-        <h3 class="text-xl font-bold text-gray-800 mb-2">Đổi Trả & Hoàn Tiền</h3>
-        <p class="text-gray-500 text-sm mb-4">Vui lòng cung cấp lý do và ảnh/video chứng minh cho đơn hàng #<span id="returnOrderIdView" class="font-bold"></span>.</p>
+        <h3 class="text-xl font-bold text-gray-800 mb-2"><?= __("return_refund") ?></h3>
+        <p class="text-gray-500 text-sm mb-4"><?= __("return_request_desc_prefix") ?> #<span id="returnOrderIdView" class="font-bold"></span>.</p>
         
         <form method="POST" action="track_order.php<?= isset($_GET['status']) ? '?status=' . htmlspecialchars($_GET['status']) : '' ?>" enctype="multipart/form-data">
             <?= csrf_input_field() ?>
             <input type="hidden" name="action" value="request_return">
             <input type="hidden" name="order_id" id="returnOrderId">
-            <div class="mb-4 text-left">
-                <label class="block text-sm font-bold text-gray-700 mb-1">Lý do trả hàng <span class="text-red-500">*</span></label>
-                <textarea name="reason" rows="3" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ví dụ: Giao sai sản phẩm, sản phẩm bị bể vỡ khi nhận..." required></textarea>
+            <div class="mb-3 text-left">
+                <label class="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wide"><?= __('return_type_label') ?> <span class="text-red-500">*</span></label>
+                <div class="relative mb-3">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-box-open text-gray-400"></i>
+                    </div>
+                    <select name="return_type" class="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none bg-white shadow-sm appearance-none cursor-pointer transition" required>
+                        <option value="" disabled selected><?= __('return_type_placeholder') ?></option>
+                        <option value="<?= __('ret_defective') ?>"><?= __('ret_defective') ?></option>
+                        <option value="<?= __('ret_wrong_item') ?>"><?= __('ret_wrong_item') ?></option>
+                        <option value="<?= __('ret_damaged') ?>"><?= __('ret_damaged') ?></option>
+                        <option value="<?= __('ret_missing') ?>"><?= __('ret_missing') ?></option>
+                        <option value="<?= __('ret_other') ?>"><?= __('ret_other') ?></option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
+                    </div>
+                </div>
+                
+                <!-- Khu vực nhập Bank thu gọn -->
+                <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-fuchsia-700 p-3 mb-3 shadow-md text-white">
+                    <div class="absolute top-0 right-0 opacity-10 transform translate-x-2 -translate-y-2">
+                        <i class="fa-brands fa-cc-visa text-7xl"></i>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-center mb-2.5">
+                            <p class="text-[9px] font-bold uppercase tracking-wider text-indigo-100"><i class="fa-solid fa-building-columns mr-1"></i> <?= __('refund_info_title') ?></p>
+                            <i class="fa-solid fa-microchip text-xl text-yellow-300 opacity-90 drop-shadow-md"></i>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div class="relative group">
+                                <input type="text" name="bank_name" placeholder="<?= __('bank_name_placeholder') ?>" class="w-full bg-white/10 border border-white/20 rounded p-1.5 text-xs text-white placeholder-white/60 outline-none focus:border-white/60 focus:bg-white/20 transition backdrop-blur-md" required>
+                            </div>
+                            <div class="relative group">
+                                <input type="text" name="bank_account" placeholder="<?= __('bank_account_placeholder') ?>" class="w-full bg-white/10 border border-white/20 rounded p-1.5 text-xs text-white placeholder-white/60 outline-none focus:border-white/60 focus:bg-white/20 transition font-mono tracking-wider backdrop-blur-md" required>
+                            </div>
+                        </div>
+                        <div class="relative group">
+                            <input type="text" name="bank_owner" placeholder="<?= __('bank_owner_placeholder') ?>" class="w-full bg-white/10 border border-white/20 rounded p-1.5 text-xs text-white placeholder-white/60 outline-none focus:border-white/60 focus:bg-white/20 transition uppercase backdrop-blur-md font-bold" required>
+                        </div>
+                    </div>
+                </div>
+
+                <textarea name="reason" rows="2" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-purple-500 outline-none mb-3" placeholder="<?= __("return_desc_placeholder") ?>" required></textarea>
             </div>
             <!-- Upload bằng chứng ảnh/video -->
             <div class="mb-4 text-left">
-                <label class="block text-sm font-bold text-gray-700 mb-1"><i class="fa-solid fa-camera mr-1 text-purple-500"></i>Đính kèm bằng chứng <span class="text-xs font-normal text-gray-400">(tối đa 5 file, ≤20MB/file)</span></label>
-                <div class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition relative">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-2 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50/30 transition relative">
                     <input type="file" name="return_media[]" multiple accept="image/*,video/mp4,video/webm" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewModalMedia(this, 'return-preview')">
-                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-gray-300 mb-1"></i>
-                    <p class="text-xs text-gray-500">Kéo thả hoặc <span class="text-purple-600 font-medium">bấm để chọn</span> ảnh/video</p>
+                    <i class="fa-solid fa-camera text-xl text-purple-400 mb-1"></i>
+                    <p class="text-[10px] text-gray-500"><?= __('upload_media_desc') ?></p>
                 </div>
-                <div id="return-preview" class="flex flex-wrap gap-2 mt-2"></div>
+                <div id="return-preview" class="flex flex-wrap gap-1 mt-1"></div>
             </div>
-            <button type="submit" class="w-full bg-purple-600 text-white font-bold py-3 rounded-lg hover:bg-purple-700 transition">Gửi Yêu Cầu Trả Hàng</button>
+            <button type="submit" class="w-full bg-purple-600 text-white font-bold py-2.5 rounded-lg hover:bg-purple-700 transition shadow-md"><?= __("submit_return_request") ?></button>
         </form>
     </div>
 </div>

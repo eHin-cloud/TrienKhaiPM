@@ -30,7 +30,7 @@ $page = isset($_GET['p']) ? $_GET['p'] : 'orders'; // Mặc định vào thẳng
 // Chặn quyền truy cập theo từng trang dựa trên hệ thống RBAC
 if (!can('dashboard') && $page === 'dashboard') { $page = 'orders'; }
 if (!can('manage_users') && in_array($page, ['users', 'login_history'])) { $page = 'orders'; }
-if (!can('manage_categories') && in_array($page, ['categories', 'brands', 'vouchers'])) { $page = 'orders'; }
+if (!can('manage_categories') && in_array($page, ['categories', 'brands', 'vouchers', 'newsletters'])) { $page = 'orders'; }
 
 $msg = '';
 $msg_type = '';
@@ -188,9 +188,19 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                 <i class="fa-solid fa-right-left w-5 text-purple-400"></i> Y/c Đổi Trả
             </a>
 
+            <a href="?p=installments"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'installments' ? 'bg-red-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
+                <i class="fa-solid fa-credit-card w-5 text-red-400"></i> Y/c Trả Góp
+            </a>
+
             <a href="?p=products"
                 class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'products' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
                 <i class="fa-solid fa-box w-5"></i> Sản phẩm
+            </a>
+
+            <a href="?p=inventory"
+                class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'inventory' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-800' ?>">
+                <i class="fa-solid fa-boxes-stacked w-5 text-emerald-400"></i> Tồn kho
             </a>
 
             <a href="?p=homepage"
@@ -214,6 +224,11 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                 <a href="?p=vouchers"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'vouchers' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
                     <i class="fa-solid fa-ticket w-5"></i> Mã giảm giá
+                </a>
+
+                <a href="?p=newsletters"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg transition <?= $page === 'newsletters' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800' ?>">
+                    <i class="fa-solid fa-envelope-open-text w-5"></i> Nhận ưu đãi
                 </a>
             <?php endif; ?>
 
@@ -271,12 +286,16 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         echo "Quản lý Thương Hiệu";
                     elseif ($page === 'vouchers')
                         echo "Quản lý Mã Giảm Giá";
+                    elseif ($page === 'newsletters')
+                        echo "Quản lý Đăng Ký Ưu Đãi";
                     elseif ($page === 'homepage')
                         echo "Quản lý Giao Diện Trang Chủ";
                     elseif ($page === 'warranties')
                         echo "Quản lý Yêu Cầu Bảo Hành";
                     elseif ($page === 'returns')
                         echo "Quản lý Yêu Cầu Đổi Trả";
+                    elseif ($page === 'installments')
+                        echo "Quản lý Yêu Cầu Trả Góp";
                     ?>
                 </h2>
             </div>
@@ -411,7 +430,17 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                                 },
                                 options: {
                                     responsive: true,
-                                    maintainAspect                 <!-- BẢNG LỊCH SỬ THU NHẬP -->
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                                    },
+                                    cutout: '70%'
+                                }
+                            });
+                        });
+                    </script>
+
+                <!-- BẢNG LỊCH SỬ THU NHẬP -->
                 <?php elseif ($page === 'revenue'): ?>
                     <div class="p-6">
                         <!-- Tiêu đề in ấn chuyên nghiệp (chỉ hiển thị khi in) -->
@@ -658,6 +687,66 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                     </table>
                     </div>
 
+                    <!-- BẢNG TỒN KHO -->
+                <?php elseif ($page === 'inventory'): ?>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
+                        <div class="flex flex-col gap-1 w-full sm:w-auto">
+                            <span class="text-slate-700 font-black text-sm">Quản lý Tồn kho</span>
+                            <span class="text-slate-400 text-xs">Theo dõi và cập nhật số lượng tồn kho sản phẩm trong hệ thống</span>
+                        </div>
+                        <span class="text-gray-600 font-medium text-sm">Tổng số sản phẩm: <?= count($items) ?></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                <th class="p-4 border-b font-semibold w-16">ID</th>
+                                <th class="p-4 border-b font-semibold w-24">Ảnh</th>
+                                <th class="p-4 border-b font-semibold w-1/3">Tên sản phẩm</th>
+                                <th class="p-4 border-b font-semibold">Hãng / Danh mục</th>
+                                <th class="p-4 border-b font-semibold text-center w-36">Tồn kho hiện tại</th>
+                                <th class="p-4 border-b font-semibold text-center w-32">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($items as $item): ?>
+                                <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
+                                    <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
+                                    <td class="p-4"><img src="<?= $item['image'] ?>"
+                                            class="w-12 h-12 object-contain border border-gray-200 rounded p-1 bg-white"></td>
+                                    <td class="p-4 font-medium text-gray-800"><?= htmlspecialchars($item['name']) ?></td>
+                                    <td class="p-4">
+                                        <div class="text-gray-800 font-medium"><?= $item['brand_name'] ?? 'Không rõ' ?></div>
+                                        <div class="text-gray-400 text-xs"><?= $item['cat_name'] ?? 'Không rõ' ?></div>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <?php if (($item['stock'] ?? 0) > 0): ?>
+                                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200"><?= $item['stock'] ?> sản phẩm</span>
+                                        <?php else: ?>
+                                            <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold border border-red-200">Hết hàng</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="p-4 text-center">
+                                        <button onclick="openStockModal(<?= htmlspecialchars(json_encode([
+                                            'id' => $item['id'],
+                                            'name' => $item['name'],
+                                            'stock' => $item['stock'] ?? 0
+                                        ], JSON_UNESCAPED_UNICODE)) ?>)"
+                                            class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 justify-center border border-blue-200 mx-auto"
+                                            title="Cập nhật tồn kho">
+                                            <i class="fa-solid fa-pen-to-square"></i> Cập nhật
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($items)): ?>
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-gray-500">Không có dữ liệu sản phẩm</td>
+                                </tr><?php endif; ?>
+                        </tbody>
+                    </table>
+                    </div>
+
                     <!-- BẢNG SẢN PHẨM -->
                 <?php elseif ($page === 'products'): ?>
                     <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
@@ -692,7 +781,7 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                                     </td>
                                     <td class="p-4 font-bold text-red-600"><?= number_format($item['price']) ?>đ</td>
                                     <td class="p-4 text-center">
-                                        <button onclick="editProduct(<?= htmlspecialchars(json_encode($item)) ?>)"
+                                        <button onclick="editProductById(<?= $item['id'] ?>)"
                                             class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-full transition"
                                             title="Sửa"><i class="fa-solid fa-pen"></i></button>
                                         <form method="POST" class="inline-block" onsubmit="return confirmDelete(event)">
@@ -713,71 +802,122 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         </tbody>
                     </table>
                     </div>
+                    <script>
+                        <?php
+                        // Giải mã more_images từ chuỗi JSON thành mảng PHP thực tế trước khi xuất ra JS
+                        // nhằm loại bỏ hoàn toàn các ký tự escape dấu nháy kép phức tạp (\u0022) lồng nhau dễ gây lỗi cú pháp JS.
+                        foreach ($items as &$item) {
+                            if (!empty($item['more_images']) && is_string($item['more_images'])) {
+                                $decoded = json_decode($item['more_images'], true);
+                                $item['more_images'] = is_array($decoded) ? $decoded : [];
+                            } else {
+                                $item['more_images'] = [];
+                            }
+                        }
+                        unset($item);
+                        ?>
+                        const productsData = <?= json_encode($items, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) ?>;
+                        function editProductById(id) {
+                            const product = productsData.find(p => p.id == id);
+                            if (product) {
+                                editProduct(product);
+                            }
+                        }
+                    </script>
 
                     <!-- BẢNG TÀI KHOẢN -->
                 <?php elseif ($page === 'users'): ?>
-                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
-                        <span class="text-gray-600 font-medium">Tổng cộng: <?= count($items) ?> tài khoản</span>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                        <div class="flex flex-col gap-1 w-full sm:w-auto">
+                            <span class="text-slate-700 font-black text-sm">Tổng cộng: <?= count($items) ?> tài khoản</span>
+                            <span class="text-slate-400 text-xs">Quản lý phân quyền và thông tin thành viên</span>
+                        </div>
                         <button onclick="openUserModal()"
-                            class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition text-sm font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Thêm Tài Khoản
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl shadow-md transition text-xs font-black flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                            <i class="fa-solid fa-plus animate-bounce"></i> Thêm Tài Khoản
                         </button>
                     </div>
                     <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm min-w-[600px]">
+                    <table class="w-full text-left border-collapse text-sm min-w-[750px]">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
-                                <th class="p-4 border-b font-semibold w-16">ID</th>
-                                <th class="p-4 border-b font-semibold">Tên & Username</th>
-                                <th class="p-4 border-b font-semibold">Số điện thoại</th>
-                                <th class="p-4 border-b font-semibold">Nguồn đăng nhập</th>
-                                <th class="p-4 border-b font-semibold">Cấp quyền (Role)</th>
-                                <th class="p-4 border-b font-semibold text-center w-28">Thao tác</th>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-[10px] font-black tracking-wider border-b border-slate-100">
+                                <th class="p-4 w-20">ID</th>
+                                <th class="p-4">Thành viên</th>
+                                <th class="p-4">Thông tin liên hệ</th>
+                                <th class="p-4">Nguồn đăng nhập</th>
+                                <th class="p-4">Vai trò (Role)</th>
+                                <th class="p-4 text-center w-28">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($items as $item): ?>
-                                <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
-                                    <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
+                                <?php
+                                // Tạo màu avatar ngẫu nhiên dựa trên chữ cái đầu
+                                $first_letter = mb_strtoupper(mb_substr(trim($item['fullname']), 0, 1, 'utf-8'), 'utf-8');
+                                $bg_colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
+                                $color_idx = ord($first_letter) % count($bg_colors);
+                                $avatar_bg = $bg_colors[$color_idx];
+                                ?>
+                                <tr class="hover:bg-slate-50/50 border-b border-gray-100 transition duration-150">
+                                    <td class="p-4 text-slate-400 font-bold">#<?= $item['id'] ?></td>
                                     <td class="p-4">
-                                        <div class="font-bold text-gray-800"><?= htmlspecialchars($item['fullname']) ?></div>
-                                        <div class="text-gray-500 text-xs">@<?= htmlspecialchars($item['username']) ?></div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-full <?= $avatar_bg ?> text-white font-black flex items-center justify-center text-sm shadow-sm select-none">
+                                                <?= $first_letter ?>
+                                            </div>
+                                            <div>
+                                                <div class="font-extrabold text-slate-800 text-sm"><?= htmlspecialchars($item['fullname']) ?></div>
+                                                <div class="text-slate-400 text-xs font-semibold">@<?= htmlspecialchars($item['username']) ?></div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="p-4 font-medium text-gray-700"><?= htmlspecialchars($item['phone']) ?></td>
+                                    <td class="p-4">
+                                        <div class="font-bold text-slate-700 text-xs flex items-center gap-1.5">
+                                            <i class="fa-solid fa-phone text-slate-400 text-[10px]"></i> <?= htmlspecialchars($item['phone']) ?>
+                                        </div>
+                                        <?php if (!empty($item['email'])): ?>
+                                            <div class="text-slate-400 text-xs mt-1 flex items-center gap-1.5">
+                                                <i class="fa-regular fa-envelope text-[10px]"></i> <?= htmlspecialchars($item['email']) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="p-4">
                                         <?php
                                         $provider = $item['auth_provider'] ?? 'local';
                                         if ($provider === 'google') {
-                                            echo '<span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-200"><i class="fa-brands fa-google"></i> Google</span>';
+                                            echo '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-red-50 text-red-600 border border-red-100 uppercase tracking-wider"><i class="fa-brands fa-google"></i> Google</span>';
                                         } else {
-                                            echo '<span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-blue-50 text-primary border border-blue-200"><i class="fa-solid fa-user"></i> DienMayPro</span>';
+                                            echo '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-50 text-blue-600 border border-blue-100 uppercase tracking-wider"><i class="fa-solid fa-user-shield"></i> Nội bộ</span>';
                                         }
                                         ?>
                                     </td>
                                     <td class="p-4">
                                         <?php
-                                        if ($item['role'] == 'admin')
-                                            echo '<span class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold">Admin</span>';
-                                        elseif ($item['role'] == 'manager')
-                                            echo '<span class="bg-blue-100 text-blue-600 px-2 py-1 rounded text-xs font-bold">Quản lý</span>';
-                                        else
-                                            echo '<span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">Khách hàng</span>';
+                                        if ($item['role'] == 'admin') {
+                                            echo '<span class="bg-red-50 text-red-600 border border-red-100 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Admin</span>';
+                                        } elseif ($item['role'] == 'manager') {
+                                            echo '<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Quản lý</span>';
+                                        } else {
+                                            echo '<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Khách hàng</span>';
+                                        }
                                         ?>
                                     </td>
                                     <td class="p-4 text-center">
-                                        <button onclick="editUser(<?= htmlspecialchars(json_encode($item)) ?>)"
-                                            class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-full transition"><i
-                                                class="fa-solid fa-pen"></i></button>
-                                        <?php if ($item['id'] != $_SESSION['user_id']): ?>
-                                            <form method="POST" class="inline-block" onsubmit="return confirmDelete(event)">
-                                                <?= csrf_input_field() ?>
-                                                <input type="hidden" name="action" value="delete_user">
-                                                <input type="hidden" name="id" value="<?= $item['id'] ?>">
-                                                <button type="submit"
-                                                    class="text-red-500 hover:bg-red-50 w-8 h-8 rounded-full transition"><i
-                                                        class="fa-solid fa-trash"></i></button>
-                                            </form>
-                                        <?php endif; ?>
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            <button onclick="editUser(<?= htmlspecialchars(json_encode($item)) ?>)"
+                                                class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-xl flex items-center justify-center transition border border-transparent hover:border-blue-100" title="Chỉnh sửa"><i
+                                                    class="fa-solid fa-pen text-xs"></i></button>
+                                            <?php if ($item['id'] != $_SESSION['user_id']): ?>
+                                                <form method="POST" class="inline-block m-0" onsubmit="return confirmDelete(event)">
+                                                    <?= csrf_input_field() ?>
+                                                    <input type="hidden" name="action" value="delete_user">
+                                                    <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                    <button type="submit"
+                                                        class="text-red-500 hover:bg-red-50 w-8 h-8 rounded-xl flex items-center justify-center transition border border-transparent hover:border-red-100" title="Xóa"><i
+                                                            class="fa-solid fa-trash text-xs"></i></button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -991,55 +1131,282 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                     </table>
                     </div>
                 <?php elseif ($page === 'vouchers'): ?>
-                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
-                        <span class="text-gray-600 font-medium">Tổng cộng: <?= count($items) ?> mã giảm giá</span>
-                        <button onclick="openVoucherModal()"
-                            class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition text-sm font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-plus"></i> Thêm Mã Giảm Giá
-                        </button>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                            <span class="text-gray-700 font-bold text-sm">Tổng cộng: <?= count($items) ?> mã giảm giá</span>
+                            <!-- Bộ lọc Trạng thái -->
+                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                <a href="?p=vouchers&status=all<?= $search ? '&q='.urlencode($search) : '' ?>" 
+                                   class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all <?= ($status_filter === 'all' || !$status_filter) ? 'bg-slate-800 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ?>">
+                                   Tất cả
+                                </a>
+                                <a href="?p=vouchers&status=active<?= $search ? '&q='.urlencode($search) : '' ?>" 
+                                   class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all <?= $status_filter === 'active' ? 'bg-green-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ?>">
+                                   Đang hoạt động
+                                </a>
+                                <a href="?p=vouchers&status=depleted<?= $search ? '&q='.urlencode($search) : '' ?>" 
+                                   class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all <?= $status_filter === 'depleted' ? 'bg-amber-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ?>">
+                                   Đã hết lượt
+                                </a>
+                                <a href="?p=vouchers&status=expired<?= $search ? '&q='.urlencode($search) : '' ?>" 
+                                   class="px-3 py-1.5 text-[10px] font-black rounded-lg transition-all <?= $status_filter === 'expired' ? 'bg-red-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' ?>">
+                                   Đã hết hạn
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto shrink-0 justify-end">
+                            <!-- Nút Xóa Hàng Loạt -->
+                            <button id="btnBulkDeleteVouchers" disabled onclick="submitBulkDeleteVouchers()"
+                                class="bg-red-500 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-trash-can animate-pulse"></i> Xóa Đã Chọn
+                            </button>
+                            <!-- Nút Thêm Mới -->
+                            <button onclick="openVoucherModal()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition text-xs font-black flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus animate-bounce"></i> Thêm Mã Giảm Giá
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm min-w-[700px]">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 uppercase text-xs border-b border-gray-100">
+                                <th class="p-4 w-12 text-center">
+                                    <input type="checkbox" id="selectAllVouchers" onclick="toggleSelectAllVouchers(this)" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
+                                </th>
+                                <th class="p-4 font-black w-20">ID</th>
+                                <th class="p-4 font-black">Mã Voucher</th>
+                                <th class="p-4 font-black">Mức giảm</th>
+                                <th class="p-4 font-black">Đã dùng / Giới hạn</th>
+                                <th class="p-4 font-black">Trạng thái</th>
+                                <th class="p-4 font-black text-center w-28">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($items)): ?>
+                                <tr>
+                                    <td colspan="7" class="p-8 text-center text-gray-400 italic font-medium">Không tìm thấy mã giảm giá nào phù hợp bộ lọc.</td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($items as $item): ?>
+                                    <?php
+                                    $is_upcoming = $item['starts_at'] && strtotime($item['starts_at']) > time();
+                                    $is_expired = $item['expires_at'] && strtotime($item['expires_at']) < time();
+                                    $is_depleted = $item['usage_limit'] > 0 && $item['used_count'] >= $item['usage_limit'];
+                                    
+                                    if ($is_upcoming) {
+                                        $status_badge = '<span class="bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Chờ Kích Hoạt</span>';
+                                    } elseif ($is_expired) {
+                                        $status_badge = '<span class="bg-red-50 text-red-600 border border-red-100 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Hết Hạn</span>';
+                                    } elseif ($is_depleted) {
+                                        $status_badge = '<span class="bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Hết Lượt</span>';
+                                    } else {
+                                        $status_badge = '<span class="bg-green-50 text-green-600 border border-green-100 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Hoạt Động</span>';
+                                    }
+                                    ?>
+                                    <tr class="hover:bg-slate-50/50 border-b border-gray-100 transition duration-150">
+                                        <td class="p-4 text-center">
+                                            <input type="checkbox" name="voucher_ids[]" value="<?= $item['id'] ?>" onclick="checkVoucherSelection()" class="voucher-checkbox w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer">
+                                        </td>
+                                        <td class="p-4 text-gray-400 font-bold">#<?= $item['id'] ?></td>
+                                        <td class="p-4">
+                                            <div class="font-black text-blue-600 uppercase tracking-wider text-sm"><?= htmlspecialchars($item['code']) ?></div>
+                                            <div class="text-[10px] text-gray-400 mt-1 flex flex-col gap-0.5">
+                                                <?php if ($item['starts_at']): ?>
+                                                    <span class="flex items-center gap-1"><i class="fa-regular fa-calendar-plus text-green-500"></i> Từ: <?= date('d/m/Y H:i', strtotime($item['starts_at'])) ?></span>
+                                                <?php endif; ?>
+                                                <?php if ($item['expires_at']): ?>
+                                                    <span class="flex items-center gap-1"><i class="fa-regular fa-clock text-red-400"></i> Đến: <?= date('d/m/Y H:i', strtotime($item['expires_at'])) ?></span>
+                                                <?php endif; ?>
+                                                <?php if (!$item['starts_at'] && !$item['expires_at']): ?>
+                                                    <span class="flex items-center gap-1 italic text-slate-400"><i class="fa-solid fa-infinity"></i> Vô thời hạn</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="font-extrabold text-red-600 bg-red-50 px-2 py-1 rounded-lg text-xs">
+                                                <?= ($item['discount_type'] === 'percent') ? number_format($item['discount_amount']) . '%' : number_format($item['discount_amount']) . 'đ' ?>
+                                            </span>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="font-bold text-gray-700 text-xs">
+                                                <?= $item['used_count'] ?> <span class="text-gray-400 font-medium">/</span> <?= $item['usage_limit'] == 0 ? 'Vô hạn' : $item['usage_limit'] ?>
+                                            </div>
+                                            <!-- Thanh phần trạng sử dụng (Progress bar nhỏ) -->
+                                            <?php if ($item['usage_limit'] > 0): ?>
+                                                <?php $pct = min(100, round(($item['used_count'] / $item['usage_limit']) * 100)); ?>
+                                                <div class="w-24 bg-gray-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                                                    <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: <?= $pct ?>%"></div>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="p-4">
+                                            <?= $status_badge ?>
+                                        </td>
+                                        <td class="p-4 text-center">
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                <button onclick="editVoucher(<?= htmlspecialchars(json_encode($item)) ?>)"
+                                                    class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-xl flex items-center justify-center transition border border-transparent hover:border-blue-100" title="Chỉnh sửa"><i
+                                                        class="fa-solid fa-pen text-xs"></i></button>
+                                                <form method="POST" class="inline-block m-0" onsubmit="return confirmDelete(event)">
+                                                    <?= csrf_input_field() ?>
+                                                    <input type="hidden" name="action" value="delete_voucher">
+                                                    <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                    <button type="submit"
+                                                        class="text-red-500 hover:bg-red-50 w-8 h-8 rounded-xl flex items-center justify-center transition border border-transparent hover:border-red-100" title="Xóa"><i
+                                                            class="fa-solid fa-trash text-xs"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <!-- Form ẩn để submit xóa hàng loạt -->
+                    <form id="formBulkDeleteVouchers" method="POST" action="">
+                        <?= csrf_input_field() ?>
+                        <input type="hidden" name="action" value="bulk_delete_vouchers">
+                        <input type="hidden" name="ids" id="bulkDeleteVouchersIds">
+                    </form>
+
+                <!-- BẢNG ĐĂNG KÝ NHẬN ƯU ĐÃI -->
+                <?php elseif ($page === 'newsletters'): ?>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50">
+                        <span class="text-gray-600 font-medium">Tổng cộng: <?= count($items) ?> lượt đăng ký nhận ưu đãi</span>
+                        
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="toggleBulkEmailCard()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-sm flex items-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> Gửi Email Hàng Loạt
+                            </button>
+                            
+                            <?php if (count($items) > 0): ?>
+                            <form method="POST" class="inline-block" onsubmit="return confirmDeleteAllNewsletters(event)">
+                                <?= csrf_input_field() ?>
+                                <input type="hidden" name="action" value="delete_all_newsletters">
+                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow-sm flex items-center gap-2">
+                                      <i class="fa-solid fa-trash-can"></i> Xóa tất cả
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- CARD SOẠN THẢO EMAIL HÀNG LOẠT (COLLAPSIBLE) -->
+                    <div id="bulk-email-card" class="hidden p-6 border-b border-gray-200 bg-white transition-all duration-300">
+                        <div class="max-w-3xl mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500 text-white flex items-center justify-center text-lg shadow-md shadow-blue-100">
+                                    <i class="fa-solid fa-bullhorn animate-bounce"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-base font-black text-slate-800">Chiến Dịch Email Marketing Hàng Loạt</h4>
+                                    <p class="text-xs text-slate-500">Gửi email thông tin khuyến mãi, ưu đãi, bài viết hữu ích đến hòm thư của khách hàng đăng ký.</p>
+                                </div>
+                            </div>
+                            
+                            <form method="POST" onsubmit="return confirmSendBulkEmail(event)">
+                                <?= csrf_input_field() ?>
+                                <input type="hidden" name="action" value="send_bulk_email">
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-5">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tiêu đề Email <span class="text-red-500">*</span></label>
+                                        <input type="text" name="email_subject" placeholder="Nhập tiêu đề hấp dẫn..." required class="w-full bg-white border border-slate-200 text-sm text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Đối tượng gửi <span class="text-red-500">*</span></label>
+                                        <select name="email_target" class="w-full bg-white border border-slate-200 text-sm text-slate-800 px-4 py-2.5 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                                            <option value="all">Tất cả danh sách (<?= count($items) ?>)</option>
+                                            <option value="approved">Đã duyệt & Tặng Voucher (<?= count(array_filter($items, fn($x) => $x['status'] === 'approved')) ?>)</option>
+                                            <option value="pending">Chờ duyệt (<?= count(array_filter($items, fn($x) => $x['status'] === 'pending')) ?>)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nội dung Email <span class="text-red-500">*</span></label>
+                                    <textarea name="email_body" rows="6" placeholder="Nhập nội dung chiến dịch marketing của bạn. Hệ thống sẽ tự động đóng gói nội dung này vào một template HTML chuyên nghiệp..." required class="w-full bg-white border border-slate-200 text-sm text-slate-800 px-4 py-3 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-medium resize-y"></textarea>
+                                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mt-2">
+                                        <p class="text-[11px] text-slate-400"><i class="fa-solid fa-circle-info mr-1 text-blue-400"></i> Hỗ trợ cả định dạng văn bản thường và các thẻ HTML cơ bản (như &lt;b&gt;, &lt;i&gt;, &lt;a&gt;, &lt;br&gt;).</p>
+                                        <p class="text-[11px] text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                                            <i class="fa-solid fa-link"></i> Website mặc định: <span class="underline font-bold"><?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . explode('admin.php', $_SERVER['SCRIPT_NAME'])[0] ?></span>
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end gap-3 border-t border-slate-200/60 pt-5">
+                                    <button type="button" onclick="toggleBulkEmailCard()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition shadow-sm">
+                                        Đóng lại
+                                    </button>
+                                    <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition shadow-md shadow-blue-100 flex items-center gap-2">
+                                        <i class="fa-solid fa-paper-plane"></i> Bắt đầu gửi ngay
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm min-w-[600px]">
                         <thead>
                             <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
                                 <th class="p-4 border-b font-semibold w-16">ID</th>
-                                <th class="p-4 border-b font-semibold">Mã Voucher</th>
-                                <th class="p-4 border-b font-semibold">Mức giảm</th>
-                                <th class="p-4 border-b font-semibold">Đã dùng / Giới hạn</th>
+                                <th class="p-4 border-b font-semibold">Email Đăng Ký / User ID</th>
+                                <th class="p-4 border-b font-semibold">Trạng thái</th>
                                 <th class="p-4 border-b font-semibold text-center w-28">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($items as $item): ?>
-                                <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
-                                    <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
-                                    <td class="p-4 font-bold text-blue-600 uppercase tracking-wide">
-                                        <?= htmlspecialchars($item['code']) ?>
-                                    </td>
-                                    <td class="p-4 font-bold text-danger">
-                                        <?= ($item['discount_type'] === 'percent') ? number_format($item['discount_amount']) . '%' : number_format($item['discount_amount']) . 'đ' ?>
-                                    </td>
-                                    <td class="p-4 text-gray-600">
-                                        <?= $item['used_count'] ?> / <?= $item['usage_limit'] == 0 ? 'Vô hạn' : $item['usage_limit'] ?>
-                                    </td>
-                                    <td class="p-4 text-center">
-                                        <button onclick="editVoucher(<?= htmlspecialchars(json_encode($item)) ?>)"
-                                            class="text-blue-500 hover:bg-blue-50 w-8 h-8 rounded-full transition"><i
-                                                class="fa-solid fa-pen"></i></button>
-                                        <form method="POST" class="inline-block" onsubmit="return confirmDelete(event)">
-                                            <?= csrf_input_field() ?>
-                                            <input type="hidden" name="action" value="delete_voucher">
-                                            <input type="hidden" name="id" value="<?= $item['id'] ?>">
-                                            <button type="submit"
-                                                class="text-red-500 hover:bg-red-50 w-8 h-8 rounded-full transition"><i
-                                                    class="fa-solid fa-trash"></i></button>
-                                        </form>
-                                    </td>
+                            <?php if (empty($items)): ?>
+                                <tr>
+                                    <td colspan="4" class="p-4 text-center text-gray-500 italic">Không có email đăng ký nào.</td>
                                 </tr>
-                            <?php endforeach; ?>
+                            <?php else: ?>
+                                <?php foreach ($items as $item): ?>
+                                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition">
+                                        <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
+                                        <td class="p-4 font-bold text-gray-700">
+                                            <?= htmlspecialchars($item['email']) ?>
+                                            <?php if ($item['user_id']): ?>
+                                                <span class="ml-1 text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">User ID: #<?= $item['user_id'] ?></span>
+                                            <?php else: ?>
+                                                <span class="ml-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Khách vãng lai</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="p-4">
+                                            <span class="px-2.5 py-1 rounded-full text-xs font-extrabold <?= $item['status'] === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800 animate-pulse' ?>">
+                                                <?= $item['status'] === 'approved' ? 'Đã Duyệt & Tặng Voucher' : 'Chờ Duyệt' ?>
+                                            </span>
+                                        </td>
+                                        <td class="p-4 text-center flex items-center justify-center gap-1">
+                                            <?php if ($item['status'] !== 'approved'): ?>
+                                                <form method="POST" class="inline-block">
+                                                    <?= csrf_input_field() ?>
+                                                    <input type="hidden" name="action" value="approve_newsletter">
+                                                    <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow-sm flex items-center gap-1">
+                                                        <i class="fa-solid fa-circle-check"></i> Duyệt & Gửi Mã
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                            <form method="POST" class="inline-block" onsubmit="return confirmDelete(event)">
+                                                <?= csrf_input_field() ?>
+                                                <input type="hidden" name="action" value="delete_newsletter">
+                                                <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                <button type="submit" class="text-red-500 hover:bg-red-50 w-8 h-8 rounded-full transition flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                     </div>
+
                 <!-- BẢNG YÊU CẦU BẢO HÀNH -->
                 <?php elseif ($page === 'warranties'): ?>
                     <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
@@ -1152,6 +1519,134 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                                     </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($items)): ?><tr><td colspan="6" class="p-8 text-center text-gray-500">Không có yêu cầu đổi trả nào</td></tr><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                <!-- BẢNG YÊU CẦU TRẢ GÓP -->
+                <?php elseif ($page === 'installments'): ?>
+                    <div class="p-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-gray-50">
+                        <span class="text-gray-600 font-medium">Tổng cộng: <?= count($items) ?> yêu cầu trả góp</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm min-w-[900px]">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+                                    <th class="p-4 border-b font-semibold w-16">ID</th>
+                                    <th class="p-4 border-b font-semibold">Khách hàng</th>
+                                    <th class="p-4 border-b font-semibold">Sản phẩm</th>
+                                    <th class="p-4 border-b font-semibold">Gói đăng ký</th>
+                                    <th class="p-4 border-b font-semibold">Trạng thái & Ghi chú (Admin)</th>
+                                    <th class="p-4 border-b font-semibold text-xs">Ngày đăng ký</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($items as $item): ?>
+                                    <tr class="hover:bg-gray-50 border-b border-gray-100 transition align-top">
+                                        <td class="p-4 text-gray-500">#<?= $item['id'] ?></td>
+                                        <td class="p-4 font-medium text-gray-800">
+                                            <?= htmlspecialchars($item['fullname']) ?><br>
+                                            <span class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i><?= htmlspecialchars($item['phone']) ?></span>
+                                        </td>
+                                        <td class="p-4 font-medium text-gray-800">
+                                            <div class="flex items-center gap-2">
+                                                <img src="<?= htmlspecialchars($item['product_image']) ?>" class="w-10 h-10 object-contain rounded border bg-white shrink-0">
+                                                <span class="line-clamp-2 max-w-[200px] text-xs"><?= htmlspecialchars($item['product_name']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-gray-600 text-xs max-w-sm">
+                                            <?php if (!empty($item['payment_method'])): ?>
+                                                <div class="space-y-1.5">
+                                                    <!-- Badge phương thức -->
+                                                    <?php if ($item['payment_method'] === 'finance'): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 uppercase tracking-wider">
+                                                            <i class="fa-solid fa-building-columns mr-1"></i>Công ty tài chính
+                                                        </span>
+                                                    <?php elseif ($item['payment_method'] === 'credit_card'): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">
+                                                            <i class="fa-solid fa-credit-card mr-1"></i>Thẻ tín dụng
+                                                        </span>
+                                                    <?php elseif ($item['payment_method'] === 'bnpl'): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider">
+                                                            <i class="fa-solid fa-clock-rotate-left mr-1"></i>Mua trước trả sau (BNPL)
+                                                        </span>
+                                                    <?php endif; ?>
+
+                                                    <!-- Tag Thu cũ đổi mới -->
+                                                    <?php if (!empty($item['is_trade_in'])): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-orange-50 text-orange-700 border border-orange-200 uppercase tracking-wider ml-1">
+                                                            <i class="fa-solid fa-repeat mr-1"></i>Thu cũ lên đời
+                                                        </span>
+                                                    <?php endif; ?>
+
+                                                    <!-- Thông tin chi tiết tổ chức & kỳ hạn -->
+                                                    <div class="mt-1 space-y-1 text-gray-700 font-medium">
+                                                        <div>
+                                                            <span class="text-gray-400 font-normal text-[11px]">Đối tác:</span> 
+                                                            <span class="font-extrabold text-gray-900"><?= htmlspecialchars($item['partner_name'] ?? '') ?></span>
+                                                            <?php if (!empty($item['card_type'])): ?>
+                                                                <span class="text-[10px] px-1 bg-gray-100 text-gray-600 rounded font-bold border border-gray-200 ml-1"><?= htmlspecialchars($item['card_type']) ?></span>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                        <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] bg-gray-50 p-1.5 rounded border border-gray-100">
+                                                            <div>
+                                                                <span class="text-gray-400">Trả trước:</span> 
+                                                                <span class="font-bold text-gray-800"><?= number_format($item['prepayment_amount'] ?? 0) ?>đ (<?= (int)($item['prepayment_percent'] ?? 0) ?>%)</span>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-gray-400">Kỳ hạn:</span> 
+                                                                <span class="font-bold text-gray-800"><?= (int)($item['term_months'] ?? 3) ?> tháng</span>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-gray-400">Lãi suất:</span> 
+                                                                <span class="font-bold text-gray-800"><?= (float)($item['interest_rate'] ?? 0) ?>% / tháng</span>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-gray-400">Chênh lệch:</span> 
+                                                                <span class="font-bold text-gray-800"><?= number_format($item['difference_amount'] ?? 0) ?>đ</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex justify-between items-center bg-red-50/50 p-1.5 rounded border border-red-100/50 text-xs">
+                                                            <div>
+                                                                <span class="text-gray-500">Mỗi tháng:</span> 
+                                                                <span class="font-black text-red-600 text-sm"><?= number_format($item['monthly_payment'] ?? 0) ?>đ</span>
+                                                            </div>
+                                                            <div class="text-right">
+                                                                <span class="text-[10px] text-gray-400 block leading-none">Tổng phải trả</span>
+                                                                <span class="font-bold text-gray-900 leading-none"><?= number_format($item['total_payment'] ?? 0) ?>đ</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php else: ?>
+                                                <!-- Fallback cho bản ghi cũ -->
+                                                <div class="font-semibold text-gray-700 bg-gray-50 p-2.5 rounded border border-gray-100 leading-relaxed text-xs">
+                                                    <?= htmlspecialchars($item['installment_term']) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="p-4">
+                                            <!-- Form cập nhật trạng thái + ghi chú Admin -->
+                                            <form method="POST" class="space-y-2">
+                                                <?= csrf_input_field() ?>
+                                                <input type="hidden" name="action" value="update_installment_status">
+                                                <input type="hidden" name="id" value="<?= $item['id'] ?>">
+                                                <select name="status" class="text-xs p-1.5 w-full border border-gray-300 rounded font-bold outline-none <?= $item['status']==='pending'?'bg-yellow-50 text-yellow-700':($item['status']==='approved'?'bg-green-50 text-green-700':'bg-red-50 text-red-700') ?>">
+                                                    <option value="pending" <?= $item['status'] == 'pending' ? 'selected' : '' ?>>Chờ duyệt</option>
+                                                    <option value="approved" <?= $item['status'] == 'approved' ? 'selected' : '' ?>>Chấp nhận</option>
+                                                    <option value="rejected" <?= $item['status'] == 'rejected' ? 'selected' : '' ?>>Từ chối</option>
+                                                </select>
+                                                
+                                                <!-- Ô GHI NỘI DUNG (ADMIN NOTES) -->
+                                                <textarea name="admin_note" rows="2" class="w-full text-xs p-2 border border-gray-200 rounded resize-none focus:ring-1 focus:ring-red-400 outline-none" placeholder="Ghi chú nội dung trả góp..."><?= htmlspecialchars($item['admin_note'] ?? '') ?></textarea>
+                                                
+                                                <button type="submit" class="w-full text-xs bg-red-600 text-white px-3 py-1.5 rounded font-bold hover:bg-red-700 transition shadow"><i class="fa-solid fa-paper-plane mr-1"></i>Cập nhật</button>
+                                            </form>
+                                        </td>
+                                        <td class="p-4 text-gray-500 text-xs"><?= date('H:i d/m/Y', strtotime($item['created_at'])) ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (empty($items)): ?><tr><td colspan="6" class="p-8 text-center text-gray-500">Không có yêu cầu trả góp nào</td></tr><?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -1396,6 +1891,43 @@ extract($adminService->getPageData($page, $_GET, $user_role));
         </div>
     </div>
 
+    <!-- MODAL CẬP NHẬT TỒN KHO NHANH -->
+    <div id="stockModal"
+        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md relative overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-base font-bold text-gray-800" id="stockModalTitle">Cập nhật tồn kho</h3>
+                <button type="button" onclick="closeModal('stockModal')"
+                    class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form method="POST" class="p-6">
+                <?= csrf_input_field() ?>
+                <input type="hidden" name="action" value="update_stock">
+                <input type="hidden" name="id" id="stock_prod_id" value="">
+                
+                <div class="space-y-4">
+                    <div>
+                        <span class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tên sản phẩm</span>
+                        <div id="stock_prod_name" class="text-sm font-bold text-slate-850 bg-slate-50 p-3 rounded-lg border border-slate-100 line-clamp-2"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Số lượng tồn kho <span class="text-red-500">*</span></label>
+                        <input type="number" name="stock" id="stock_prod_qty" required min="0"
+                            class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                            placeholder="Nhập số lượng tồn kho mới...">
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('stockModal')"
+                        class="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition">Hủy</button>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md">Lưu cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL SẢN PHẨM -->
     <div id="productModal"
         class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -1483,6 +2015,12 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                             class="w-full px-3 py-2 border border-gray-300 rounded outline-none"
                             placeholder="Trả góp 0%, Mới 2024">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Số lượng tồn kho *</label>
+                        <input type="number" name="stock" id="prod_stock" required min="0" value="100"
+                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Nhập số lượng">
+                    </div>
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Mô tả bài viết chi tiết</label>
                         <textarea name="description" id="prod_desc"></textarea>
@@ -1506,75 +2044,125 @@ extract($adminService->getPageData($page, $_GET, $user_role));
 
     <!-- MODAL TÀI KHOẢN -->
     <div id="userModal"
-        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg relative overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800" id="userModalTitle">Thêm Tài Khoản</h3>
+        class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h3 class="text-base font-black text-slate-800" id="userModalTitle">Thêm Tài Khoản Mới</h3>
                 <button type="button" onclick="closeModal('userModal')"
-                    class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+                    class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form method="POST" class="p-6">
+            <form method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
                 <?= csrf_input_field() ?>
                 <input type="hidden" name="action" id="usr_action" value="add_user">
                 <input type="hidden" name="id" id="usr_id" value="">
-                <div class="space-y-4">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- HỌ VÀ TÊN -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên *</label>
-                        <input type="text" name="fullname" id="usr_fullname" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại *</label>
-                        <input type="text" name="phone" id="usr_phone" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập (Username) *</label>
-                        <input type="text" name="username" id="usr_username" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" name="email" id="usr_email"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="example@gmail.com">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-                        <input type="text" name="address" id="usr_address"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Số nhà, đường, phường/xã...">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1" id="lbl_usr_password">Mật khẩu
-                            *</label>
-                        <input type="password" name="password" id="usr_password" minlength="8"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none transition">
-                        <div id="admin-pw-hints" class="mt-1.5 text-xs space-y-0.5">
-                            <p id="admin-pw-len" class="flex items-center gap-1 text-gray-400"><i
-                                    class="fa-solid fa-circle text-[6px]"></i> Ít nhất 8 ký tự</p>
-                            <p id="admin-pw-letter" class="flex items-center gap-1 text-gray-400"><i
-                                    class="fa-solid fa-circle text-[6px]"></i> Ít nhất 1 chữ cái</p>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Họ và tên <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-user text-xs"></i>
+                            </span>
+                            <input type="text" name="fullname" id="usr_fullname" required
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="Nhập họ và tên đầy đủ...">
                         </div>
-                        <p class="text-xs text-gray-500 mt-1 hidden" id="hint_usr_password">Bỏ trống nếu không muốn đổi
-                            mật khẩu mới.</p>
                     </div>
+                    
+                    <!-- SỐ ĐIỆN THOẠI -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cấp quyền *</label>
-                        <select name="role" id="usr_role" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="customer">Khách hàng (Customer)</option>
-                            <option value="manager">Quản lý (Manager)</option>
-                            <option value="admin">Quản trị viên (Admin)</option>
-                        </select>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Số điện thoại <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-phone text-xs"></i>
+                            </span>
+                            <input type="text" name="phone" id="usr_phone" required
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="Nhập số điện thoại...">
+                        </div>
+                    </div>
+                    
+                    <!-- TÊN ĐĂNG NHẬP -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tên đăng nhập (Username) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-at text-xs"></i>
+                            </span>
+                            <input type="text" name="username" id="usr_username" required
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="VD: nguyenvanb...">
+                        </div>
+                    </div>
+                    
+                    <!-- EMAIL -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-regular fa-envelope text-xs"></i>
+                            </span>
+                            <input type="email" name="email" id="usr_email"
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="example@gmail.com">
+                        </div>
+                    </div>
+                    
+                    <!-- ĐỊA CHỈ -->
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Địa chỉ</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-location-dot text-xs"></i>
+                            </span>
+                            <input type="text" name="address" id="usr_address"
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="Số nhà, tên đường, phường/xã, quận/huyện...">
+                        </div>
+                    </div>
+                    
+                    <!-- MẬT KHẨU -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5" id="lbl_usr_password">Mật khẩu <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-lock text-xs"></i>
+                            </span>
+                            <input type="password" name="password" id="usr_password" minlength="8"
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                        </div>
+                        <div id="admin-pw-hints" class="mt-2 text-[10px] font-bold space-y-1">
+                            <p id="admin-pw-len" class="flex items-center gap-1.5 text-slate-400"><i
+                                    class="fa-solid fa-circle text-[5px]"></i> Ít nhất 8 ký tự</p>
+                            <p id="admin-pw-letter" class="flex items-center gap-1.5 text-slate-400"><i
+                                    class="fa-solid fa-circle text-[5px]"></i> Ít nhất 1 chữ cái</p>
+                        </div>
+                        <p class="text-[10px] text-slate-400 font-bold mt-2 hidden italic" id="hint_usr_password"><i class="fa-solid fa-circle-info"></i> Bỏ trống nếu không muốn đổi mật khẩu mới.</p>
+                    </div>
+                    
+                    <!-- CẤP QUYỀN -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cấp quyền (Vai trò) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                                <i class="fa-solid fa-shield-halved text-xs"></i>
+                            </span>
+                            <select name="role" id="usr_role" required
+                                class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                                <option value="customer">Khách hàng (Customer)</option>
+                                <option value="manager">Quản lý (Manager)</option>
+                                <option value="admin">Quản trị viên (Admin)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 shrink-0">
                     <button type="button" onclick="closeModal('userModal')"
-                        class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium transition">Hủy</button>
+                        class="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition">Hủy</button>
                     <button type="submit"
-                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition shadow-md">Lưu
-                        Tài Khoản</button>
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md shadow-blue-100">Lưu Tài Khoản</button>
                 </div>
             </form>
         </div>
@@ -1653,49 +2241,88 @@ extract($adminService->getPageData($page, $_GET, $user_role));
     <!-- MODAL VOUCHER -->
     <div id="voucherModal"
         class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm relative overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-800" id="voucherModalTitle">Thêm Mã Giảm Giá</h3>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-slate-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h3 class="text-base font-black text-slate-800" id="voucherModalTitle">Thêm Mã Giảm Giá</h3>
                 <button type="button" onclick="closeModal('voucherModal')"
-                    class="text-gray-400 hover:text-red-500 text-xl"><i class="fa-solid fa-xmark"></i></button>
+                    class="text-gray-400 hover:text-red-500 text-xl transition"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form method="POST" class="p-6">
+            <form method="POST" class="flex-1 overflow-y-auto p-6 space-y-4">
                 <?= csrf_input_field() ?>
                 <input type="hidden" name="action" id="voucher_action" value="add_voucher">
                 <input type="hidden" name="id" id="voucher_id" value="">
+                
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mã Voucher *</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mã Voucher <span class="text-red-500">*</span></label>
                         <input type="text" name="code" id="voucher_code" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                            class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold uppercase"
                             placeholder="VD: GIAM10K, PRO10...">
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Loại giảm giá *</label>
-                        <select name="discount_type" id="voucher_discount_type" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
-                            <option value="fixed">Giảm số tiền cố định (đ)</option>
-                            <option value="percent">Giảm theo phần trăm (%)</option>
-                        </select>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Loại giảm giá <span class="text-red-500">*</span></label>
+                            <select name="discount_type" id="voucher_discount_type" required
+                                class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                                <option value="fixed">Số tiền cố định (đ)</option>
+                                <option value="percent">Phần trăm (%)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Mức giảm <span class="text-red-500">*</span></label>
+                            <input type="number" name="discount_amount" id="voucher_discount_amount" required min="1"
+                                class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold"
+                                placeholder="10000 hoặc 10">
+                        </div>
                     </div>
+                    
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Mức giảm *</label>
-                        <input type="number" name="discount_amount" id="voucher_discount_amount" required min="1"
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="10000 hoặc 10">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Giới hạn sử dụng (0 = vô hạn)</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Giới hạn sử dụng (0 = Vô hạn)</label>
                         <input type="number" name="usage_limit" id="voucher_usage_limit" value="0" min="0" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 outline-none">
+                            class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                    </div>
+
+                    <!-- THỜI GIAN HOẠT ĐỘNG -->
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Thời gian bắt đầu</label>
+                                <button type="button" onclick="document.getElementById('voucher_starts_at').value=''" class="text-[10px] text-red-500 font-bold hover:underline">Xóa chọn</button>
+                            </div>
+                            <input type="datetime-local" name="starts_at" id="voucher_starts_at"
+                                class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                            <span class="text-[10px] text-slate-400 mt-1 block">Bỏ trống để mã có hiệu lực ngay lập tức.</span>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Thời gian hết hạn</label>
+                                <button type="button" onclick="document.getElementById('voucher_expires_at').value=''" class="text-[10px] text-red-500 font-bold hover:underline">Xóa chọn</button>
+                            </div>
+                            <input type="datetime-local" name="expires_at" id="voucher_expires_at"
+                                class="w-full px-4 py-2 bg-white border border-slate-200 text-sm text-slate-800 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-bold">
+                            <span class="text-[10px] text-slate-400 mt-1 block">Bỏ trống để mã có hiệu lực vĩnh viễn.</span>
+                            
+                            <!-- Chọn Nhanh Thời Gian -->
+                            <div class="mt-2.5">
+                                <span class="block text-[10px] font-bold text-slate-500 mb-1">Cài đặt nhanh hạn dùng kể từ hiện tại:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="setQuickVoucherDuration(3)" class="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all">+3 Giờ</button>
+                                    <button type="button" onclick="setQuickVoucherDuration(24)" class="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all">+24 Giờ</button>
+                                    <button type="button" onclick="setQuickVoucherDuration(48)" class="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all">+2 Ngày</button>
+                                    <button type="button" onclick="setQuickVoucherDuration(72)" class="bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all">+3 Ngày</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 shrink-0">
                     <button type="button" onclick="closeModal('voucherModal')"
-                        class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium transition">Hủy</button>
+                        class="px-5 py-2.5 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold transition">Hủy</button>
                     <button type="submit"
-                        class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition shadow-md">Lưu
-                        Mã</button>
+                        class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-md shadow-blue-100">Lưu Mã</button>
                 </div>
             </form>
         </div>
@@ -1744,6 +2371,118 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                 confirmButtonText: 'Xóa ngay!',
                 cancelButtonText: 'Hủy'
             }).then((result) => { if (result.isConfirmed) form.submit(); })
+        }
+
+        function confirmDeleteAllNewsletters(e) {
+            e.preventDefault();
+            const form = e.target;
+            Swal.fire({
+                title: '⚠️ Cảnh báo nguy hiểm!',
+                text: 'Bạn có chắc chắn muốn xóa TOÀN BỘ danh sách đăng ký nhận ưu đãi không? Hành động này KHÔNG THỂ HOÀN TÁC!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Vâng, Xóa tất cả!',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+            return false;
+        }
+
+        function toggleBulkEmailCard() {
+            const card = document.getElementById('bulk-email-card');
+            if (card) {
+                card.classList.toggle('hidden');
+                if (!card.classList.contains('hidden')) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        }
+
+        function confirmSendBulkEmail(event) {
+            event.preventDefault();
+            const form = event.target;
+            const targetSelect = form.querySelector('select[name="email_target"]');
+            const targetText = targetSelect.options[targetSelect.selectedIndex].text;
+            
+            Swal.fire({
+                title: '📣 Xác nhận gửi email hàng loạt?',
+                text: `Hệ thống sẽ tiến hành gửi email hàng loạt cho đối tượng: "${targetText}". Quá trình này có thể mất vài giây tùy vào số lượng hòm thư. Bạn có muốn tiếp tục?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#004bb9',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Có, Bắt đầu gửi!',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Đang gửi email hàng loạt...',
+                        html: 'Vui lòng không tắt hoặc tải lại trang cho đến khi quá trình gửi kết thúc!',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    form.submit();
+                }
+            });
+            return false;
+        }
+
+        // --- VOUCHER BULK DELETE & SELECT ---
+        function toggleSelectAllVouchers(source) {
+            const checkboxes = document.querySelectorAll('.voucher-checkbox');
+            checkboxes.forEach(chk => {
+                chk.checked = source.checked;
+            });
+            checkVoucherSelection();
+        }
+
+        function checkVoucherSelection() {
+            const checkboxes = document.querySelectorAll('.voucher-checkbox');
+            const selectAll = document.getElementById('selectAllVouchers');
+            const btnDelete = document.getElementById('btnBulkDeleteVouchers');
+            
+            let checkedCount = 0;
+            checkboxes.forEach(chk => {
+                if (chk.checked) checkedCount++;
+            });
+            
+            if (btnDelete) {
+                btnDelete.disabled = (checkedCount === 0);
+            }
+            
+            if (selectAll) {
+                selectAll.checked = (checkedCount === checkboxes.length && checkboxes.length > 0);
+            }
+        }
+
+        function submitBulkDeleteVouchers() {
+            const checkboxes = document.querySelectorAll('.voucher-checkbox:checked');
+            const ids = Array.from(checkboxes).map(chk => chk.value);
+            
+            if (ids.length === 0) return;
+            
+            Swal.fire({
+                title: 'Xác nhận xóa hàng loạt?',
+                text: `Bạn có chắc chắn muốn xóa ${ids.length} mã giảm giá đã chọn? Hành động này không thể hoàn tác!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Đồng ý xóa!',
+                cancelButtonText: 'Hủy bỏ'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('bulkDeleteVouchersIds').value = ids.join(',');
+                    document.getElementById('formBulkDeleteVouchers').submit();
+                }
+            });
         }
 
         function confirmLock(e, isBanned) {
@@ -1826,6 +2565,7 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('prod_more_images_urls').value = '';
             document.getElementById('prod_gift').value = '';
             document.getElementById('prod_tags').value = '';
+            document.getElementById('prod_stock').value = '100';
             if (tinymce.get('prod_desc')) tinymce.get('prod_desc').setContent('');
             if (tinymce.get('prod_specs')) tinymce.get('prod_specs').setContent('');
 
@@ -1845,9 +2585,12 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             
             // Xử lý more_images (JSON array) -> chuỗi xuống dòng để hiện trong textarea
             let moreImagesText = "";
-            if (product.more_images) {
+            if (product && product.more_images) {
                 try {
-                    const moreArr = JSON.parse(product.more_images);
+                    let moreArr = product.more_images;
+                    if (typeof moreArr === 'string') {
+                        moreArr = JSON.parse(moreArr);
+                    }
                     if (Array.isArray(moreArr)) {
                         moreImagesText = moreArr.join("\n");
                     }
@@ -1857,21 +2600,29 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             }
             document.getElementById('prod_more_images_urls').value = moreImagesText;
 
-            document.getElementById('prod_gift').value = product.gift_text;
-            document.getElementById('prod_tags').value = product.tags;
+            document.getElementById('prod_gift').value = product.gift_text || '';
+            document.getElementById('prod_tags').value = product.tags || '';
+            document.getElementById('prod_stock').value = product.stock ?? 100;
 
             if (tinymce.get('prod_desc')) tinymce.get('prod_desc').setContent(product.description || '');
             if (tinymce.get('prod_specs')) tinymce.get('prod_specs').setContent(product.specifications || '');
             document.getElementById('productModal').classList.remove('hidden');
         }
 
+        function openStockModal(product) {
+            document.getElementById('stock_prod_id').value = product.id;
+            document.getElementById('stock_prod_name').innerText = product.name;
+            document.getElementById('stock_prod_qty').value = product.stock;
+            document.getElementById('stockModal').classList.remove('hidden');
+        }
+
         function resetAdminPwHints() {
             const pwLen = document.getElementById('admin-pw-len');
             const pwLetter = document.getElementById('admin-pw-letter');
-            pwLen.className = 'flex items-center gap-1 text-gray-400';
-            pwLen.innerHTML = '<i class="fa-solid fa-circle text-[6px]"></i> Ít nhất 8 ký tự';
-            pwLetter.className = 'flex items-center gap-1 text-gray-400';
-            pwLetter.innerHTML = '<i class="fa-solid fa-circle text-[6px]"></i> Ít nhất 1 chữ cái';
+            pwLen.className = 'flex items-center gap-1.5 text-slate-400';
+            pwLen.innerHTML = '<i class="fa-solid fa-circle text-[5px]"></i> Ít nhất 8 ký tự';
+            pwLetter.className = 'flex items-center gap-1.5 text-slate-400';
+            pwLetter.innerHTML = '<i class="fa-solid fa-circle text-[5px]"></i> Ít nhất 1 chữ cái';
             const oldErr = document.getElementById('admin-pw-error');
             if (oldErr) oldErr.remove();
             const pwInput = document.getElementById('usr_password');
@@ -1954,6 +2705,8 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('voucher_discount_type').value = 'fixed';
             document.getElementById('voucher_discount_amount').value = '';
             document.getElementById('voucher_usage_limit').value = '0';
+            document.getElementById('voucher_starts_at').value = '';
+            document.getElementById('voucher_expires_at').value = '';
             document.getElementById('voucherModal').classList.remove('hidden');
         }
 
@@ -1965,7 +2718,17 @@ extract($adminService->getPageData($page, $_GET, $user_role));
             document.getElementById('voucher_discount_type').value = voucher.discount_type;
             document.getElementById('voucher_discount_amount').value = voucher.discount_amount;
             document.getElementById('voucher_usage_limit').value = voucher.usage_limit;
+            document.getElementById('voucher_starts_at').value = voucher.starts_at ? voucher.starts_at.substring(0, 16).replace(' ', 'T') : '';
+            document.getElementById('voucher_expires_at').value = voucher.expires_at ? voucher.expires_at.substring(0, 16).replace(' ', 'T') : '';
             document.getElementById('voucherModal').classList.remove('hidden');
+        }
+
+        function setQuickVoucherDuration(hours) {
+            const now = new Date();
+            now.setHours(now.getHours() + hours);
+            const tzOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+            document.getElementById('voucher_expires_at').value = localISOTime;
         }
 
         // ===== ADMIN PASSWORD VALIDATION =====
@@ -1984,25 +2747,25 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                     if (oldErr) oldErr.remove();
 
                     if (val.length >= 8) {
-                        pwLen.className = 'flex items-center gap-1 text-green-500';
-                        pwLen.innerHTML = '<i class="fa-solid fa-circle-check text-[10px]"></i> Ít nhất 8 ký tự';
+                        pwLen.className = 'flex items-center gap-1.5 text-emerald-500';
+                        pwLen.innerHTML = '<i class="fa-solid fa-circle-check text-[9px]"></i> Ít nhất 8 ký tự';
                     } else if (val.length > 0) {
-                        pwLen.className = 'flex items-center gap-1 text-red-500';
-                        pwLen.innerHTML = '<i class="fa-solid fa-circle-xmark text-[10px]"></i> Ít nhất 8 ký tự';
+                        pwLen.className = 'flex items-center gap-1.5 text-rose-500';
+                        pwLen.innerHTML = '<i class="fa-solid fa-circle-xmark text-[9px]"></i> Ít nhất 8 ký tự';
                     } else {
-                        pwLen.className = 'flex items-center gap-1 text-gray-400';
-                        pwLen.innerHTML = '<i class="fa-solid fa-circle text-[6px]"></i> Ít nhất 8 ký tự';
+                        pwLen.className = 'flex items-center gap-1.5 text-slate-400';
+                        pwLen.innerHTML = '<i class="fa-solid fa-circle text-[5px]"></i> Ít nhất 8 ký tự';
                     }
 
                     if (/[a-zA-Z]/.test(val)) {
-                        pwLetter.className = 'flex items-center gap-1 text-green-500';
-                        pwLetter.innerHTML = '<i class="fa-solid fa-circle-check text-[10px]"></i> Ít nhất 1 chữ cái';
+                        pwLetter.className = 'flex items-center gap-1.5 text-emerald-500';
+                        pwLetter.innerHTML = '<i class="fa-solid fa-circle-check text-[9px]"></i> Ít nhất 1 chữ cái';
                     } else if (val.length > 0) {
-                        pwLetter.className = 'flex items-center gap-1 text-red-500';
-                        pwLetter.innerHTML = '<i class="fa-solid fa-circle-xmark text-[10px]"></i> Ít nhất 1 chữ cái';
+                        pwLetter.className = 'flex items-center gap-1.5 text-rose-500';
+                        pwLetter.innerHTML = '<i class="fa-solid fa-circle-xmark text-[9px]"></i> Ít nhất 1 chữ cái';
                     } else {
-                        pwLetter.className = 'flex items-center gap-1 text-gray-400';
-                        pwLetter.innerHTML = '<i class="fa-solid fa-circle text-[6px]"></i> Ít nhất 1 chữ cái';
+                        pwLetter.className = 'flex items-center gap-1.5 text-slate-400';
+                        pwLetter.innerHTML = '<i class="fa-solid fa-circle text-[5px]"></i> Ít nhất 1 chữ cái';
                     }
                 });
             }
@@ -2018,10 +2781,10 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         if (oldErr) oldErr.remove();
                         const errDiv = document.createElement('div');
                         errDiv.id = 'admin-pw-error';
-                        errDiv.className = 'bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-200 flex items-center justify-center gap-2';
+                        errDiv.className = 'bg-rose-50 text-rose-600 p-3.5 rounded-xl mb-4 text-xs font-bold text-center border border-rose-100 flex items-center justify-center gap-2';
                         errDiv.style.animation = 'fadeIn 0.3s ease';
-                        errDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Mật khẩu phải có ít nhất 8 ký tự và chứa ít nhất 1 chữ cái!';
-                        const formContent = userForm.querySelector('.space-y-4');
+                        errDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation text-sm"></i> Mật khẩu phải có ít nhất 8 ký tự và chứa ít nhất 1 chữ cái!';
+                        const formContent = userForm.querySelector('.grid') || userForm.querySelector('.space-y-4') || userForm.firstElementChild;
                         userForm.insertBefore(errDiv, formContent);
                         pwInput.classList.add('border-red-500', 'ring-2', 'ring-red-200');
                         pwInput.style.animation = 'shake 0.4s ease';
@@ -2035,10 +2798,10 @@ extract($adminService->getPageData($page, $_GET, $user_role));
                         if (oldErr) oldErr.remove();
                         const errDiv = document.createElement('div');
                         errDiv.id = 'admin-pw-error';
-                        errDiv.className = 'bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-200 flex items-center justify-center gap-2';
+                        errDiv.className = 'bg-rose-50 text-rose-600 p-3.5 rounded-xl mb-4 text-xs font-bold text-center border border-rose-100 flex items-center justify-center gap-2';
                         errDiv.style.animation = 'fadeIn 0.3s ease';
-                        errDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Vui lòng nhập mật khẩu!';
-                        const formContent = userForm.querySelector('.space-y-4');
+                        errDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation text-sm"></i> Vui lòng nhập mật khẩu để tạo tài khoản mới!';
+                        const formContent = userForm.querySelector('.grid') || userForm.querySelector('.space-y-4') || userForm.firstElementChild;
                         userForm.insertBefore(errDiv, formContent);
                         pwInput.classList.add('border-red-500', 'ring-2', 'ring-red-200');
                         pwInput.style.animation = 'shake 0.4s ease';

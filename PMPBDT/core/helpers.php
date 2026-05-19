@@ -27,8 +27,11 @@ if (!function_exists('e')) {
  */
 if (!function_exists('asset')) {
     function asset(?string $path): string {
+        // Tự động nhận diện base path (ví dụ: '/PMPBDT/public' ở local hoặc '' ở hosting)
+        $basePath = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/\\');
+        
         if (!$path || trim($path) === '') {
-            return '/PMPBDT/public/assets/img/no-image.png'; // Trả về ảnh mặc định nếu rỗng
+            return $basePath . '/assets/img/no-image.png'; // Trả về ảnh mặc định nếu rỗng
         }
         // Nếu là URL tuyệt đối (bắt đầu bằng http:// hoặc https://) thì trả về luôn
         if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
@@ -37,7 +40,7 @@ if (!function_exists('asset')) {
         // Xóa dấu / ở đầu nếu có để tránh trùng lặp
         $path = ltrim($path, '/');
         // Trả về đường dẫn tuyệt đối từ root web
-        return '/PMPBDT/public/' . $path;
+        return $basePath . '/' . $path;
     }
 }
 

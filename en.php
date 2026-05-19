@@ -596,11 +596,4 @@ return [
     'bank_owner_label' => "Account Holder",
     'bank_owner_placeholder' => "ACCOUNT HOLDER (NO ACCENTS)",
     'upload_media_desc' => "Upload error photos/videos here",
-
-    // === CART NEW KEYS ===
-    'cart_items_waiting' => 'items waiting',
-    'delete_all' => 'Delete all',
-    'free_shipping_nationwide' => 'Free shipping nationwide',
-    'pcs' => 'pcs',
-    'secure_checkout_hint' => '100% Secure Checkout',
 ];

@@ -926,3 +926,9 @@ Stack trace: #0 D:\Xampp\htdocs\PMPBDT\PMPBDT\public\index.php(125): require_onc
 [2026-05-18 19:37:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1515
 [2026-05-18 19:37:16] [PHP_ERROR] Error [2]: Undefined variable $brands in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
 [2026-05-18 19:37:16] [PHP_ERROR] Error [2]: foreach() argument must be of type array|object, null given in D:\Xampp\htdocs\PMPBDT\PMPBDT\views\admin\admin.php on line 1523
+[2026-05-19 12:35:44] [PHP_ERROR] Error [2]: Undefined array key "fullname" in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 248
+[2026-05-19 12:35:44] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 248
+[2026-05-19 12:43:27] [PHP_ERROR] Error [2]: Undefined array key "fullname" in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 248
+[2026-05-19 12:43:27] [PHP_ERROR] Error [8192]: htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 248
+[2026-05-19 12:49:32] [PHP_ERROR] Error [2]: Undefined array key "fullname" in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 252
+[2026-05-19 12:51:19] [PHP_ERROR] Error [2]: Undefined array key "fullname" in D:\Sever\htdocs\GitTKPM\TrienKhaiPM\PMPBDT\views\admin\admin.php on line 248

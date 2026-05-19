@@ -28,15 +28,43 @@ class AdminService
         if ($action === 'update_order_status') {
             $id = $post['id'];
             $status = $post['status'];
+
+            // Lấy thông tin đơn hàng hiện tại trước khi cập nhật
+            $stmtCurrent = $this->db->prepare("SELECT user_id, is_deducted FROM orders WHERE id = ?");
+            $stmtCurrent->execute([$id]);
+            $currentOrder = $stmtCurrent->fetch();
+
             $this->db->prepare("UPDATE orders SET status=? WHERE id=?")->execute([$status, $id]);
 
-            // Thông báo web
-            $stmtOrder = $this->db->prepare("SELECT user_id FROM orders WHERE id = ?");
-            $stmtOrder->execute([$id]);
-            $order = $stmtOrder->fetch();
-            if ($order) {
+            if ($currentOrder) {
+                $isDeducted = (int)$currentOrder['is_deducted'];
+                $isTargetStatus = in_array($status, ['delivering', 'completed']);
+
+                if ($isTargetStatus && $isDeducted === 0) {
+                    // Tiến hành trừ kho
+                    $stmtDetails = $this->db->prepare("SELECT product_id, quantity FROM order_details WHERE order_id = ?");
+                    $stmtDetails->execute([$id]);
+                    $orderDetails = $stmtDetails->fetchAll();
+                    foreach ($orderDetails as $detail) {
+                        $this->db->prepare("UPDATE products SET stock = stock - ? WHERE id = ?")
+                                 ->execute([$detail['quantity'], $detail['product_id']]);
+                    }
+                    $this->db->prepare("UPDATE orders SET is_deducted = 1 WHERE id = ?")->execute([$id]);
+                } elseif (!$isTargetStatus && $isDeducted === 1) {
+                    // Tiến hành hoàn kho
+                    $stmtDetails = $this->db->prepare("SELECT product_id, quantity FROM order_details WHERE order_id = ?");
+                    $stmtDetails->execute([$id]);
+                    $orderDetails = $stmtDetails->fetchAll();
+                    foreach ($orderDetails as $detail) {
+                        $this->db->prepare("UPDATE products SET stock = stock + ? WHERE id = ?")
+                                 ->execute([$detail['quantity'], $detail['product_id']]);
+                    }
+                    $this->db->prepare("UPDATE orders SET is_deducted = 0 WHERE id = ?")->execute([$id]);
+                }
+
+                // Thông báo web
                 $statusText = ['pending' => 'chờ xử lý', 'processing' => 'đã được xác nhận', 'delivering' => 'đang giao', 'completed' => 'đã hoàn thành', 'cancelled' => 'đã hủy'][$status] ?? $status;
-                $this->createNotification((int) $order['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order');
+                $this->createNotification((int) $currentOrder['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order');
             }
 
             $msg = "Cập nhật trạng thái đơn hàng thành công!";
@@ -88,6 +116,25 @@ class AdminService
                 $this->createNotification($rInfo['user_id'], "Đổi trả đơn hàng", "Yêu cầu đổi trả ĐH #$rInfo[order_id] $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
             }
             $msg = "Cập nhật trạng thái trả hàng thành công!";
+            $msg_type = 'success';
+        }
+
+        // --- XỬ LÝ YÊU CẦU TRẢ GÓP ---
+        elseif ($action === 'update_installment_status') {
+            $id = (int) $post['id'];
+            $status = trim($post['status']);
+            $admin_note = isset($post['admin_note']) ? trim($post['admin_note']) : '';
+            $this->db->prepare("UPDATE installment_requests SET status=?, admin_note=? WHERE id=?")->execute([$status, $admin_note, $id]);
+
+            $stmt = $this->db->prepare("SELECT ir.*, p.name as product_name FROM installment_requests ir JOIN products p ON ir.product_id = p.id WHERE ir.id = ?");
+            $stmt->execute([$id]);
+            $ir = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($ir && $ir['user_id']) {
+                $st = ['pending' => 'chờ duyệt', 'approved' => 'được chấp nhận', 'rejected' => 'bị từ chối'][$status] ?? $status;
+                $this->createNotification($ir['user_id'], "Yêu cầu Trả Góp", "Yêu cầu trả góp cho sản phẩm $ir[product_name] đã $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
+            }
+
+            $msg = "Cập nhật yêu cầu trả góp thành công!";
             $msg_type = 'success';
         }
 
@@ -162,44 +209,61 @@ class AdminService
                 }
             }
 
-            // Xử lý upload file hàng loạt
-            if (isset($files['more_images_upload'])) {
+            // Xử lý upload file hàng loạt (more_images)
+            if (isset($files['more_images_upload']) && is_array($files['more_images_upload']['tmp_name'])) {
                 $upload_dir = 'uploads/';
-                if (!file_exists($upload_dir))
+                if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
+                }
 
                 foreach ($files['more_images_upload']['tmp_name'] as $key => $tmp_name) {
-                    if ($files['more_images_upload']['error'][$key] !== UPLOAD_ERR_NO_FILE) {
-                        if ($files['more_images_upload']['error'][$key] === UPLOAD_ERR_OK) {
-                            $file_name = time() . '_more_' . $key . '_' . basename($files['more_images_upload']['name'][$key]);
+                    $error_code = $files['more_images_upload']['error'][$key] ?? UPLOAD_ERR_NO_FILE;
+                    if ($error_code !== UPLOAD_ERR_NO_FILE) {
+                        if ($error_code === UPLOAD_ERR_OK) {
+                            $original_name = basename($files['more_images_upload']['name'][$key]);
+                            // Làm sạch tên file để loại bỏ ký tự lạ, tránh lỗi lưu trữ hệ thống
+                            $clean_name = preg_replace('/[^a-zA-Z0-9._-]/', '_', $original_name);
+                            $file_name = time() . '_more_' . $key . '_' . $clean_name;
                             $target_file = $upload_dir . $file_name;
                             if (move_uploaded_file($tmp_name, $target_file)) {
                                 $more_images_arr[] = $target_file;
                             } else {
-                                return ['msg' => 'Không thể lưu file ảnh phụ tải lên. Vui lòng kiểm tra quyền thư mục máy chủ!', 'msg_type' => 'error'];
+                                return ['msg' => 'Không thể lưu file ảnh phụ "' . $original_name . '" tải lên. Vui lòng kiểm tra quyền thư mục máy chủ!', 'msg_type' => 'error'];
                             }
                         } else {
-                            return ['msg' => 'Lỗi xảy ra khi tải lên một số ảnh phụ!', 'msg_type' => 'error'];
+                            $upload_errors = [
+                                UPLOAD_ERR_INI_SIZE => 'vượt quá dung lượng cho phép của máy chủ (upload_max_filesize).',
+                                UPLOAD_ERR_FORM_SIZE => 'vượt quá dung lượng cho phép của form.',
+                                UPLOAD_ERR_PARTIAL => 'chỉ được tải lên một phần.',
+                                UPLOAD_ERR_NO_TMP_DIR => 'thiếu thư mục tạm trên máy chủ.',
+                                UPLOAD_ERR_CANT_WRITE => 'không thể ghi file vào đĩa máy chủ.',
+                                UPLOAD_ERR_EXTENSION => 'bị chặn bởi một PHP extension.'
+                            ];
+                            $original_name = basename($files['more_images_upload']['name'][$key]);
+                            $err_detail = $upload_errors[$error_code] ?? 'lỗi tải lên không xác định.';
+                            return ['msg' => 'Ảnh phụ "' . $original_name . '" tải lên thất bại: ' . $err_detail, 'msg_type' => 'error'];
                         }
                     }
                 }
             }
             $more_images_json = !empty($more_images_arr) ? json_encode($more_images_arr, JSON_UNESCAPED_SLASHES) : null;
 
+            $stock = isset($post['stock']) ? (int) $post['stock'] : 100;
+
             // 4. Lưu thông tin vào Cơ sở dữ liệu
             try {
                 if ($action === 'add_product') {
-                    $stmt = $this->db->prepare("INSERT INTO products (name, category_id, brand_id, price, old_price, image, more_images, gift_text, tags, description, specifications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications]);
+                    $stmt = $this->db->prepare("INSERT INTO products (name, category_id, brand_id, price, old_price, image, more_images, gift_text, tags, description, specifications, rate_star, total_reviews, stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.00, 0, ?)");
+                    $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications, $stock]);
                     $msg = "Thêm sản phẩm mới thành công!";
                 } else {
-                    $stmt = $this->db->prepare("UPDATE products SET name=?, category_id=?, brand_id=?, price=?, old_price=?, image=?, more_images=?, gift_text=?, tags=?, description=?, specifications=? WHERE id=?");
-                    $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications, $id]);
+                    $stmt = $this->db->prepare("UPDATE products SET name=?, category_id=?, brand_id=?, price=?, old_price=?, image=?, more_images=?, gift_text=?, tags=?, description=?, specifications=?, stock=? WHERE id=?");
+                    $stmt->execute([$name, $category_id, $brand_id, $price, $old_price, $image, $more_images_json, $gift_text, $tags, $description, $specifications, $stock, $id]);
                     $msg = "Cập nhật sản phẩm thành công!";
                 }
                 $msg_type = 'success';
-            } catch (\PDOException $e) {
-                $msg = "Lỗi CSDL khi lưu sản phẩm: " . $e->getMessage();
+            } catch (\Throwable $e) {
+                $msg = "Lỗi khi lưu sản phẩm: " . $e->getMessage();
                 $msg_type = 'error';
             }
         } elseif ($action === 'delete_product') {
@@ -210,6 +274,23 @@ class AdminService
                 $msg_type = 'success';
             } catch (\PDOException $e) {
                 $msg = "Không thể xóa sản phẩm do ràng buộc dữ liệu: " . $e->getMessage();
+                $msg_type = 'error';
+            }
+        } elseif ($action === 'update_stock') {
+            $id = $post['id'] ?? null;
+            $stock = isset($post['stock']) ? (int) $post['stock'] : 0;
+            if (empty($id)) {
+                return ['msg' => 'ID sản phẩm không hợp lệ!', 'msg_type' => 'error'];
+            }
+            if ($stock < 0) {
+                return ['msg' => 'Số lượng tồn kho không được âm!', 'msg_type' => 'error'];
+            }
+            try {
+                $this->db->prepare("UPDATE products SET stock=? WHERE id=?")->execute([$stock, $id]);
+                $msg = "Cập nhật số lượng tồn kho thành công!";
+                $msg_type = 'success';
+            } catch (\Throwable $e) {
+                $msg = "Lỗi khi cập nhật tồn kho: " . $e->getMessage();
                 $msg_type = 'error';
             }
         }
@@ -323,18 +404,34 @@ class AdminService
                 $discount_amount = $post['discount_amount'];
                 $discount_type = $post['discount_type'];
                 $usage_limit = $post['usage_limit'];
+                $starts_at = !empty($post['starts_at']) ? $post['starts_at'] : null;
+                $expires_at = !empty($post['expires_at']) ? $post['expires_at'] : null;
 
                 if ($action === 'add_voucher') {
-                    $this->db->prepare("INSERT INTO vouchers (code, discount_amount, discount_type, usage_limit) VALUES (?, ?, ?, ?)")->execute([$code, $discount_amount, $discount_type, $usage_limit]);
+                    $this->db->prepare("INSERT INTO vouchers (code, discount_amount, discount_type, usage_limit, starts_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)")->execute([$code, $discount_amount, $discount_type, $usage_limit, $starts_at, $expires_at]);
                     $msg = "Thêm mã giảm giá thành công!";
                 } else {
-                    $this->db->prepare("UPDATE vouchers SET code=?, discount_amount=?, discount_type=?, usage_limit=? WHERE id=?")->execute([$code, $discount_amount, $discount_type, $usage_limit, $id]);
+                    $this->db->prepare("UPDATE vouchers SET code=?, discount_amount=?, discount_type=?, usage_limit=?, starts_at=?, expires_at=? WHERE id=?")->execute([$code, $discount_amount, $discount_type, $usage_limit, $starts_at, $expires_at, $id]);
                     $msg = "Cập nhật mã giảm giá thành công!";
                 }
                 $msg_type = 'success';
             } elseif ($action === 'delete_voucher') {
                 $this->db->prepare("DELETE FROM vouchers WHERE id=?")->execute([$post['id']]);
                 $msg = "Đã xóa mã giảm giá!";
+                $msg_type = 'success';
+            } elseif ($action === 'bulk_delete_vouchers') {
+                $ids = isset($post['ids']) ? $post['ids'] : [];
+                if (!empty($ids)) {
+                    if (is_string($ids)) {
+                        $ids = explode(',', $ids);
+                    }
+                    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                    $stmt = $this->db->prepare("DELETE FROM vouchers WHERE id IN ($placeholders)");
+                    $stmt->execute($ids);
+                    $msg = "Đã xóa hàng loạt " . count($ids) . " mã giảm giá thành công!";
+                } else {
+                    $msg = "Vui lòng chọn ít nhất một mã giảm giá để xóa!";
+                }
                 $msg_type = 'success';
             }
 
@@ -347,6 +444,106 @@ class AdminService
                     }
                 }
                 $msg = "Cập nhật banner trang chủ thành công!";
+                $msg_type = 'success';
+            }
+
+            // --- GỬI EMAIL CHIẾN DỊCH HÀNG LOẠT ---
+            elseif ($action === 'send_bulk_email') {
+                $subject = trim($post['email_subject'] ?? '');
+                $content = trim($post['email_body'] ?? '');
+                $target = trim($post['email_target'] ?? 'all');
+
+                if (empty($subject) || empty($content)) {
+                    return ['msg' => 'Tiêu đề và Nội dung email không được để trống!', 'msg_type' => 'error'];
+                }
+
+                // Nạp mail_helper nếu chưa được nạp
+                require_once __DIR__ . '/../../core/mail_helper.php';
+
+                // Lọc đối tượng gửi
+                $sql = "SELECT email FROM newsletters";
+                if ($target === 'approved') {
+                    $sql .= " WHERE status = 'approved'";
+                } elseif ($target === 'pending') {
+                    $sql .= " WHERE status = 'pending'";
+                }
+
+                $emails = $this->db->query($sql)->fetchAll(PDO::FETCH_COLUMN);
+
+                if (empty($emails)) {
+                    return ['msg' => 'Không tìm thấy email nào phù hợp với bộ lọc đối tượng đã chọn!', 'msg_type' => 'error'];
+                }
+
+                $success_count = 0;
+                $fail_count = 0;
+
+                // Tự động nhận diện link trang web mặc định của hệ thống
+                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http");
+                $host = $_SERVER['HTTP_HOST'];
+                $base_url = $protocol . "://" . $host . explode('admin.php', $_SERVER['SCRIPT_NAME'])[0];
+
+                // Xây dựng template HTML email chiến dịch chuyên nghiệp dựa trên buildEmailTemplate
+                foreach ($emails as $email) {
+                    // Chèn nút CTA trỏ về link trang web mặc định ở chân nội dung email chiến dịch
+                    $email_content = $content . '
+                    <div style="text-align:center; margin: 28px 0 10px 0;">
+                        <a href="' . $base_url . '" target="_blank" style="display:inline-block; background-color:#004bb9; color:#ffffff; font-size:15px; font-weight:bold; text-decoration:none; padding: 12px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,75,185,0.25);">
+                            🛒 Ghé Thăm Website Ngay
+                        </a>
+                    </div>';
+
+                    $body = buildEmailTemplate([
+                        'title' => $subject,
+                        'greeting' => "Xin chào bạn,",
+                        'message' => $email_content,
+                        'status_text' => 'Bản Tin Ưu Đãi',
+                        'status_color' => '#3b82f6',
+                        'admin_note' => '',
+                        'type_icon' => '🎁',
+                        'accent_color' => '#004bb9'
+                    ]);
+
+                    if (sendEmail($email, $email, $subject, $body)) {
+                        $success_count++;
+                    } else {
+                        $fail_count++;
+                    }
+                }
+
+                $msg = "Đã gửi email chiến dịch hàng loạt thành công cho $success_count lượt đăng ký!";
+                if ($fail_count > 0) {
+                    $msg .= " (Thất bại: $fail_count)";
+                }
+                $msg_type = 'success';
+            }
+
+            // --- XỬ LÝ ĐĂNG KÝ NHẬN ƯU ĐÃI (NEWSLETTER) ---
+            elseif ($action === 'approve_newsletter') {
+                $id = $post['id'];
+                $this->db->prepare("UPDATE newsletters SET status='approved' WHERE id=?")->execute([$id]);
+
+                // Lấy thông tin người đăng ký
+                $stmtSub = $this->db->prepare("SELECT user_id, email FROM newsletters WHERE id = ?");
+                $stmtSub->execute([$id]);
+                $sub = $stmtSub->fetch(PDO::FETCH_ASSOC);
+                if ($sub && $sub['user_id']) {
+                    // Tạo một mã giảm giá ngẫu nhiên 50K
+                    $code = 'NEWS' . strtoupper(substr(md5(time() . $sub['email']), 0, 5));
+                    $this->db->prepare("INSERT INTO vouchers (code, discount_amount, discount_type, usage_limit) VALUES (?, 50000, 'fixed', 1)")->execute([$code]);
+
+                    // Gửi thông báo trực tiếp cho người dùng
+                    $this->createNotification((int) $sub['user_id'], "Quà tặng Đăng ký Ưu đãi", "Cảm ơn bạn đã đăng ký! Tặng bạn mã giảm giá 50.000đ: " . $code . ". Nhập mã này ở bước thanh toán nhé!", 'system');
+                }
+
+                $msg = "Đã duyệt và gửi mã giảm giá thành công!";
+                $msg_type = 'success';
+            } elseif ($action === 'delete_newsletter') {
+                $this->db->prepare("DELETE FROM newsletters WHERE id=?")->execute([$post['id']]);
+                $msg = "Đã xóa lượt đăng ký!";
+                $msg_type = 'success';
+            } elseif ($action === 'delete_all_newsletters') {
+                $this->db->query("DELETE FROM newsletters");
+                $msg = "Đã xóa toàn bộ danh sách đăng ký nhận ưu đãi!";
                 $msg_type = 'success';
             }
         }
@@ -414,7 +611,7 @@ class AdminService
                 $total_orders += $row['count'];
             }
 
-        } elseif ($page === 'products') {
+        } elseif ($page === 'products' || $page === 'inventory') {
             $sql = "SELECT p.*, c.name as cat_name, b.name as brand_name FROM products p LEFT JOIN categories c ON p.category_id=c.id LEFT JOIN brands b ON p.brand_id=b.id";
             $params = [];
             if ($search) {
@@ -482,15 +679,45 @@ class AdminService
             $items = $stmtBrand->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'vouchers' && $userRole === 'admin') {
+            $status_filter = $getParams['status'] ?? 'all';
             $sql = "SELECT * FROM vouchers";
+            $where = [];
             $params = [];
+
             if ($search) {
-                $sql .= " WHERE code LIKE ?";
+                $where[] = "code LIKE ?";
                 $params[] = "%$search%";
             }
+
+            if ($status_filter === 'active') {
+                $where[] = "(expires_at IS NULL OR expires_at > NOW()) AND (starts_at IS NULL OR starts_at <= NOW()) AND (usage_limit = 0 OR used_count < usage_limit)";
+            } elseif ($status_filter === 'depleted') {
+                $where[] = "usage_limit > 0 AND used_count >= usage_limit";
+            } elseif ($status_filter === 'expired') {
+                $where[] = "expires_at IS NOT NULL AND expires_at < NOW()";
+            }
+
+            if (!empty($where)) {
+                $sql .= " WHERE " . implode(" AND ", $where);
+            }
+
+            $sql .= " ORDER BY id DESC";
+
             $stmtVoucher = $this->db->prepare($sql);
             $stmtVoucher->execute($params);
             $items = $stmtVoucher->fetchAll(PDO::FETCH_ASSOC);
+
+        } elseif ($page === 'newsletters' && $userRole === 'admin') {
+            $sql = "SELECT * FROM newsletters";
+            $params = [];
+            if ($search) {
+                $sql .= " WHERE email LIKE ?";
+                $params[] = "%$search%";
+            }
+            $sql .= " ORDER BY id DESC";
+            $stmtNewsletter = $this->db->prepare($sql);
+            $stmtNewsletter->execute($params);
+            $items = $stmtNewsletter->fetchAll(PDO::FETCH_ASSOC);
 
         } elseif ($page === 'homepage') {
             $site_settings = getSiteSettings($this->db);
@@ -501,6 +728,20 @@ class AdminService
 
         } elseif ($page === 'returns') {
             $items = getAllReturns($this->db);
+        } elseif ($page === 'installments') {
+            $sql = "SELECT ir.*, p.name as product_name, p.image as product_image FROM installment_requests ir JOIN products p ON ir.product_id = p.id";
+            if ($search) {
+                $sql .= " WHERE ir.fullname LIKE ? OR ir.phone LIKE ? OR p.name LIKE ?";
+            }
+            $sql .= " ORDER BY ir.id DESC";
+
+            $stmt = $this->db->prepare($sql);
+            if ($search) {
+                $stmt->execute(["%$search%", "%$search%", "%$search%"]);
+            } else {
+                $stmt->execute();
+            }
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($page === 'dashboard') {
             return $this->getDashboardData();
         } elseif ($page === 'revenue') {

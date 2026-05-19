@@ -13,8 +13,8 @@ $action = $_GET['action'] ?? ($data['action'] ?? 'list');
 
 switch ($action) {
     case 'list':
-        // Lấy danh sách voucher còn hạn và còn lượt dùng
-        $stmt = $db->query('SELECT * FROM vouchers WHERE (usage_limit = 0 OR used_count < usage_limit) ORDER BY created_at DESC');
+        // Lấy danh sách voucher còn hạn, đã kích hoạt và còn lượt dùng
+        $stmt = $db->query('SELECT * FROM vouchers WHERE (usage_limit = 0 OR used_count < usage_limit) AND (starts_at IS NULL OR starts_at <= NOW()) AND (expires_at IS NULL OR expires_at >= NOW()) ORDER BY created_at DESC');
         $vouchers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         foreach ($vouchers as &$v) {
@@ -43,6 +43,14 @@ switch ($action) {
 
         if ($voucher['usage_limit'] > 0 && $voucher['used_count'] >= $voucher['usage_limit']) {
             api_json_response(false, 'Mã giảm giá này đã hết lượt sử dụng.');
+        }
+
+        if ($voucher['starts_at'] && strtotime($voucher['starts_at']) > time()) {
+            api_json_response(false, 'Mã giảm giá này chưa đến thời gian kích hoạt.');
+        }
+
+        if ($voucher['expires_at'] && strtotime($voucher['expires_at']) < time()) {
+            api_json_response(false, 'Mã giảm giá đã hết hạn sử dụng.');
         }
 
         $discount_value = 0;

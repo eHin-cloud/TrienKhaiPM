@@ -27,4 +27,8 @@ class CartService {
     public function getCartCount(int $userId): int {
         return $this->cartRepo->getCartCount($userId);
     }
+
+    public function clearUserCart(int $userId) {
+        $this->cartRepo->clearCart($userId);
+    }
 }

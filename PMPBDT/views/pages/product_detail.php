@@ -477,6 +477,22 @@ require_once __DIR__ . '/../partials/header.php';
                 <?php endif; ?>
             </div>
 
+            <!-- Tình trạng tồn kho -->
+            <div class="flex items-center gap-2 mt-1 text-sm bg-white p-3 border border-gray-200 rounded-lg shadow-sm">
+                <span class="text-gray-500 font-medium">Tình trạng:</span>
+                <?php if (($product['stock'] ?? 0) > 0): ?>
+                    <span class="bg-green-50 text-green-700 font-bold px-3 py-1 rounded-full text-xs border border-green-250 flex items-center gap-1.5 shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                        Còn hàng (<?= $product['stock'] ?> sản phẩm)
+                    </span>
+                <?php else: ?>
+                    <span class="bg-red-50 text-red-700 font-bold px-3 py-1 rounded-full text-xs border border-red-200 flex items-center gap-1.5 shadow-sm">
+                        <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                        Hết hàng
+                    </span>
+                <?php endif; ?>
+            </div>
+
             <!-- Box Khuyến Mãi -->
             <?php if ($product['gift_text']):
                 $gifts = array_filter(explode(';', $product['gift_text']));
@@ -500,26 +516,47 @@ require_once __DIR__ . '/../partials/header.php';
             <?php endif; ?>
 
             <!-- CÁC NÚT MUA HÀNG TÍCH HỢP AJAX -->
+            <?php $isOutOfStock = ($product['stock'] ?? 0) <= 0; ?>
             <div class="flex flex-col gap-3 mt-2">
                 <div class="flex gap-3 h-[60px]">
-                    <button type="button" onclick="addToCartAjax(<?= $id ?>)"
-                        class="flex-1 bg-white border border-[#2e7dd6] text-[#2e7dd6] rounded-lg hover:bg-blue-50 transition shadow-sm flex flex-col items-center justify-center text-center">
-                        <i class="fa-solid fa-cart-plus text-lg mb-0.5"></i>
-                        <span class="text-[14px] font-medium leading-tight"><?= __("add_to_cart") ?></span>
-                    </button>
-                    <button type="button" onclick="buyNowAjax(<?= $id ?>)"
-                        class="flex-1 bg-[#ff7a00] text-white rounded-lg hover:bg-[#e66e00] transition shadow-sm flex flex-col items-center justify-center text-center">
-                        <span class="font-medium text-[16px] leading-tight"><?= __("buy_now") ?></span>
-                    </button>
+                    <?php if ($isOutOfStock): ?>
+                        <button type="button" disabled
+                            class="flex-1 bg-gray-100 border border-gray-300 text-gray-400 rounded-lg cursor-not-allowed flex flex-col items-center justify-center text-center opacity-65">
+                            <i class="fa-solid fa-cart-plus text-lg mb-0.5"></i>
+                            <span class="text-[14px] font-medium leading-tight"><?= __("add_to_cart") ?></span>
+                        </button>
+                        <button type="button" disabled
+                            class="flex-1 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed flex flex-col items-center justify-center text-center font-bold text-[16px] uppercase tracking-wider">
+                            Hết hàng
+                        </button>
+                    <?php else: ?>
+                        <button type="button" onclick="addToCartAjax(<?= $id ?>)"
+                            class="flex-1 bg-white border border-[#2e7dd6] text-[#2e7dd6] rounded-lg hover:bg-blue-50 transition shadow-sm flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-cart-plus text-lg mb-0.5"></i>
+                            <span class="text-[14px] font-medium leading-tight"><?= __("add_to_cart") ?></span>
+                        </button>
+                        <button type="button" onclick="buyNowAjax(<?= $id ?>)"
+                            class="flex-1 bg-[#ff7a00] text-white rounded-lg hover:bg-[#e66e00] transition shadow-sm flex flex-col items-center justify-center text-center">
+                            <span class="font-medium text-[16px] leading-tight"><?= __("buy_now") ?></span>
+                        </button>
+                    <?php endif; ?>
                 </div>
                 <div class="flex gap-2">
-                    <button type="button"
-                        onclick="document.getElementById('installmentModal').classList.remove('hidden')"
-                        class="flex-1 bg-[#2e7dd6] text-white rounded-lg py-2.5 hover:bg-[#2368b8] transition shadow-sm flex flex-col items-center justify-center">
-                        <span class="font-medium text-[15px] mb-0.5"><?= __("buy_installment") ?> <i
-                                class="fa-solid fa-angle-right text-[12px]"></i></span>
-                        <span class="text-[12px] font-normal opacity-90"><?= __("callback_hint") ?></span>
-                    </button>
+                    <?php if ($isOutOfStock): ?>
+                        <button type="button" disabled
+                            class="flex-1 bg-gray-200 text-gray-400 rounded-lg py-2.5 cursor-not-allowed flex flex-col items-center justify-center opacity-65">
+                            <span class="font-medium text-[15px] mb-0.5"><?= __("buy_installment") ?></span>
+                            <span class="text-[12px] font-normal opacity-90">Sản phẩm hiện hết hàng</span>
+                        </button>
+                    <?php else: ?>
+                        <button type="button"
+                            onclick="openInstallmentModal()"
+                            class="flex-1 bg-[#2e7dd6] text-white rounded-lg py-2.5 hover:bg-[#2368b8] transition shadow-sm flex flex-col items-center justify-center">
+                            <span class="font-medium text-[15px] mb-0.5"><?= __("buy_installment") ?> <i
+                                    class="fa-solid fa-angle-right text-[12px]"></i></span>
+                            <span class="text-[12px] font-normal opacity-90"><?= __("callback_hint") ?></span>
+                        </button>
+                    <?php endif; ?>
                     <button type="button" onclick="toggleCompare(<?= $id ?>, this)"
                         class="w-[60px] bg-white border border-gray-200 text-gray-600 rounded-lg hover:border-primary hover:text-primary transition shadow-sm flex items-center justify-center text-lg"
                         title="<?= __("add_to_compare") ?>">
@@ -600,7 +637,7 @@ require_once __DIR__ . '/../partials/header.php';
          ĐÁNH GIÁ VÀ NHẬN XÉT SẢN PHẨM 
          ========================================================= -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-8 mt-8" id="reviews">
-        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("order_history") ?> & <?= __("detail") ?>
+        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("reviews_comments") ?>
             <?= htmlspecialchars($product['name']) ?></h2>
 
         <!-- PHẦN TỔNG HỢP ĐÁNH GIÁ -->
@@ -658,7 +695,7 @@ require_once __DIR__ . '/../partials/header.php';
         <div id="review-form-container"
             class="hidden mb-8 max-w-2xl mx-auto bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
             <?php if (isset($_SESSION['user_id'])): ?>
-                <form method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
+                <form id="main-review-form" method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
                     <?= csrf_input_field() ?>
                     <h4 class="font-bold mb-4 text-center text-gray-800"><?= __("invite_review") ?></h4>
 
@@ -845,49 +882,382 @@ require_once __DIR__ . '/../partials/header.php';
     </div>
 </div>
 
-<!-- MODAL TRẢ GÓP -->
-<div id="installmentModal"
-    class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4">
-    <div class="bg-white rounded-xl w-full max-w-[400px] flex flex-col relative shadow-2xl">
-        <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
-            <h3 class="font-bold text-lg text-gray-800"><?= __("buy_installment") ?> </h3>
-            <button onclick="document.getElementById('installmentModal').classList.add('hidden')"
-                class="text-gray-400 hover:text-red-500 transition w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50"><i
-                    class="fa-solid fa-xmark text-xl"></i></button>
+<!-- MODAL TRẢ GÓP NÂNG CAO -->
+<div id="installmentModal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4 py-8 overflow-y-auto">
+    <div class="bg-white rounded-2xl w-full max-w-[750px] flex flex-col relative shadow-2xl border border-gray-100 max-h-[90vh] overflow-hidden transition-all duration-300 transform scale-95 opacity-0" id="installmentModalContainer">
+        
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
+            <h3 class="font-extrabold text-xl text-gray-900 flex items-center gap-2">
+                <i class="fa-solid fa-credit-card text-primary text-lg"></i>
+                <?= __("installment_info") ?>
+            </h3>
+            <button onclick="closeInstallmentModal()" class="text-gray-400 hover:text-red-500 transition w-9 h-9 flex items-center justify-center rounded-full hover:bg-red-50">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
 
-        <form id="installmentForm" class="p-5" onsubmit="submitInstallment(event)">
-            <input type="hidden" name="product_id" value="<?= $id ?>">
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("fullname") ?> *</label>
-                <input type="text" name="fullname" required
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary"
-                    value="<?= isset($_SESSION['fullname']) ? htmlspecialchars($_SESSION['fullname']) : '' ?>">
+        <!-- Scrollable Body -->
+        <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+            
+            <!-- Product Brief -->
+            <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-xl mb-6 border border-gray-100">
+                <div class="w-16 h-16 shrink-0 bg-white rounded-lg p-1 border border-gray-100 flex items-center justify-center">
+                    <img src="<?= htmlspecialchars($product['image']) ?>" class="w-full h-full object-contain" alt="<?= htmlspecialchars($product['name']) ?>">
+                </div>
+                <div>
+                    <h4 class="font-bold text-gray-800 text-sm md:text-base line-clamp-1"><?= htmlspecialchars($product['name']) ?></h4>
+                    <p class="text-lg font-black text-red-600 mt-0.5" id="installmentProductPrice" data-price="<?= $product['price'] ?>">
+                        <?= number_format($product['price']) ?>đ
+                    </p>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("phone") ?> *</label>
-                <input type="tel" name="phone" required pattern="[0-9]{10}"
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary"
-                    placeholder="Nhập số điện thoại...">
+
+            <!-- Tabs at top -->
+            <div class="grid grid-cols-3 gap-2 p-1 bg-gray-100 rounded-xl mb-6 shrink-0">
+                <!-- Tab 1: Finance Company -->
+                <button onclick="switchInstallmentTab(1)" id="inst-tab-1" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("pay_finance_company") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("pay_finance_company_desc") ?></span>
+                </button>
+                <!-- Tab 2: Credit Card -->
+                <button onclick="switchInstallmentTab(2)" id="inst-tab-2" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("pay_credit_card") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("pay_credit_card_desc") ?></span>
+                </button>
+                <!-- Tab 3: Buy Now Pay Later -->
+                <button onclick="switchInstallmentTab(3)" id="inst-tab-3" class="flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent">
+                    <span class="text-xs md:text-sm font-black"><?= __("buy_now_pay_later") ?></span>
+                    <span class="text-[10px] text-gray-400 font-medium"><?= __("buy_now_pay_later_desc") ?></span>
+                </button>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("desired_term") ?></label>
-                <select name="term"
-                    class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-primary">
-                    <option value="Gói 3 tháng (Lãi suất 0%)">Gói 3 tháng (Lãi suất 0%)</option>
-                    <option value="Gói 6 tháng (Lãi suất 5%)">Gói 6 tháng (Lãi suất 5%)</option>
-                    <option value="Gói 9 tháng (Lãi suất 10%)">Gói 9 tháng (Lãi suất 10%)</option>
-                    <option value="Gói 12 tháng (Lãi suất 20%)">Gói 12 tháng (Lãi suất 20%)</option>
-                </select>
+
+            <!-- TAB 1: Finance Company Content -->
+            <div id="inst-content-1" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Choose Finance Company -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_finance_company", "Chọn công ty tài chính") ?></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="selectFinanceCompany('Shinhan Finance')" id="comp-Shinhan" class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Shinhan Finance
+                            </button>
+                            <button type="button" onclick="selectFinanceCompany('Home Credit')" id="comp-Home" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Home Credit
+                            </button>
+                            <button type="button" onclick="selectFinanceCompany('HD Saison')" id="comp-HD" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                HD Saison
+                            </button>
+                            <button type="button" onclick="selectFinanceCompany('Mirae Asset')" id="comp-Mirae" class="border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12">
+                                Mirae Asset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Choose Prepayment Percentage -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_prepayment_percent", "Chọn mức trả trước (%)") ?></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="selectPrepayPercent(10)" id="prepay-10" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                10%
+                            </button>
+                            <button type="button" onclick="selectPrepayPercent(20)" id="prepay-20" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                20%
+                            </button>
+                            <button type="button" onclick="selectPrepayPercent(30)" id="prepay-30" class="border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                30%
+                            </button>
+                            <button type="button" onclick="selectPrepayPercent(40)" id="prepay-40" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                40%
+                            </button>
+                            <button type="button" onclick="selectPrepayPercent(50)" id="prepay-50" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                50%
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Choose Term -->
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_installment_term", "Chọn số tháng trả góp") ?></label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="selectFinanceTerm(3)" id="term-3" class="border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                3 <?= __("months_suffix", " tháng") ?>
+                            </button>
+                            <button type="button" onclick="selectFinanceTerm(4)" id="term-4" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                4 <?= __("months_suffix", " tháng") ?>
+                            </button>
+                            <button type="button" onclick="selectFinanceTerm(6)" id="term-6" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                6 <?= __("months_suffix", " tháng") ?>
+                            </button>
+                            <button type="button" onclick="selectFinanceTerm(9)" id="term-9" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                9 <?= __("months_suffix", " tháng") ?>
+                            </button>
+                            <button type="button" onclick="selectFinanceTerm(12)" id="term-12" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                12 <?= __("months_suffix", " tháng") ?>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Finance Calculations Table -->
+                <div class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("company", "Công ty") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-company">Shinhan Finance</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("installment_price", "Giá mua trả góp") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-price"><?= number_format($product['price']) ?>đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("prepayment", "Trả trước") ?> (<span id="calc-prepay-percent">30</span>%)</span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-prepay">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("interest_rate", "Lãi suất") ?></span>
+                        <span class="text-sm font-bold text-green-600 text-right" id="calc-interest-rate">0%</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("required_papers", "Giấy tờ cần có") ?></span>
+                        <span class="text-xs font-bold text-gray-600 text-right"><?= __("required_papers_val", "CMND/CCCD + Bằng lái xe/Hộ khẩu") ?></span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("monthly_installment_principal", "Góp mỗi tháng (Gốc)") ?></span>
+                        <span class="text-sm font-bold text-red-600 text-right" id="calc-monthly">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("principal_interest", "Gốc + Lãi") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="calc-total-monthly">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("insurance_fee", "Phí thu hộ/Bảo hiểm") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all bg-gray-50">
+                        <span class="text-sm text-gray-600 font-black"><?= __("total_payment", "Tổng tiền phải trả") ?></span>
+                        <span class="text-sm font-black text-gray-800 text-right" id="calc-total">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 p-3 hover:bg-white transition-all bg-red-50/20">
+                        <span class="text-sm text-gray-600 font-black"><?= __("difference", "Chênh lệch") ?></span>
+                        <span class="text-sm font-black text-red-600 text-right" id="calc-diff">0đ</span>
+                    </div>
+                </div>
+                <p class="text-center text-[10px] text-gray-400 mt-1 italic"><?= __("installment_disclaimer", "(Bảng tính tham khảo, số tiền trả trước và hạn mức tuỳ thuộc vào hồ sơ được duyệt.)") ?></p>
             </div>
-            <button type="submit"
-                class="w-full bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-blue-800 transition shadow"><?= __("confirm_registration") ?></button>
-            <p class="text-center text-[11px] text-gray-500 mt-3"><?= __("callback_hint") ?></p>
-        </form>
+
+            <!-- TAB 2: Credit Card Content -->
+            <div id="inst-content-2" class="hidden space-y-6">
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_installment_method", "Chọn phương thức trả góp") ?></label>
+                    <div class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-between font-bold text-sm text-gray-800 select-none">
+                        <span><?= __("pay_via_onepay", "Trả góp qua Onepay (thẻ Visa/MasterCard/JCB/Napas)") ?></span>
+                        <div class="flex gap-1 shrink-0">
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">Visa</span>
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">Master</span>
+                            <span class="bg-gray-100 text-gray-500 rounded px-1 text-[10px]">JCB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. Select bank -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_bank", "1. Chọn ngân hàng trả góp") ?></label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button type="button" onclick="selectCreditBank('Vietcombank')" id="bank-Vietcombank" class="border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none">
+                            Vietcombank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('Techcombank')" id="bank-Techcombank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            Techcombank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('Sacombank')" id="bank-Sacombank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            Sacombank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('ACB')" id="bank-ACB" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            ACB
+                        </button>
+                        <button type="button" onclick="selectCreditBank('MBBank')" id="bank-MBBank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            MBBank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('VPBank')" id="bank-VPBank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            VPBank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('VIB')" id="bank-VIB" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            VIB
+                        </button>
+                        <button type="button" onclick="selectCreditBank('BIDV')" id="bank-BIDV" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            BIDV
+                        </button>
+                        <button type="button" onclick="selectCreditBank('VietinBank')" id="bank-VietinBank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            VietinBank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('TPBank')" id="bank-TPBank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            TPBank
+                        </button>
+                        <button type="button" onclick="selectCreditBank('HSBC')" id="bank-HSBC" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            HSBC
+                        </button>
+                        <button type="button" onclick="selectCreditBank('Shinhan Bank')" id="bank-ShinhanBank" class="border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            Shinhan Bank
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Select card type -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_card_type", "2. Chọn loại thẻ") ?></label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectCreditCard('Visa')" id="card-Visa" class="border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none">
+                            Visa
+                        </button>
+                        <button onclick="selectCreditCard('MasterCard')" id="card-MasterCard" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            MasterCard
+                        </button>
+                        <button onclick="selectCreditCard('JCB')" id="card-JCB" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none">
+                            JCB
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Select Term and Rate -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_term_rate", "3. Chọn số tiền và kỳ hạn trả góp") ?></label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button type="button" onclick="selectCreditTerm(3)" id="cterm-3" class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">3 <?= __("months_suffix", " tháng") ?></span>
+                            <span class="text-[10px] text-green-600 font-bold">0% Lãi suất</span>
+                        </button>
+                        <button type="button" onclick="selectCreditTerm(6)" id="cterm-6" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">6 <?= __("months_suffix", " tháng") ?></span>
+                            <span class="text-[10px] text-red-600 font-bold">0.58% / tháng</span>
+                        </button>
+                        <button type="button" onclick="selectCreditTerm(9)" id="cterm-9" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">9 <?= __("months_suffix", " tháng") ?></span>
+                            <span class="text-[10px] text-red-600 font-bold">0.5% / tháng</span>
+                        </button>
+                        <button type="button" onclick="selectCreditTerm(12)" id="cterm-12" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">12 <?= __("months_suffix", " tháng") ?></span>
+                            <span class="text-[10px] text-red-600 font-bold">0.46% / tháng</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Credit Card Calculations Table -->
+                <div class="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("bank", "Ngân hàng") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="cc-calc-bank">Vietcombank</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("card_type", "Loại thẻ") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right" id="cc-calc-card">Visa</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("installment_price", "Giá mua trả góp") ?></span>
+                        <span class="text-sm font-bold text-gray-800 text-right"><?= number_format($product['price']) ?>đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("flat_interest_rate", "Lãi suất phẳng hàng tháng") ?></span>
+                        <span class="text-sm font-extrabold text-red-600 text-right" id="cc-calc-rate">0.5% / tháng</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+                        <span class="text-sm text-gray-500 font-medium"><?= __("monthly_payment_goclai", "Góp mỗi tháng (Gốc + Lãi)") ?></span>
+                        <span class="text-sm font-bold text-red-600 text-right" id="cc-calc-monthly">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all bg-gray-50">
+                        <span class="text-sm text-gray-600 font-black"><?= __("total_payment", "Tổng tiền phải trả") ?></span>
+                        <span class="text-sm font-black text-gray-800 text-right" id="cc-calc-total">0đ</span>
+                    </div>
+                    <div class="grid grid-cols-2 p-3 hover:bg-white transition-all bg-red-50/20">
+                        <span class="text-sm text-gray-600 font-black"><?= __("difference", "Chênh lệch") ?></span>
+                        <span class="text-sm font-black text-red-600 text-right" id="cc-calc-diff">0đ</span>
+                    </div>
+                </div>
+                <p class="text-center text-[10px] text-gray-400 mt-1 italic"><?= __("installment_disclaimer", "(Bảng tính tham khảo, số tiền trả trước và hạn mức tuỳ thuộc vào hồ sơ được duyệt.)") ?></p>
+            </div>
+
+            <!-- TAB 3: Buy Now Pay Later Content -->
+            <div id="inst-content-3" class="hidden space-y-6">
+                <!-- Select BNPL Provider -->
+                <div>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_bnpl_provider", "Chọn nhà cung cấp Mua trước trả sau") ?></label>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <button type="button" onclick="selectBnplProvider('Home PayLater')" id="bnpl-HomePayLater" class="border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">Home PayLater</span>
+                            <span class="text-[10px] text-red-500 font-black uppercase mt-1">🔥 <?= __("hot_tag", "Hot nhất") ?></span>
+                        </button>
+                        <button type="button" onclick="selectBnplProvider('Fundiin')" id="bnpl-Fundiin" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">Fundiin</span>
+                            <span class="text-[10px] text-blue-500 font-bold uppercase mt-1">👍 <?= __("popular_tag", "Phổ biến") ?></span>
+                        </button>
+                        <button type="button" onclick="selectBnplProvider('Kredivo')" id="bnpl-Kredivo" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none">
+                            <span class="text-sm font-extrabold text-gray-800">Kredivo</span>
+                            <span class="text-[10px] text-gray-400 font-medium uppercase mt-1">💳 <?= __("global_tag", "Toàn cầu") ?></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- BNPL Description Box -->
+                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-5">
+                    <h5 class="font-extrabold text-gray-800 text-base mb-2" id="bnpl-title">Home PayLater</h5>
+                    <p class="text-sm text-gray-600 leading-relaxed" id="bnpl-desc">Home PayLater là dịch vụ mua trước trả sau cực HOT của Home Credit. Hạn mức lên đến 25 triệu, không cần chứng minh thu nhập, lãi suất 0% cho kỳ hạn ngắn, xét duyệt siêu tốc chỉ trong 60 giây.</p>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="mt-8 border-t border-gray-100 pt-6 space-y-4">
+                <h5 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1"><?= __("contact_info", "Thông tin người đăng ký") ?></h5>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1"><?= __("fullname", "Họ và tên") ?> *</label>
+                        <input type="text" id="inst-fullname" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-medium" value="<?= isset($_SESSION['fullname']) ? htmlspecialchars($_SESSION['fullname']) : '' ?>" placeholder="<?= __("fullname", "Họ và tên") ?>">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1"><?= __("phone", "Số điện thoại") ?> *</label>
+                        <input type="tel" id="inst-phone" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-primary text-sm font-medium" placeholder="VD: 0987654321">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Old to New Trade-In Switch (Common under all tabs) -->
+            <div class="mt-4 space-y-2">
+                <label class="flex items-center gap-3 cursor-pointer select-none group">
+                    <input type="checkbox" id="inst-trade-in" class="w-5 h-5 accent-primary rounded cursor-pointer transition">
+                    <span class="text-sm font-bold text-gray-700 group-hover:text-gray-900 transition-all">
+                        <?= __("trade_in_prompt", "Bạn có muốn đăng ký thu cũ lên đời? (Trợ giá lên đến 2 triệu)") ?>
+                    </span>
+                </label>
+            </div>
+
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-4 bg-gray-50/50 shrink-0">
+            <button onclick="closeInstallmentModal()" class="px-6 py-3 border border-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-100 transition shadow-sm bg-white min-w-[120px]">
+                <?= __("close", "Đóng") ?>
+            </button>
+            <button onclick="submitNewInstallment()" class="flex-1 px-8 py-3 bg-red-600 text-white rounded-xl font-black text-sm hover:bg-red-700 transition shadow-lg shadow-red-200 text-center uppercase tracking-wider">
+                <?= __("confirm_installment", "XÁC NHẬN TRẢ GÓP") ?>
+            </button>
+        </div>
+
     </div>
 </div>
 
 <script>
+    /**
+     * ẨN / HIỆN FORM ĐÁNH GIÁ SẢN PHẨM
+     * Xử lý ẩn/hiện và tự động cuộn trang (scrollIntoView) cho hộp thoại nhập review.
+     */
+    function toggleReviewForm() {
+        const form = document.getElementById('review-form-container');
+        if (form) {
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
     /**
      * MỞ RỘNG / THU GỌN MÔ TẢ SẢN PHẨM
      * Toggle chiều cao của container mô tả ngắn (350px) thành hiển thị đầy đủ (full).
@@ -1310,6 +1680,391 @@ require_once __DIR__ . '/../partials/header.php';
         document.addEventListener('DOMContentLoaded', startAutoSlide);
     }
 
+</script>
+
+<!-- JAVASCRIPT TRẢ GÓP NÂNG CAO -->
+<script>
+    let currentTab = 1;
+    let selectedCompany = 'Shinhan Finance';
+    let selectedTerm = 3;
+    let selectedPrepayPercent = 30;
+    let selectedBank = 'Vietcombank';
+    let selectedCreditCard = 'Visa';
+    let selectedCreditTerm = 3;
+    let selectedBnpl = 'Home PayLater';
+
+    const interestRatesMap = {
+        'Shinhan Finance': { 3: 0, 4: 1.29, 6: 1.49, 9: 1.69, 12: 1.89 },
+        'Home Credit': { 3: 0, 4: 1.39, 6: 1.59, 9: 1.79, 12: 1.99 },
+        'HD Saison': { 3: 0, 4: 1.49, 6: 1.69, 9: 1.89, 12: 2.09 },
+        'Mirae Asset': { 3: 0, 4: 1.59, 6: 1.79, 9: 1.99, 12: 2.19 }
+    };
+
+    const bnplData = {
+        'Home PayLater': {
+            title: 'Home PayLater',
+            desc: `<?= __("home_paylater_desc") ?>`
+        },
+        'Fundiin': {
+            title: 'Fundiin',
+            desc: `<?= __("fundiin_desc") ?>`
+        },
+        'Kredivo': {
+            title: 'Kredivo',
+            desc: `<?= __("kredivo_desc") ?>`
+        }
+    };
+
+    function openInstallmentModal() {
+        const modal = document.getElementById('installmentModal');
+        const container = document.getElementById('installmentModalContainer');
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            container.classList.remove('scale-95', 'opacity-0');
+            container.classList.add('scale-100', 'opacity-100');
+        }, 10);
+        
+        selectedCompany = 'Shinhan Finance';
+        selectedTerm = 3;
+        selectedPrepayPercent = 30;
+        selectedBnpl = 'Home PayLater';
+        selectedBank = 'Vietcombank';
+        selectedCreditCard = 'Visa';
+        selectedCreditTerm = 3;
+        
+        selectFinanceCompany('Shinhan Finance');
+        selectPrepayPercent(30);
+        selectFinanceTerm(3);
+        selectCreditBank('Vietcombank');
+        selectCreditCard('Visa');
+        selectCreditTerm(3);
+        selectBnplProvider('Home PayLater');
+        recalcInstallment();
+        
+        modal.onclick = function(e) {
+            if (e.target === modal) {
+                closeInstallmentModal();
+            }
+        };
+    }
+
+    function closeInstallmentModal() {
+        const modal = document.getElementById('installmentModal');
+        const container = document.getElementById('installmentModalContainer');
+        container.classList.remove('scale-100', 'opacity-100');
+        container.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    function switchInstallmentTab(tabNum) {
+        currentTab = tabNum;
+        for (let i = 1; i <= 3; i++) {
+            const tabEl = document.getElementById('inst-tab-' + i);
+            const contentEl = document.getElementById('inst-content-' + i);
+            if (i === tabNum) {
+                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent";
+                contentEl.classList.remove('hidden');
+            } else {
+                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent";
+                contentEl.classList.add('hidden');
+            }
+        }
+        recalcInstallment();
+    }
+
+    function selectFinanceCompany(compName) {
+        selectedCompany = compName;
+        const companies = ['Shinhan Finance', 'Home Credit', 'HD Saison', 'Mirae Asset'];
+        const compMap = {
+            'Shinhan Finance': 'Shinhan',
+            'Home Credit': 'Home',
+            'HD Saison': 'HD',
+            'Mirae Asset': 'Mirae'
+        };
+        companies.forEach(c => {
+            const btn = document.getElementById('comp-' + compMap[c]);
+            if (btn) {
+                if (c === compName) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 transition-all select-none h-12";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectPrepayPercent(percent) {
+        selectedPrepayPercent = percent;
+        const percents = [10, 20, 30, 40, 50];
+        percents.forEach(p => {
+            const btn = document.getElementById('prepay-' + p);
+            if (btn) {
+                if (p === percent) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectFinanceTerm(months) {
+        selectedTerm = months;
+        const terms = [3, 4, 6, 9, 12];
+        terms.forEach(t => {
+            const btn = document.getElementById('term-' + t);
+            if (btn) {
+                if (t === months) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectCreditBank(bankName) {
+        selectedBank = bankName;
+        const banks = ['Vietcombank', 'Techcombank', 'Sacombank', 'ACB', 'MBBank', 'VPBank', 'VIB', 'BIDV', 'VietinBank', 'TPBank', 'HSBC', 'ShinhanBank'];
+        banks.forEach(b => {
+            const btn = document.getElementById('bank-' + b);
+            if (btn) {
+                const isSelected = (bankName === b || (bankName === 'Shinhan Bank' && b === 'ShinhanBank'));
+                if (isSelected) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectCreditCard(cardName) {
+        selectedCreditCard = cardName;
+        const cards = ['Visa', 'MasterCard', 'JCB'];
+        cards.forEach(c => {
+            const btn = document.getElementById('card-' + c);
+            if (btn) {
+                if (c === cardName) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectCreditTerm(months) {
+        selectedCreditTerm = months;
+        const terms = [3, 6, 9, 12];
+        terms.forEach(t => {
+            const btn = document.getElementById('cterm-' + t);
+            if (btn) {
+                if (t === months) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+                }
+            }
+        });
+        recalcInstallment();
+    }
+
+    function selectBnplProvider(providerName) {
+        selectedBnpl = providerName;
+        const providers = ['Home PayLater', 'Fundiin', 'Kredivo'];
+        providers.forEach(p => {
+            const idSuffix = p.replace(/\s+/g, '');
+            const btn = document.getElementById('bnpl-' + idSuffix);
+            if (btn) {
+                if (p === providerName) {
+                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 transition-all select-none";
+                } else {
+                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none";
+                }
+            }
+        });
+        
+        const data = bnplData[providerName];
+        if (data) {
+            document.getElementById('bnpl-title').innerText = data.title;
+            document.getElementById('bnpl-desc').innerText = data.desc;
+        }
+    }
+
+    function recalcInstallment() {
+        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
+        
+        // 1. Finance Company calculations (Tab 1)
+        document.getElementById('calc-company').innerText = selectedCompany;
+        document.getElementById('calc-prepay-percent').innerText = selectedPrepayPercent;
+        
+        const prepayAmount = Math.round(price * (selectedPrepayPercent / 100));
+        document.getElementById('calc-prepay').innerText = prepayAmount.toLocaleString('vi-VN') + 'đ';
+        
+        const remainingPrincipal = price - prepayAmount;
+        const rates = interestRatesMap[selectedCompany] || { 3: 0, 4: 0, 6: 0, 9: 0, 12: 0 };
+        const monthlyInterestRate = rates[selectedTerm] || 0;
+        document.getElementById('calc-interest-rate').innerText = monthlyInterestRate + '%' + '<?= __("per_month_suffix", " / tháng") ?>';
+        
+        const monthlyPrincipal = remainingPrincipal / selectedTerm;
+        const monthlyInterest = remainingPrincipal * (monthlyInterestRate / 100);
+        const monthlyAmt = Math.round(monthlyPrincipal + monthlyInterest);
+        
+        document.getElementById('calc-monthly').innerText = Math.round(monthlyPrincipal).toLocaleString('vi-VN') + 'đ';
+        document.getElementById('calc-total-monthly').innerText = monthlyAmt.toLocaleString('vi-VN') + 'đ';
+        
+        const totalToPay = prepayAmount + (monthlyAmt * selectedTerm);
+        document.getElementById('calc-total').innerText = totalToPay.toLocaleString('vi-VN') + 'đ';
+        
+        const difference = totalToPay - price;
+        document.getElementById('calc-diff').innerText = difference.toLocaleString('vi-VN') + 'đ';
+
+        // 2. Credit Card calculations (Tab 2)
+        const ccBankEl = document.getElementById('cc-calc-bank');
+        if (ccBankEl) {
+            ccBankEl.innerText = selectedBank;
+            document.getElementById('cc-calc-card').innerText = selectedCreditCard;
+            
+            // Map flat monthly rates directly
+            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
+            const ccFlatRate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
+            document.getElementById('cc-calc-rate').innerText = ccFlatRate + '%' + '<?= __("per_month_suffix", " / tháng") ?>';
+            
+            const ccMonthlyAmt = Math.round((price / selectedCreditTerm) + (price * (ccFlatRate / 100)));
+            document.getElementById('cc-calc-monthly').innerText = ccMonthlyAmt.toLocaleString('vi-VN') + 'đ';
+            
+            const ccTotalToPay = ccMonthlyAmt * selectedCreditTerm;
+            document.getElementById('cc-calc-total').innerText = ccTotalToPay.toLocaleString('vi-VN') + 'đ';
+            
+            const ccDifference = ccTotalToPay - price;
+            document.getElementById('cc-calc-diff').innerText = ccDifference.toLocaleString('vi-VN') + 'đ';
+        }
+    }
+
+    function submitNewInstallment() {
+        const fullname = document.getElementById('inst-fullname').value.trim();
+        const phone = document.getElementById('inst-phone').value.trim();
+
+        if (!fullname) {
+            Swal.fire('<?= __("warning") ?>', '<?= __("please_enter_fullname") ?>', 'warning');
+            return;
+        }
+        if (!phone || !/^[0-9]{10}$/.test(phone)) {
+            Swal.fire('<?= __("warning") ?>', '<?= __("please_enter_valid_phone") ?>', 'warning');
+            return;
+        }
+
+        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
+        const tradeInCheckbox = document.getElementById('inst-trade-in');
+        const isTradeIn = tradeInCheckbox.checked ? 1 : 0;
+        const tradeInText = isTradeIn ? ' (Thu cũ lên đời)' : '';
+
+        let termText = '';
+        let payment_method = '';
+        let partner_name = '';
+        let card_type = '';
+        let prepayment_percent = 0;
+        let prepayment_amount = 0;
+        let term_months = 3;
+        let monthly_payment = 0;
+        let total_payment = 0;
+        let difference_amount = 0;
+        let interest_rate = 0;
+
+        if (currentTab === 1) {
+            payment_method = 'finance';
+            partner_name = selectedCompany;
+            prepayment_percent = selectedPrepayPercent;
+            prepayment_amount = Math.round(price * (prepayment_percent / 100));
+            term_months = selectedTerm;
+            interest_rate = (interestRatesMap[selectedCompany] || {})[selectedTerm] || 0;
+            
+            const remainingPrincipal = price - prepayment_amount;
+            const monthlyPrincipal = remainingPrincipal / term_months;
+            const monthlyInterest = remainingPrincipal * (interest_rate / 100);
+            monthly_payment = Math.round(monthlyPrincipal + monthlyInterest);
+            total_payment = prepayment_amount + (monthly_payment * term_months);
+            difference_amount = total_payment - price;
+            
+            termText = `Công ty tài chính: ${selectedCompany}, Trả trước: ${selectedPrepayPercent}%, Kỳ hạn: ${selectedTerm} tháng${tradeInText}`;
+        } else if (currentTab === 2) {
+            payment_method = 'credit_card';
+            partner_name = selectedBank;
+            card_type = selectedCreditCard;
+            prepayment_percent = 0;
+            prepayment_amount = 0;
+            term_months = selectedCreditTerm;
+            
+            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
+            interest_rate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
+            monthly_payment = Math.round((price / term_months) + (price * (interest_rate / 100)));
+            total_payment = monthly_payment * term_months;
+            difference_amount = total_payment - price;
+            
+            termText = `Thẻ tín dụng: ${selectedBank} - ${selectedCreditCard}, Kỳ hạn: ${selectedCreditTerm} tháng (Lãi suất phẳng: ${interest_rate}%/tháng)${tradeInText}`;
+        } else {
+            payment_method = 'bnpl';
+            partner_name = selectedBnpl;
+            prepayment_percent = 0;
+            prepayment_amount = 0;
+            term_months = 3;
+            interest_rate = 0;
+            monthly_payment = Math.round(price / 3);
+            total_payment = price;
+            difference_amount = 0;
+            
+            termText = `Mua trước trả sau: ${selectedBnpl}${tradeInText}`;
+        }
+
+        const formData = new FormData();
+        formData.append('product_id', <?= $id ?>);
+        formData.append('term', termText);
+        formData.append('fullname', fullname);
+        formData.append('phone', phone);
+        formData.append('payment_method', payment_method);
+        formData.append('partner_name', partner_name);
+        formData.append('card_type', card_type);
+        formData.append('prepayment_percent', prepayment_percent);
+        formData.append('prepayment_amount', prepayment_amount);
+        formData.append('term_months', term_months);
+        formData.append('monthly_payment', monthly_payment);
+        formData.append('total_payment', total_payment);
+        formData.append('difference_amount', difference_amount);
+        formData.append('interest_rate', interest_rate);
+        formData.append('is_trade_in', isTradeIn);
+        formData.append('csrf_token', csrfToken);
+
+        fetch(getApiUrl('save_installment.php'), {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeInstallmentModal();
+                Swal.fire({
+                    title: '<?= __("notification") ?>',
+                    text: '<?= __("installment_success_swal") ?>',
+                    icon: 'success',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire('<?= __("warning") ?>', data.message || 'Lỗi đăng ký trả góp.', 'error');
+            }
+        })
+        .catch(err => {
+            Swal.fire('<?= __("warning") ?>', 'Không thể gửi yêu cầu trả góp.', 'error');
+        });
+    }
 </script>
 
 <script>

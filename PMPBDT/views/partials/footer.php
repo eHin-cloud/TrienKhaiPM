@@ -367,11 +367,11 @@
                     <span class="absolute -bottom-2 left-0 w-12 h-1 bg-secondary rounded"></span>
                 </h3>
                 <ul class="space-y-3">
-                    <li><a href="#" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("warranty_policy") ?></a></li>
-                    <li><a href="#" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("return_policy_1_1") ?></a></li>
-                    <li><a href="#" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("delivery_install") ?></a></li>
-                    <li><a href="#" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("installment_guide") ?></a></li>
-                    <li><a href="#" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("faq") ?></a></li>
+                    <li><a href="javascript:showPolicyModal('warranty')" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("warranty_policy") ?></a></li>
+                    <li><a href="javascript:showPolicyModal('return')" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("return_policy_1_1") ?></a></li>
+                    <li><a href="javascript:showPolicyModal('delivery')" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("delivery_install") ?></a></li>
+                    <li><a href="javascript:showPolicyModal('installment')" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("installment_guide") ?></a></li>
+                    <li><a href="javascript:showPolicyModal('faq')" class="text-sm text-gray-300 hover:text-secondary transition-colors flex items-center gap-2 group"><i class="fa-solid fa-chevron-right text-[10px] text-secondary group-hover:translate-x-1 transition-transform"></i> <?= __("faq") ?></a></li>
                 </ul>
             </div>
 
@@ -382,8 +382,8 @@
                     <span class="absolute -bottom-2 left-0 w-12 h-1 bg-secondary rounded"></span>
                 </h3>
                 <p class="text-sm text-gray-300 mb-4"><?= __("newsletter_desc") ?></p>
-                <form class="relative mb-8" onsubmit="event.preventDefault(); if(typeof showSuccessModal === 'function') showSuccessModal('<?= __("newsletter_success_swal") ?>');">
-                    <input type="email" placeholder="<?= __("newsletter_placeholder") ?>" required class="w-full bg-white/10 border border-white/10 text-sm text-white px-4 py-3 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all">
+                <form id="newsletter-form" class="relative mb-8" onsubmit="submitNewsletter(event)">
+                    <input type="email" id="newsletter-email" name="email" placeholder="<?= __("newsletter_placeholder") ?>" required class="w-full bg-white/10 border border-white/10 text-sm text-white px-4 py-3 rounded-lg focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all">
                     <button type="submit" class="absolute right-1 top-1 bottom-1 bg-secondary hover:bg-yellow-400 text-primary px-4 rounded-md font-medium transition-colors">
                         <?= __("send") ?>
                     </button>
@@ -403,13 +403,48 @@
         <div class="pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
             <p class="text-xs text-blue-100">© 2026 DIENMAY<span class="text-white font-bold">PRO</span>. <?= __("all_rights_reserved") ?></p>
             <div class="flex gap-4 text-xs text-blue-100">
-                <a href="#" class="hover:text-white transition"><?= __("terms_of_use") ?></a>
+                <a href="javascript:showPolicyModal('terms')" class="hover:text-white transition"><?= __("terms_of_use") ?></a>
                 <span class="text-white/20">|</span>
-                <a href="#" class="hover:text-white transition"><?= __("privacy_policy") ?></a>
+                <a href="javascript:showPolicyModal('privacy')" class="hover:text-white transition"><?= __("privacy_policy") ?></a>
             </div>
         </div>
     </div>
 </footer>
+
+<!-- ==========================================
+     MODAL CHÍNH SÁCH VÀ ĐIỀU KHOẢN (PREMIUM DESIGN)
+     ========================================== -->
+<div id="policy-modal" class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden transform scale-95 transition-all duration-300 flex flex-col max-h-[85vh]">
+        <!-- Header -->
+        <div class="p-6 bg-gradient-to-r from-primary to-blue-700 text-white flex justify-between items-center relative">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-lg text-secondary" id="policy-modal-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg leading-tight" id="policy-modal-title">Tiêu đề chính sách</h3>
+                    <p class="text-xs text-blue-100 mt-0.5"><?= __('customer_support') ?></p>
+                </div>
+            </div>
+            <button onclick="closePolicyModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6 md:p-8 overflow-y-auto flex-1 text-slate-600 dark:text-slate-300 leading-relaxed text-sm" id="policy-modal-content">
+            Nội dung chính sách...
+        </div>
+        
+        <!-- Footer -->
+        <div class="p-4 bg-slate-50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-700 flex justify-end gap-3">
+            <button onclick="closePolicyModal()" class="bg-secondary hover:bg-yellow-400 text-primary font-bold px-6 py-2.5 rounded-xl transition shadow-md hover:shadow-lg text-sm flex items-center gap-2">
+                <i class="fa-solid fa-check"></i> <?= __('close') ?>
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Thư viện SweetAlert2 - Hiệu ứng thông báo đẹp mắt -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -422,7 +457,67 @@
     // BIẾN TOÀN CỤC: CSRF TOKEN CHO AJAX
     // ==========================================
     const csrfToken = '<?= generate_csrf_token() ?>';
-    const assetPath = '/PMPBDT/public/';
+    const assetPath = '<?= rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ""), "/\\") ?>/';
+
+    // ==========================================
+    // XỬ LÝ ĐĂNG KÝ NHẬN ƯU ĐÃI (NEWSLETTER)
+    // ==========================================
+    function submitNewsletter(event) {
+        event.preventDefault();
+        const emailInput = document.getElementById('newsletter-email');
+        if (!emailInput || !emailInput.value) return;
+
+        const btn = event.target.querySelector('button[type="submit"]');
+        let originalText = '';
+        if (btn) {
+            originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+            btn.disabled = true;
+        }
+
+        const formData = new FormData();
+        formData.append('email', emailInput.value);
+        formData.append('csrf_token', '<?= get_csrf_token_value() ?>');
+
+        fetch('subscribe.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+            if (data.success) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: 'Thành công!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#004bb9'
+                    });
+                } else {
+                    alert(data.message);
+                }
+                emailInput.value = '';
+            } else {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Thông báo', data.message, 'warning');
+                } else {
+                    alert(data.message);
+                }
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+            console.error('Lỗi đăng ký nhận ưu đãi:', err);
+            Swal.fire('Lỗi!', 'Không thể gửi yêu cầu đăng ký.', 'error');
+        });
+    }
 
     /**
      * Hàm giả lập asset() của PHP trong JS
@@ -898,6 +993,377 @@
     }
 
     // Gửi tin nhắn khi bấm phím Enter
+    aiInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // ==========================================
+    // CẤU HÌNH & XỬ LÝ HIỂN THỊ MODAL CHÍNH SÁCH
+    // ==========================================
+    const policyData = {
+        warranty: {
+            title_vi: "Chính Sách Bảo Hành Điện Máy",
+            title_en: "Electronic Warranty Policy",
+            icon: "fa-shield-halved",
+            content_vi: `
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-circle-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Thời gian bảo hành vượt trội</h4>
+                            <p class="text-slate-600">Bảo hành chính hãng <b>12 tháng</b> cho toàn bộ sản phẩm do Điện Máy PRO phân phối.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Lỗi 1 đổi 1 nhanh chóng</h4>
+                            <p class="text-slate-600">Áp dụng chính sách <b>1 đổi 1 trong vòng 30 ngày</b> đầu tiên nếu sản phẩm phát sinh lỗi phần cứng từ nhà sản xuất.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Bảo hành tận nơi miễn phí</h4>
+                            <p class="text-slate-600">Điện Máy PRO hỗ trợ kỹ thuật viên kiểm tra và bảo hành sản phẩm tận nhà miễn phí trong phạm vi bán kính 20km tính từ cửa hàng gần nhất.</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-circle-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Extended Warranty Period</h4>
+                            <p class="text-slate-600">Official manufacturer warranty of <b>12 months</b> for all products distributed by Điện Máy PRO.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-arrow-rotate-left"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Hassle-free 1-to-1 Replacement</h4>
+                            <p class="text-slate-600">Enjoy <b>1-to-1 replacement within the first 30 days</b> if the product experiences any hardware faults from the manufacturer.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Free On-site Home Support</h4>
+                            <p class="text-slate-600">Điện Máy PRO supports on-site home inspection and warranty repair completely free of charge within a 20km radius of the nearest store.</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        return: {
+            title_vi: "Chính Sách Đổi Trả 1-1",
+            title_en: "1-to-1 Exchange & Return Policy",
+            icon: "fa-arrows-rotate",
+            content_vi: `
+                <div class="space-y-6">
+                    <p class="text-slate-600 mb-4">Nhằm bảo vệ tối đa quyền lợi khách hàng, Điện Máy PRO cam kết chính sách đổi trả hàng minh bạch như sau:</p>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Thời hạn đổi trả 30 ngày</h4>
+                            <p class="text-slate-600">Đổi mới sản phẩm cùng loại hoàn toàn miễn phí nếu phát sinh lỗi kỹ thuật của nhà sản xuất.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-box-open"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Điều kiện áp dụng</h4>
+                            <p class="text-slate-600">Sản phẩm đổi trả phải còn đầy đủ vỏ hộp, tem nhãn, phụ kiện đi kèm, quà tặng kèm theo (nếu có) và không bị nứt vỡ, trầy xước phần cứng.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-circle-dollar-to-slot"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Chính sách thu hồi & hoàn tiền</h4>
+                            <p class="text-slate-600">Nếu không có sản phẩm cùng model để đổi, khách hàng có thể chọn đổi sang mẫu khác (bù trừ chênh lệch) hoặc được hoàn trả 100% giá trị hóa đơn.</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-6">
+                    <p class="text-slate-600 mb-4">To ensure maximum customer satisfaction, Điện Máy PRO guarantees a fully transparent exchange policy:</p>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-calendar-check"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">30-Day Exchange Period</h4>
+                            <p class="text-slate-600">Exchange for a brand-new identical product completely free of charge in case of manufacturer engineering faults.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-box-open"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Eligibility Conditions</h4>
+                            <p class="text-slate-600">Returned products must remain in original packaging, with intact warranty stamps, all accessories, gifts (if any), and no scratches or physical damage.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-circle-dollar-to-slot"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Refund & Alternative Solutions</h4>
+                            <p class="text-slate-600">If the same model is out of stock, customers can choose an alternative product (pay/receive the price difference) or request a 100% full refund.</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        delivery: {
+            title_vi: "Dịch Vụ Giao Hàng & Lắp Đặt",
+            title_en: "Delivery & Installation Service",
+            icon: "fa-truck-ramp-box",
+            content_vi: `
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Giao hàng hỏa tốc trong 2 giờ</h4>
+                            <p class="text-slate-600">Áp dụng miễn phí vận chuyển trong bán kính 10km cho tất cả đơn hàng từ 5.000.000đ. Đội ngũ giao hàng hỏa tốc phục vụ trong 2 giờ kể từ khi xác nhận đơn.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Lắp đặt chuyên nghiệp tại nhà</h4>
+                            <p class="text-slate-600">Kỹ thuật viên lành nghề chịu trách nhiệm lắp đặt đầy đủ các thiết bị gia dụng lớn (Tivi, Tủ lạnh, Máy giặt, Điều hòa...) chuẩn kỹ thuật an toàn.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Bàn giao & Hướng dẫn sử dụng</h4>
+                            <p class="text-slate-600">Sau khi lắp đặt, nhân viên sẽ tiến hành chạy thử sản phẩm ổn định, bàn giao phiếu bảo hành và hướng dẫn quý khách cách sử dụng chi tiết, bền bỉ nhất.</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-truck-fast"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Express 2-Hour Delivery</h4>
+                            <p class="text-slate-600">Free shipping within a 10km radius for all orders over 5,000,000đ. Our express delivery team delivers within 2 hours of order confirmation.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Professional Home Installation</h4>
+                            <p class="text-slate-600">Certified technicians handle full assembly and installation for large home appliances (TV, Refrigerator, Washing Machine, AC) under strict safety guidelines.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-chalkboard-user"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Product Walkthrough & Handover</h4>
+                            <p class="text-slate-600">Once installed, the crew runs standard tests, hands over the warranty certificate, and provides a thorough user demonstration for optimal appliance life.</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        installment: {
+            title_vi: "Hướng Dẫn Mua Trả Góp 0%",
+            title_en: "0% Interest Installment Guide",
+            icon: "fa-credit-card",
+            content_vi: `
+                <div class="space-y-6">
+                    <p class="text-slate-600 mb-4">Điện Máy PRO cung cấp hai hình thức trả góp linh hoạt giúp quý khách dễ dàng sở hữu sản phẩm yêu thích:</p>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-credit-card"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Trả góp 0% lãi suất qua thẻ tín dụng</h4>
+                            <p class="text-slate-600">Hỗ trợ kỳ hạn linh hoạt 3, 6, 9, 12 tháng qua thẻ tín dụng của 25+ ngân hàng uy tín. Không cần chứng minh thu nhập, không mất phí làm hồ sơ.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Trả góp duyệt siêu tốc qua Công ty tài chính</h4>
+                            <p class="text-slate-600">Chỉ cần Căn cước công dân gắn chip. Duyệt hồ sơ nhanh chóng chỉ trong 10-15 phút tại hệ thống cửa hàng Điện Máy PRO toàn quốc (Home Credit, HD Saison).</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Khoản trả trước linh động</h4>
+                            <p class="text-slate-600">Trả trước từ 0đ đến 30% giá trị sản phẩm tùy điều kiện tài chính cá nhân của quý khách.</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-6">
+                    <p class="text-slate-600 mb-4">Điện Máy PRO offers two flexible installment methods to help you purchase your dream products with ease:</p>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-credit-card"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">0% Interest Credit Card Installment</h4>
+                            <p class="text-slate-600">Support flexible terms of 3, 6, 9, 12 months with cards from 25+ major banks. No income proof required, zero document fees.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Financial Company Quick Approval</h4>
+                            <p class="text-slate-600">Only National ID required. File review and approval completed within 10-15 minutes at any Điện Máy PRO outlet nationwide (Home Credit, HD Saison).</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">Flexible Down Payments</h4>
+                            <p class="text-slate-600">Choose to pay upfront from 0đ up to 30% of the item's total invoice value depending on your needs.</p>
+                        </div>
+                    </div>
+                </div>
+            `
+        },
+        faq: {
+            title_vi: "Câu Hỏi Thường Gặp (FAQ)",
+            title_en: "Frequently Asked Questions (FAQ)",
+            icon: "fa-circle-question",
+            content_vi: `
+                <div class="space-y-5">
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> Tôi có thể thanh toán qua những hình thức nào?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Điện Máy PRO hỗ trợ tiền mặt khi nhận hàng (COD), Chuyển khoản qua mã VietQR, Trả góp qua cổng Home PayLater, và Thẻ tín dụng quốc tế.</p>
+                    </div>
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> Cửa hàng có hỗ trợ giao lắp thiết bị trong ngày không?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Có! Đối với các đơn hàng điện lạnh, điện máy lớn đặt trước 15h00 trong khu vực nội thành, chúng tôi hỗ trợ giao hàng và lắp đặt hoàn thiện ngay trong ngày.</p>
+                    </div>
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> Bảo hành điện tử của tôi được kích hoạt như thế nào?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Kể từ thời điểm hoàn tất thanh toán và bàn giao máy, số điện thoại đăng ký mua hàng của quý khách sẽ được lưu trữ tự động trên máy chủ bảo hành quốc gia để tra cứu mà không cần giữ lại giấy tờ phiền toái.</p>
+                    </div>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-5">
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> Which payment methods do you support?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Điện Máy PRO supports Cash on Delivery (COD), Direct Bank Transfer with VietQR, Installment plans via Home PayLater, and international credit/debit cards.</p>
+                    </div>
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> Do you offer same-day delivery and installation?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Yes! For all major appliances ordered before 3:00 PM inside metropolitan areas, we guarantee full same-day shipping and functional on-site assembly.</p>
+                    </div>
+                    <div class="border-b border-gray-100 pb-4">
+                        <h4 class="font-bold text-slate-800 text-sm mb-1.5 flex items-center gap-2"><span class="text-primary font-black">Q:</span> How is my electronic warranty activated?</h4>
+                        <p class="text-slate-600 text-xs pl-5"><span class="text-green-600 font-bold">A:</span> Immediately after invoice payment, your buyer phone number is registered automatically on our online national warranty database, allowing hassle-free verification without physical paper documents.</p>
+                    </div>
+                </div>
+            `
+        },
+        terms: {
+            title_vi: "Điều Khoản Sử Dụng Website",
+            title_en: "Website Terms of Use",
+            icon: "fa-gavel",
+            content_vi: `
+                <div class="space-y-4">
+                    <p class="text-slate-600">Khi truy cập và đặt mua sản phẩm tại Điện Máy PRO, quý khách đồng ý cam kết tuân thủ các điều khoản sau:</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-600">
+                        <li><b>Thông tin tài khoản:</b> Cung cấp đầy đủ, trung thực thông tin liên hệ và địa chỉ giao nhận hàng.</li>
+                        <li><b>Quyền sở hữu trí tuệ:</b> Mọi nội dung, hình ảnh thiết kế trên website đều thuộc bản quyền sở hữu của Điện Máy PRO.</li>
+                        <li><b>Thay đổi dịch vụ:</b> Điện Máy PRO giữ quyền điều chỉnh giá sản phẩm, thông tin khuyến mãi mà không cần thông báo trước tùy theo nguồn cung thị trường.</li>
+                    </ul>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-4">
+                    <p class="text-slate-600">By accessing and buying from Điện Máy PRO, you acknowledge and agree to comply with the following terms:</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-600">
+                        <li><b>Account Accuracy:</b> Provide complete and truthful contact details and shipping addresses.</li>
+                        <li><b>Intellectual Property:</b> All written media, graphics, and interface assets remain the exclusive copyrighted property of Điện Máy PRO.</li>
+                        <li><b>Service Adjustments:</b> Điện Máy PRO reserves the right to modify prices and campaigns without prior notice due to supplier inventory.</li>
+                    </ul>
+                </div>
+            `
+        },
+        privacy: {
+            title_vi: "Bảo Mật Thông Tin Khách Hàng",
+            title_en: "Customer Data Privacy Policy",
+            icon: "fa-lock",
+            content_vi: `
+                <div class="space-y-4">
+                    <p class="text-slate-600">Điện Máy PRO hiểu rõ tầm quan trọng của việc bảo vệ dữ liệu cá nhân, chúng tôi cam kết thực thi nghiêm ngặt:</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-600">
+                        <li><b>Mục đích thu thập:</b> Chỉ sử dụng thông tin cá nhân (Họ tên, SĐT, Địa chỉ, Email) để thực hiện giao dịch, vận chuyển và kích hoạt bảo hành điện tử.</li>
+                        <li><b>Cam kết bảo mật:</b> Không bán, cho thuê hay tiết lộ thông tin của quý khách cho bất cứ đơn vị thứ ba nào ngoài đối tác vận tải được chỉ định.</li>
+                        <li><b>Mã hóa giao dịch:</b> Toàn bộ cổng thanh toán điện tử đều được bảo mật đa tầng bởi chứng chỉ bảo mật mã hóa SSL hàng đầu thế giới.</li>
+                    </ul>
+                </div>
+            `,
+            content_en: `
+                <div class="space-y-4">
+                    <p class="text-slate-600">Điện Máy PRO values customer confidentiality, adhering strictly to global privacy policies:</p>
+                    <ul class="list-disc pl-5 space-y-2 text-slate-600">
+                        <li><b>Purpose of Processing:</b> We collect and process user contact information solely for order fulfillment, delivery logistics, and e-warranty indexing.</li>
+                        <li><b>No Third-Party Sharing:</b> Your details are never rented or shared with external third parties except authorized logistic companies.</li>
+                        <li><b>Encrypted Payments:</b> Online transaction pipelines are protected under secure layers via premium global SSL certificates.</li>
+                    </ul>
+                </div>
+            `
+        }
+    };
+
+    /**
+     * Hiển thị modal chính sách với hiệu ứng fade-in & scale-up premium
+     * @param {string} type - Loại chính sách (warranty, return, delivery, installment, faq, terms, privacy)
+     */
+    function showPolicyModal(type) {
+        const data = policyData[type];
+        if (!data) return;
+        
+        const lang = '<?= getCurrentLang() ?>';
+        const title = lang === 'en' ? data.title_en : data.title_vi;
+        const content = lang === 'en' ? data.content_en : data.content_vi;
+        
+        // Cập nhật tiêu đề, icon và nội dung
+        document.getElementById('policy-modal-title').innerText = title;
+        document.getElementById('policy-modal-icon').innerHTML = `<i class="fa-solid ${data.icon}"></i>`;
+        document.getElementById('policy-modal-content').innerHTML = content;
+        
+        // Kích hoạt hiển thị modal
+        const modal = document.getElementById('policy-modal');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        
+        const dialog = modal.querySelector('.transform');
+        dialog.classList.remove('scale-95');
+        dialog.classList.add('scale-100');
+    }
+
+    /**
+     * Đóng modal chính sách với hiệu ứng thu nhỏ mượt mà
+     */
+    function closePolicyModal() {
+        const modal = document.getElementById('policy-modal');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        
+        const dialog = modal.querySelector('.transform');
+        dialog.classList.remove('scale-100');
+        dialog.classList.add('scale-95');
+    }
+
+    // Đóng modal khi nhấp chuột ngoài vùng nội dung (Click outside to close)
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('policy-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closePolicyModal();
+                }
+            });
+        }
+    });
+
     aiInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });

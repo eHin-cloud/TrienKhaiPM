@@ -595,11 +595,4 @@ return [
     'bank_owner_label' => "Chủ tài khoản",
     'bank_owner_placeholder' => "CHỦ TÀI KHOẢN (VIẾT HOA KHÔNG DẤU)",
     'upload_media_desc' => "Tải ảnh/video lỗi lên đây",
-    
-    // === CART NEW KEYS ===
-    'cart_items_waiting' => 'sản phẩm đang chờ',
-    'delete_all' => 'Xóa tất cả',
-    'free_shipping_nationwide' => 'Miễn phí vận chuyển toàn quốc',
-    'pcs' => 'sản phẩm',
-    'secure_checkout_hint' => 'Thanh toán an toàn & bảo mật 100%',
 ];
