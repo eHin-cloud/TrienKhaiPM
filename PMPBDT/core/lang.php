@@ -103,7 +103,8 @@ function translate_html_content($html, $cacheKey) {
                     $url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" . urlencode($trimmed);
                     $options = [
                         "http" => [
-                            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36\r\n"
+                            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36\r\n",
+                            "timeout" => 1.5
                         ]
                     ];
                     $context = stream_context_create($options);
@@ -136,6 +137,70 @@ function translate_html_content($html, $cacheKey) {
         // Fallback to original html
     }
     
+    // Nếu thất bại hoặc có lỗi, ghi tạm thời chuỗi gốc vào cache để không tiếp tục gửi request làm chậm trang
+    @file_put_contents($cacheFile, $html);
     return $html;
 }
+
+/**
+ * TỰ ĐỘNG DỊCH VĂN BẢN THUẦN SANG TIẾNG ANH & CACHE FILE TĨNH
+ * @param string $text Văn bản gốc (tiếng Việt từ DB)
+ * @param string $cacheKey Key định danh để lưu cache
+ * @return string Văn bản đã dịch
+ */
+function translate_text($text, $cacheKey) {
+    if (empty($text)) return $text;
+    if (getCurrentLang() === 'vi') return $text;
+    
+    $cacheDir = __DIR__ . '/../storage/cache/translation/';
+    if (!file_exists($cacheDir)) {
+        @mkdir($cacheDir, 0777, true);
+    }
+    
+    $cacheFile = $cacheDir . md5($cacheKey . '_' . md5($text)) . '.txt';
+    if (file_exists($cacheFile)) {
+        return file_get_contents($cacheFile);
+    }
+    
+    try {
+        $trimmed = trim($text);
+        if (empty($trimmed) || is_numeric($trimmed) || (strlen($trimmed) <= 1 && !preg_match('/\p{L}/u', $trimmed))) {
+            return $text;
+        }
+        
+        $url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=" . urlencode($trimmed);
+        $options = [
+            "http" => [
+                "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36\r\n",
+                "timeout" => 1.5
+            ]
+        ];
+        $context = stream_context_create($options);
+        $response = @file_get_contents($url, false, $context);
+        
+        if ($response !== false) {
+            $resData = json_decode($response, true);
+            if (isset($resData[0])) {
+                $translatedText = "";
+                foreach ($resData[0] as $segment) {
+                    $translatedText .= $segment[0] ?? "";
+                }
+                if (!empty($translatedText)) {
+                    $left_space = strlen($text) - strlen(ltrim($text));
+                    $right_space = strlen($text) - strlen(rtrim($text));
+                    $finalResult = str_repeat(" ", $left_space) . $translatedText . str_repeat(" ", $right_space);
+                    @file_put_contents($cacheFile, $finalResult);
+                    return $finalResult;
+                }
+            }
+        }
+    } catch (\Exception $e) {
+        // Fallback to original text
+    }
+    
+    // Nếu thất bại hoặc có lỗi, ghi tạm thời chuỗi gốc vào cache để không tiếp tục gửi request làm chậm trang
+    @file_put_contents($cacheFile, $text);
+    return $text;
+}
+?>
 

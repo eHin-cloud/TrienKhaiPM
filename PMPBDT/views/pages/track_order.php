@@ -159,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // === TẢI DỮ LIỆU ĐƠN HÀNG ===
-$search_query = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['id']) ? trim($_GET['id']) : ''); // Mã đơn hoặc SĐT
+$search_query = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['id']) ? trim($_GET['id']) : (isset($_GET['order_id']) ? trim($_GET['order_id']) : '')); // Mã đơn hoặc SĐT
 $status_filter = isset($_GET['status']) ? $_GET['status'] : 'all'; // Tab trạng thái đang chọn
 $orders = [];     // Mảng kết quả đơn hàng
 $error = '';      // Thông báo lỗi/rỗng

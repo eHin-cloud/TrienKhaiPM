@@ -5,7 +5,7 @@
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => 'Phương thức không được hỗ trợ']);
+    echo json_encode(['success' => false, 'message' => __('method_not_supported')]);
     exit;
 }
 
@@ -16,7 +16,7 @@ $total_price = isset($data['total_price']) ? floatval($data['total_price']) : 0;
 $bundle_discount = isset($data['bundle_discount']) ? floatval($data['bundle_discount']) : 0;
 
 if (empty($code)) {
-    echo json_encode(['success' => false, 'message' => 'Vui lòng nhập mã giảm giá']);
+    echo json_encode(['success' => false, 'message' => __('please_enter_coupon')]);
     exit;
 }
 
@@ -26,25 +26,25 @@ try {
     $voucher = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$voucher) {
-        echo json_encode(['success' => false, 'message' => 'Mã giảm giá không tồn tại']);
+        echo json_encode(['success' => false, 'message' => __('coupon_not_exist')]);
         exit;
     }
 
     // Kiểm tra giới hạn số lượng (usage_limit = 0 nghĩa là vô hạn)
     if ($voucher['usage_limit'] > 0 && $voucher['used_count'] >= $voucher['usage_limit']) {
-        echo json_encode(['success' => false, 'message' => 'Mã giảm giá đã hết lượt sử dụng']);
+        echo json_encode(['success' => false, 'message' => __('coupon_limit_reached')]);
         exit;
     }
     
     // Kiểm tra thời gian bắt đầu hoạt động
     if ($voucher['starts_at'] && strtotime($voucher['starts_at']) > time()) {
-        echo json_encode(['success' => false, 'message' => 'Mã giảm giá này chưa đến thời gian kích hoạt']);
+        echo json_encode(['success' => false, 'message' => __('coupon_not_active_yet')]);
         exit;
     }
 
     // Kiểm tra thời gian hết hạn
     if ($voucher['expires_at'] && strtotime($voucher['expires_at']) < time()) {
-        echo json_encode(['success' => false, 'message' => 'Mã giảm giá đã hết hạn sử dụng']);
+        echo json_encode(['success' => false, 'message' => __('coupon_expired')]);
         exit;
     }
     
@@ -77,13 +77,13 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Áp dụng mã thành công!',
+        'message' => __('coupon_applied'),
         'discount_amount' => $discount_value,
         'new_total' => $final_total,
-        'discount_text' => ($voucher['discount_type'] === 'percent') ? "Giảm {$voucher['discount_amount']}%" : "Giảm " . number_format($voucher['discount_amount']) . "đ"
+        'discount_text' => ($voucher['discount_type'] === 'percent') ? __("discount_prefix_text") . " {$voucher['discount_amount']}%" : __("discount_prefix_text") . " " . number_format($voucher['discount_amount']) . "đ"
     ]);
 
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Lỗi hệ thống: ' . $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => __('system_error') . ': ' . $e->getMessage()]);
 }
 ?>

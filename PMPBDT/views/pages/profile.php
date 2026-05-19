@@ -923,22 +923,72 @@ require_once __DIR__ . '/../partials/header.php';
                 });
         }
 
+        function clickFullNotification(id, redirectUrl) {
+            fetch(getApiUrl('api/notification.php?action=read'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            }).then(() => {
+                loadFullNotifications();
+                if (redirectUrl && redirectUrl.trim() !== '') {
+                    window.location.href = redirectUrl;
+                }
+            }).catch(() => {
+                if (redirectUrl && redirectUrl.trim() !== '') {
+                    window.location.href = redirectUrl;
+                }
+            });
+        }
+
         function renderFullNotiList(items) {
             const list = document.getElementById('full-noti-list');
             if (items.length === 0) {
-                list.innerHTML = `<div class="p-10 text-center text-gray-400">Bạn chưa có thông báo nào.</div>`;
+                list.innerHTML = `
+                    <div class="p-16 text-center text-gray-400">
+                        <i class="fa-solid fa-bell-slash text-4xl mb-3 opacity-20"></i>
+                        <p class="text-sm">Bạn chưa có thông báo nào.</p>
+                    </div>`;
                 return;
             }
 
             let html = '';
             items.forEach(item => {
+                const redirectUrlEscaped = (item.redirect_url || '').replace(/'/g, "\\'");
+                
+                let iconHtml = '';
+                if (item.type === 'order') {
+                    iconHtml = `
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0 border border-blue-100">
+                            <i class="fa-solid fa-box text-base"></i>
+                        </div>`;
+                } else if (item.type === 'promo') {
+                    iconHtml = `
+                        <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500 shrink-0 border border-red-100">
+                            <i class="fa-solid fa-gift text-base"></i>
+                        </div>`;
+                } else {
+                    iconHtml = `
+                        <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 shrink-0 border border-gray-100">
+                            <i class="fa-solid fa-bullhorn text-base"></i>
+                        </div>`;
+                }
+                
                 html += `
-                    <div class="p-4 border rounded-xl transition-all ${!item.is_read ? 'bg-blue-50 border-blue-200' : 'bg-white hover:bg-gray-50'}" onclick="markOneRead(${item.id})">
-                        <div class="flex justify-between items-start mb-1">
-                            <h4 class="font-bold text-gray-800">${item.title}</h4>
-                            <span class="text-[10px] text-gray-400">${new Date(item.created_at).toLocaleString('vi-VN')}</span>
+                    <div class="p-4 border rounded-xl transition-all cursor-pointer flex gap-4 relative group ${!item.is_read ? 'bg-blue-50/50 border-blue-200 shadow-sm shadow-blue-50' : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50/50'}" onclick="clickFullNotification(${item.id}, '${redirectUrlEscaped}')">
+                        ${iconHtml}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start mb-1 gap-2">
+                                <h4 class="font-bold text-gray-800 text-sm leading-snug truncate group-hover:text-blue-600 transition-colors">${item.title}</h4>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap shrink-0">${new Date(item.created_at).toLocaleString('vi-VN')}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed">${item.message}</p>
+                            ${item.redirect_url ? `
+                                <div class="mt-2 text-[10px] text-blue-600 font-bold flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-right-to-bracket text-[9px]"></i> Bấm để xem chi tiết
+                                </div>
+                            ` : ''}
                         </div>
-                        <p class="text-sm text-gray-600">${item.message}</p>
+                        ${!item.is_read ? '<span class="absolute right-3.5 top-3.5 w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
                     </div>
                 `;
             });

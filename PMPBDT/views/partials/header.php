@@ -339,6 +339,38 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
             color: white;
             transform: scale(1.1) !important;
         }
+
+        /* Responsive notification CSS */
+        #noti-dropdown.active-show {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        @media (max-width: 768px) {
+            #noti-dropdown {
+                position: fixed !important;
+                bottom: 0 !important;
+                top: auto !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                max-height: 80vh !important;
+                border-radius: 24px 24px 0 0 !important;
+                transform: translateY(100%) !important;
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s !important;
+                z-index: 9999 !important;
+                box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                margin: 0 !important;
+            }
+            #noti-dropdown.active-show {
+                transform: translateY(0) !important;
+            }
+            #noti-list {
+                max-height: 55vh !important;
+            }
+        }
     </style>
 
     <!-- JS cho Tìm kiếm thông minh và Thông báo -->
@@ -478,20 +510,64 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                     });
             }
 
+            window.clickNotification = function(id, redirectUrl) {
+                fetch(getApiUrl('api/notification.php?action=read'), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                }).then(() => {
+                    loadNotifications();
+                    if (redirectUrl && redirectUrl.trim() !== '') {
+                        window.location.href = redirectUrl;
+                    }
+                }).catch(() => {
+                    if (redirectUrl && redirectUrl.trim() !== '') {
+                        window.location.href = redirectUrl;
+                    }
+                });
+            }
+
             function renderNotifications(items) {
                 if (items.length === 0) {
-                    notiList.innerHTML = `<div class="p-10 text-center text-gray-400 text-sm"><?= __('no_notifications') ?></div>`;
+                    notiList.innerHTML = `
+                        <div class="p-10 text-center text-gray-400">
+                            <i class="fa-solid fa-bell-slash text-3xl mb-2 opacity-30"></i>
+                            <p class="text-xs"><?= __('no_notifications') ?></p>
+                        </div>`;
                     return;
                 }
 
                 let html = '';
                 items.forEach(item => {
+                    const redirectUrlEscaped = (item.redirect_url || '').replace(/'/g, "\\'");
+                    
+                    let iconHtml = '';
+                    if (item.type === 'order') {
+                        iconHtml = `
+                            <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                <i class="fa-solid fa-box text-sm"></i>
+                            </div>`;
+                    } else if (item.type === 'promo') {
+                        iconHtml = `
+                            <div class="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center text-red-500 shrink-0">
+                                <i class="fa-solid fa-gift text-sm"></i>
+                            </div>`;
+                    } else {
+                        iconHtml = `
+                            <div class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0">
+                                <i class="fa-solid fa-bullhorn text-sm"></i>
+                            </div>`;
+                    }
+
                     html += `
-                        <div class="p-3 border-b hover:bg-gray-50 transition cursor-pointer relative ${!item.is_read ? 'bg-blue-50/50' : ''}" onclick="markRead(${item.id})">
-                            ${!item.is_read ? '<span class="absolute right-3 top-3 w-2 h-2 bg-blue-500 rounded-full"></span>' : ''}
-                            <h5 class="text-xs font-bold text-gray-800 pr-4">${item.title}</h5>
-                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">${item.message}</p>
-                            <span class="text-[10px] text-gray-400 mt-2 block">${formatTime(item.created_at)}</span>
+                        <div class="p-3.5 border-b border-gray-100 hover:bg-slate-50 transition cursor-pointer flex gap-3 relative ${!item.is_read ? 'bg-blue-50/40' : ''}" onclick="clickNotification(${item.id}, '${redirectUrlEscaped}'); hideNoti();">
+                            ${iconHtml}
+                            <div class="flex-1 min-w-0">
+                                <h5 class="text-xs font-bold text-gray-800 pr-4 leading-snug truncate">${item.title}</h5>
+                                <p class="text-[11px] text-gray-500 mt-0.5 leading-relaxed line-clamp-2">${item.message}</p>
+                                <span class="text-[9px] text-gray-400 mt-1.5 block">${formatTime(item.created_at)}</span>
+                            </div>
+                            ${!item.is_read ? '<span class="absolute right-4 top-4 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>' : ''}
                         </div>
                     `;
                 });
@@ -519,6 +595,55 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                 } else {
                     notiBadge.classList.add('hidden');
                 }
+            }
+
+            // Click toggle notification for mobile/desktop
+            const notiBtnToggle = document.getElementById('noti-btn');
+            const notiDropdownMenu = document.getElementById('noti-dropdown');
+            const notiBackdrop = document.getElementById('noti-backdrop');
+
+            function showNoti() {
+                if (!notiLoaded) {
+                    loadNotifications();
+                    notiLoaded = true;
+                }
+                notiDropdownMenu.classList.add('active-show');
+                if (window.innerWidth <= 768 && notiBackdrop) {
+                    notiBackdrop.classList.remove('hidden');
+                    setTimeout(() => {
+                        notiBackdrop.classList.add('opacity-100');
+                    }, 50);
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            window.hideNoti = function() {
+                notiDropdownMenu.classList.remove('active-show');
+                if (notiBackdrop) {
+                    notiBackdrop.classList.remove('opacity-100');
+                    setTimeout(() => {
+                        notiBackdrop.classList.add('hidden');
+                    }, 300);
+                    document.body.style.overflow = '';
+                }
+            }
+
+            if (notiBtnToggle && notiDropdownMenu) {
+                notiBtnToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (notiDropdownMenu.classList.contains('active-show')) {
+                        hideNoti();
+                    } else {
+                        showNoti();
+                    }
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!notiDropdownMenu.contains(e.target) && !notiBtnToggle.contains(e.target)) {
+                        hideNoti();
+                    }
+                });
             }
             
             // 3. SO SÁNH SẢN PHẨM
@@ -950,11 +1075,19 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                             <?= $unread_notifications ?>
                         </span>
                     </button>
+                    <!-- Backdrop phủ mờ cho mobile -->
+                    <div id="noti-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[9998] hidden transition-opacity duration-300 opacity-0"></div>
+                    
                     <!-- Dropdown thông báo -->
-                    <div id="noti-dropdown" class="absolute right-0 top-full mt-0 w-[320px] bg-white border border-gray-200 rounded shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-gray-800">
-                        <div class="p-3 border-b flex justify-between items-center bg-gray-50">
+                    <div id="noti-dropdown" class="absolute right-0 top-full mt-0 w-[320px] bg-white border border-gray-200 rounded-2xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden text-gray-800">
+                        <!-- Pull bar cho di động -->
+                        <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mt-3 md:hidden"></div>
+                        <div class="p-3.5 border-b flex justify-between items-center bg-gray-50">
                             <span class="font-bold text-sm">Thông báo</span>
-                            <button onclick="markAllRead()" class="text-xs text-blue-600 hover:underline">Đánh dấu tất cả là đã đọc</button>
+                            <div class="flex items-center gap-2">
+                                <button onclick="markAllRead()" class="text-xs text-blue-600 hover:underline">Đọc tất cả</button>
+                                <button onclick="hideNoti()" class="text-gray-400 hover:text-gray-600 md:hidden ml-2"><i class="fa-solid fa-xmark text-base"></i></button>
+                            </div>
                         </div>
                         <div id="noti-list" class="max-h-[400px] overflow-y-auto">
                             <div class="p-8 text-center text-gray-400 text-xs">
@@ -962,8 +1095,8 @@ $search_query = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
                                 <p>Đang tải thông báo...</p>
                             </div>
                         </div>
-                        <div class="p-2 border-t text-center bg-gray-50">
-                            <a href="profile.php?tab=notifications" class="text-xs text-blue-600 font-medium">Xem tất cả</a>
+                        <div class="p-3 border-t text-center bg-gray-50">
+                            <a href="profile.php?tab=notifications" class="text-xs text-blue-600 font-bold block" onclick="hideNoti()">Xem tất cả thông báo</a>
                         </div>
                     </div>
                 </div>

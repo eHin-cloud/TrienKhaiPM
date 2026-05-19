@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_order'])) {
     $phone = trim($_POST['phone']);
     $address = trim($_POST['address']);
     $note = trim($_POST['note']);
-    $payment_method = $_POST['payment_method'] ?? 'cod'; // Phương thức: 'qr' hoặc 'cod'
+    $payment_method = $_POST['payment_method'] ?? 'qr'; // Phương thức: 'qr' hoặc 'cod'
 
     // Validate dữ liệu bắt buộc
     if (!empty($fullname) && !empty($phone) && !empty($address)) {
@@ -193,213 +193,489 @@ require_once __DIR__ . '/../partials/header.php';
 ?>
 
 <!-- ==========================================
-     GIAO DIỆN TRANG THANH TOÁN
+     GIAO DIỆN TRANG THANH TOÁN (PREMIUM STYLE)
      ========================================== -->
-<div class="container mx-auto px-4 py-8 max-w-5xl">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap');
+.checkout-wrap { font-family: 'Be Vietnam Pro', sans-serif; background-color: #f8fafc; min-height: 100vh; }
+.checkout-wrap * { box-sizing: border-box; }
+.checkout-wrap .fa, .checkout-wrap .fa-solid, .checkout-wrap .fa-regular, .checkout-wrap .fa-brands, .checkout-wrap [class*="fa-"] {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "FontAwesome" !important;
+}
+
+/* ── Checkout Hero ── */
+.checkout-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%);
+    padding: 36px 20px 80px;
+    position: relative; overflow: hidden;
+}
+.checkout-hero::before {
+    content:''; position:absolute; inset:0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.checkout-hero-orb { position:absolute; border-radius:50%; filter:blur(60px); pointer-events:none; }
+.checkout-hero-orb-1 { width:300px;height:300px;background:rgba(139,92,246,0.25);top:-100px;right:-50px; }
+.checkout-hero-orb-2 { width:200px;height:200px;background:rgba(99,102,241,0.2);bottom:-60px;left:10%; }
+.checkout-hero-inner { max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:16px;position:relative;z-index:1; }
+.checkout-hero h1 { color:#fff;font-size:clamp(22px,4vw,32px);font-weight:800;margin:0; }
+.checkout-hero-sub { color:rgba(255,255,255,0.6);font-size:13px;margin-top:4px; }
+.checkout-hero-icon { width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:16px;
+    display:flex;align-items:center;justify-content:center;font-size:22px;color:#c4b5fd;
+    border:1px solid rgba(255,255,255,0.15);flex-shrink:0; }
+
+/* ── Main Layout ── */
+.checkout-layout { max-width:1100px;margin:-48px auto 0;padding:0 16px 60px;display:grid;grid-template-columns:1fr 350px;gap:20px;align-items:start;position:relative;z-index:5; }
+
+@media(max-width:900px){
+    .checkout-layout {
+        grid-template-columns:1fr;margin-top:-40px;padding-bottom:90px !important;
+    }
+    .checkout-summary-wrap {
+        position: fixed !important;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto !important;
+        z-index: 998;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -8px 24px rgba(0,0,0,0.12);
+        padding: 14px 20px;
+        margin: 0;
+        border-top: 1px solid #f1f5f9;
+        background: #fff;
+    }
+    .checkout-summary-wrap h3,
+    .checkout-summary-wrap .summary-list-products,
+    .checkout-summary-wrap .voucher-box,
+    .checkout-summary-wrap .summary-item-row:not(.total),
+    .checkout-summary-wrap .vat-hint,
+    .checkout-summary-wrap .btn-back-link {
+        display: none !important;
+    }
+    .checkout-summary-wrap .summary-item-row.total {
+        border-top: none;
+        padding-top: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .checkout-summary-wrap .summary-item-row.total span {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+    .checkout-summary-wrap .summary-item-row.total .amount {
+        font-size: 18px;
+        line-height: 1.2;
+    }
+    .checkout-summary-wrap .btn-confirm-order {
+        margin-top: 0;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-size: 14px;
+        height: 42px;
+        width: auto;
+    }
+    .checkout-summary-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+}
+
+/* ── Cards ── */
+.checkout-card {
+    background:#fff;border-radius:18px;padding:24px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.04);border:1px solid #e2e8f0;
+}
+.checkout-card h3 {
+    font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;
+    padding-bottom:12px;border-bottom:1.5px solid #f1f5f9;
+    display:flex;align-items:center;gap:8px;
+}
+
+/* Input styles */
+.form-label {
+    display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 6px;
+}
+.form-input {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    outline: none;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e293b;
+    display: block;
+    box-sizing: border-box;
+}
+.form-input:focus {
+    background: #fff; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
+}
+
+/* Payment Option Labels */
+.payment-option-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    margin-bottom: 12px;
+}
+.payment-option-label.active {
+    border-color: #c7d2fe; background-color: #f5f3ff;
+}
+.payment-option-label:hover:not(.active) {
+    background-color: #f8fafc; border-color: #cbd5e1;
+}
+
+/* Scrollbar styling */
+.hide-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.hide-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+.hide-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Voucher box */
+.voucher-box {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;
+}
+.voucher-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    outline: none;
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: #fff;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    display: block;
+}
+.voucher-input:focus {
+    border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.btn-apply-voucher {
+    background-color: #1e293b;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+.btn-apply-voucher:hover {
+    background: #0f172a;
+}
+
+/* Summary item rows */
+.checkout-summary-wrap {
+    background:#fff;border-radius:20px;padding:24px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.06);border:1px solid #f1f5f9;
+    position:sticky;top:80px;
+}
+.checkout-summary-wrap h3 {
+    font-size:15px;font-weight:800;color:#1e293b;margin:0 0 16px;
+    padding-bottom:12px;border-bottom:1px solid #f1f5f9;
+}
+.summary-item-row {
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:13.5px;color:#64748b;margin-bottom:12px;
+}
+.summary-item-row b { color:#1e293b;font-weight:700; }
+.summary-item-row.total {
+    border-top:1px dashed #e2e8f0;padding-top:16px;margin-top:8px;
+    font-size:14px;font-weight:700;color:#1e293b;
+}
+.summary-item-row.total .amount { font-size:22px;font-weight:900;color:#ef4444; }
+
+.btn-confirm-order {
+    width: 100%; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff; border: none; border-radius: 12px; padding: 14px;
+    font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 16px;
+    box-shadow: 0 6px 20px rgba(239,68,68,0.3); transition: all 0.25s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-confirm-order:hover {
+    transform: translateY(-2px); box-shadow: 0 10px 28px rgba(239,68,68,0.4);
+}
+.btn-confirm-order:active {
+    transform: translateY(0);
+}
+</style>
+
+<div class="checkout-wrap pb-12">
+
+    <!-- HERO -->
+    <div class="checkout-hero">
+        <div class="checkout-hero-orb checkout-hero-orb-1"></div>
+        <div class="checkout-hero-orb checkout-hero-orb-2"></div>
+        <div class="checkout-hero-inner">
+            <div class="checkout-hero-icon"><i class="fa-solid fa-money-check-dollar"></i></div>
+            <div>
+                <h1><?= __("checkout_info") ?></h1>
+                <div class="checkout-hero-sub"><?= count($cart_items) ?> <?= __("products_count") ?> <?= __("cart_items_waiting") ?></div>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== GIAO DIỆN ĐẶT HÀNG THÀNH CÔNG (Chỉ hiện khi COD đặt thành công) ===== -->
     <?php if ($order_success): ?>
-        <div class="bg-white p-10 rounded-xl shadow-sm border border-gray-200 text-center max-w-2xl mx-auto mt-10">
-            <!-- Icon check thành công -->
-            <div
-                class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-5">
-                <i class="fa-solid fa-check"></i>
+        <div class="checkout-layout mt-10" style="grid-template-columns: 1fr; max-w: 650px;">
+            <div class="checkout-card text-center py-12 px-8">
+                <!-- Icon check thành công -->
+                <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 border border-green-100 shadow-sm">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-3"><?= __("order_success_title") ?></h2>
+                <p class="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
+                    <?= __("order_success_msg_prefix") ?> 
+                    <span class="text-indigo-600 font-extrabold text-xl">#<?= $order_id ?></span>.<br>
+                    <?= __("order_success_callback") ?>
+                </p>
+                <!-- Nút điều hướng -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <a href="index.php" class="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-violet-600 text-white px-8 py-3.5 rounded-xl font-bold hover:opacity-95 transition shadow-lg shadow-indigo-600/20 text-center">
+                        <i class="fa-solid fa-bag-shopping mr-2"></i> <?= __("continue_shopping") ?>
+                    </a>
+                    <a href="track_order.php" class="w-full sm:w-auto bg-slate-100 text-slate-700 px-8 py-3.5 rounded-xl font-bold hover:bg-slate-200 transition text-center border border-slate-200">
+                        <i class="fa-solid fa-receipt mr-2"></i> <?= __("view_order") ?>
+                    </a>
+                </div>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2"><?= __("order_success_title") ?></h2>
-            <p class="text-gray-600 mb-6"><?= __("order_success_msg_prefix") ?> <b
-                    class="text-primary text-lg">#
-                    <?= $order_id ?>
-                </b>.<br><?= __("order_success_callback") ?></p>
-            <!-- Nút điều hướng -->
-            <a href="index.php"
-                class="bg-primary text-white px-8 py-3 rounded-lg font-bold hover:bg-blue-800 transition shadow-md inline-block"><?= __("continue_shopping") ?></a>
-            <a href="track_order.php"
-                class="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg font-bold hover:bg-gray-200 transition shadow-md inline-block ml-2 border border-gray-200"><?= __("view_order") ?></a>
         </div>
 
-        <!-- ===== GIAO DIỆN FORM THANH TOÁN (Mặc định) ===== -->
+    <!-- ===== GIAO DIỆN FORM THANH TOÁN (Mặc định) ===== -->
     <?php else: ?>
-        <h1 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-            <i class="fa-solid fa-money-check-dollar text-primary"></i> <?= __("checkout_info") ?>
-        </h1>
-
-        <form method="POST" action="checkout.php" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <form method="POST" action="checkout.php" class="checkout-layout" id="checkoutForm" onsubmit="return validateCheckout()">
             <?= csrf_input_field() ?>
 
             <!-- === CỘT TRÁI: Form thông tin người nhận === -->
-            <div class="lg:col-span-2">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-                        <h3 class="font-bold text-gray-800"><?= __("receiver_info") ?></h3>
+            <div class="space-y-6">
+                <div class="checkout-card">
+                    <div class="flex justify-between items-center mb-5 pb-2 border-b border-slate-100">
+                        <h3 class="font-bold text-gray-800" style="margin: 0; padding: 0; border: none;">
+                            <i class="fa-solid fa-user-gear text-indigo-500 mr-1"></i><?= __("receiver_info") ?>
+                        </h3>
                         <?php if (!empty($saved_addresses)): ?>
-                            <button type="button" onclick="openAddressPicker()" class="text-xs text-blue-600 font-bold hover:underline">
-                                <i class="fa-solid fa-address-book mr-1"></i> Chọn từ địa chỉ đã lưu
+                            <button type="button" onclick="openAddressPicker()" class="text-xs text-indigo-600 font-bold hover:text-indigo-800 transition flex items-center gap-1">
+                                <i class="fa-solid fa-address-book"></i> <?= __("select_saved_address") ?>
                             </button>
                         <?php endif; ?>
                     </div>
 
                     <!-- Họ tên + SĐT -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="col-span-full">
-                            <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("fullname") ?> *</label>
-                            <!-- Tự động điền tên từ session nếu đã đăng nhập -->
+                        <div>
+                            <label class="form-label"><?= __("fullname") ?> *</label>
                             <input type="text" name="fullname" id="checkout-fullname" required
-                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
+                                class="form-input"
                                 value="<?= htmlspecialchars($default_addr['fullname'] ?? ($_SESSION['fullname'] ?? '')) ?>">
                         </div>
-                        <div class="col-span-full">
-                            <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("phone") ?> *</label>
-                            <!-- Validate pattern 10 chữ số -->
-                            <input type="tel" name="phone" id="checkout-phone" required pattern="[0-9]{10}" placeholder="VD: 0901234567"
+                        <div>
+                            <label class="form-label"><?= __("phone") ?> *</label>
+                            <input type="tel" name="phone" id="checkout-phone" required pattern="[0-9]{10}" placeholder="<?= __("phone_placeholder") ?>"
                                 value="<?= htmlspecialchars($default_addr['phone'] ?? ($currentUser['phone'] ?? '')) ?>"
-                                class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+                                class="form-input">
                         </div>
                     </div>
 
                     <!-- Địa chỉ giao hàng -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("detailed_address") ?> *</label>
+                        <label class="form-label"><?= __("detailed_address") ?> *</label>
                         <input type="text" name="address" id="checkout-address" required
                             value="<?= htmlspecialchars($default_addr['address'] ?? ($currentUser['address'] ?? '')) ?>"
-                            placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố..."
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none">
+                            placeholder="<?= __("address_placeholder") ?>"
+                            class="form-input">
                     </div>
 
                     <!-- Ghi chú (tùy chọn) -->
                     <div class="mb-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1"><?= __("order_note") ?></label>
-                        <textarea name="note" rows="3" placeholder="Ghi chú thêm về thời gian giao hàng, chỉ dẫn địa chỉ..."
-                            class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"></textarea>
+                        <label class="form-label"><?= __("order_note") ?></label>
+                        <textarea name="note" rows="3" placeholder="<?= __("order_note_placeholder") ?>"
+                            class="form-input" style="resize: none;"></textarea>
                     </div>
                 </div>
 
                 <!-- === PHƯƠNG THỨC THANH TOÁN === -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mt-6">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><?= __("payment_method") ?></h3>
+                <div class="checkout-card">
+                    <h3><i class="fa-solid fa-credit-card text-indigo-500 mr-1"></i><?= __("payment_method") ?></h3>
+
+                    <?php $activeMethod = $_POST['payment_method'] ?? 'qr'; ?>
 
                     <!-- Lựa chọn 1: Chuyển khoản QR (khuyên dùng - checked mặc định) -->
-                    <label
-                        class="flex items-start gap-3 p-4 border border-blue-200 bg-blue-50 rounded-lg mb-3 cursor-pointer transition relative group">
-                        <input type="radio" name="payment_method" value="qr" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'qr') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
-                    accent-primary">
+                    <label id="payment-label-qr"
+                        class="payment-option-label <?= $activeMethod === 'qr' ? 'active' : '' ?>">
+                        <input type="radio" name="payment_method" value="qr" <?= $activeMethod === 'qr' ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-indigo-600 accent-indigo-600">
                         <div class="flex-1">
-                            <div class="font-bold text-gray-800 flex items-center gap-2"><?= __("qr_payment") ?> <span
-                                    class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse"><?= __("recommended") ?></span></div>
-                            <div class="text-sm text-gray-600 mt-1"><?= __("qr_desc") ?></div>
+                            <div class="font-bold text-gray-800 flex items-center gap-2" style="font-size:13.5px">
+                                <?= __("qr_payment") ?> 
+                                <span class="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                                    <?= __("recommended") ?>
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1 leading-relaxed"><?= __("qr_desc") ?></div>
                             <!-- Logo đối tác thanh toán -->
-                            <div class="flex gap-2 mt-2">
-                                <img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" class="h-5">
-                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png"
-                                    class="h-5">
+                            <div class="flex gap-2 mt-2.5">
+                                <img src="https://vnpay.vn/assets/images/logo-icon/logo-primary.svg" class="object-contain" style="height: 18px;">
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png" class="object-contain" style="height: 18px;">
                             </div>
                         </div>
                     </label>
 
                     <!-- Lựa chọn 2: Thanh toán khi nhận hàng (COD) -->
-                    <label
-                        class="flex items-start gap-3 p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                        <input type="radio" name="payment_method" value="cod" <?= (isset($_POST['payment_method']) && $_POST['payment_method'] == 'cod') ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-primary
-                    accent-primary">
+                    <label id="payment-label-cod"
+                        class="payment-option-label <?= $activeMethod === 'cod' ? 'active' : '' ?>">
+                        <input type="radio" name="payment_method" value="cod" <?= $activeMethod === 'cod' ? 'checked' : '' ?> class="mt-1 w-4 h-4 text-indigo-600 accent-indigo-600">
                         <div class="flex-1">
-                            <div class="font-bold text-gray-800"><?= __("cod_payment") ?></div>
-                            <div class="text-sm text-gray-600 mt-1"><?= __("cod_desc") ?></div>
+                            <div class="font-bold text-gray-800" style="font-size:13.5px"><?= __("cod_payment") ?></div>
+                            <div class="text-xs text-gray-500 mt-1 leading-relaxed"><?= __("cod_desc") ?></div>
                         </div>
                     </label>
                 </div>
             </div>
 
             <!-- === CỘT PHẢI: Hóa đơn tóm tắt === -->
-            <div class="lg:col-span-1">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 sticky top-24">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2"><?= __("your_order") ?> (
-                        <?= count($cart_items) ?> <?= __("results") ?>)
-                    </h3>
+            <div class="checkout-summary-wrap">
+                <h3><i class="fa-solid fa-receipt text-indigo-500 mr-1"></i><?= __("your_order") ?> (<?= count($cart_items) ?>)</h3>
 
-                    <!-- Danh sách sản phẩm đã chọn (scrollable nếu nhiều) -->
-                    <div class="space-y-3 mb-4 max-h-[300px] overflow-y-auto pr-2 hide-scrollbar">
-                        <?php foreach ($cart_items as $item): ?>
-                            <div class="flex justify-between items-start gap-3 text-sm">
-                                <div class="flex items-start gap-2 flex-1">
-                                    <div class="font-medium text-gray-800 w-6 shrink-0">
-                                        <?= $item['quantity'] ?>x
-                                    </div>
-                                    <div class="text-gray-600 line-clamp-2">
-                                        <?= htmlspecialchars($item['name']) ?>
-                                    </div>
+                <!-- Danh sách sản phẩm đã chọn (scrollable nếu nhiều) -->
+                <div class="space-y-3 mb-4 max-h-[220px] overflow-y-auto pr-1.5 hide-scrollbar summary-list-products">
+                    <?php foreach ($cart_items as $item): ?>
+                        <div class="flex justify-between items-start gap-3 text-xs border-b border-slate-50 pb-2">
+                            <div class="flex items-start gap-2 flex-1">
+                                <div class="font-bold text-indigo-600 w-5 shrink-0 text-center bg-indigo-50 rounded py-0.5">
+                                    <?= $item['quantity'] ?>
                                 </div>
-                                <div class="font-bold text-gray-800 shrink-0">
-                                    <?= number_format($item['price'] * $item['quantity']) ?>đ
+                                <div class="text-gray-700 font-medium line-clamp-2">
+                                    <?= htmlspecialchars(getCurrentLang() === 'en' ? translate_text($item['name'], 'prod_name_' . $item['product_id']) : $item['name']) ?>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-
-                    <!-- Mã giảm giá -->
-                    <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <label class="block text-sm font-medium text-gray-700 mb-2"><?= __("coupon_code") ?></label>
-                        <div class="flex gap-2">
-                            <input type="text" id="voucherCodeInput" value="<?= htmlspecialchars($applied_voucher_code) ?>"
-                                class="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary outline-none uppercase"
-                                placeholder="Nhập mã...">
-                            <button type="button" onclick="applyVoucher()"
-                                class="bg-gray-800 text-white px-4 shrink-0 rounded font-bold text-sm hover:bg-gray-700 transition"><?= __("apply") ?></button>
+                            <div class="font-bold text-gray-800 shrink-0">
+                                <?= number_format($item['price'] * $item['quantity']) ?>đ
+                            </div>
                         </div>
-                        <p id="voucherMessage"
-                            class="text-xs mt-2 <?= $applied_discount > 0 ? 'text-green-600 font-bold' : 'hidden' ?>">
-                            <?= $applied_discount > 0 ? 'Mã đã được áp dụng!' : '' ?>
-                        </p>
-                    </div>
+                    <?php endforeach; ?>
+                </div>
 
-                    <!-- Tóm tắt giá tiền -->
-                    <div class="border-t border-gray-100 pt-4 mb-6" id="summaryBlock">
-                        <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+                <!-- Mã giảm giá -->
+                <div class="voucher-box">
+                    <label class="block text-xs font-bold text-gray-600 mb-2"><?= __("coupon_code") ?></label>
+                    <div class="flex gap-2">
+                        <input type="text" id="voucherCodeInput" value="<?= htmlspecialchars($applied_voucher_code) ?>"
+                            class="voucher-input"
+                            placeholder="<?= __("enter_coupon") ?>">
+                        <button type="button" onclick="applyVoucher()" class="btn-apply-voucher"><?= __("apply") ?></button>
+                    </div>
+                    <p id="voucherMessage"
+                        class="text-xs mt-2 <?= $applied_discount > 0 ? 'text-green-600 font-bold' : 'hidden' ?>">
+                        <?= $applied_discount > 0 ? __("coupon_applied") : '' ?>
+                    </p>
+                </div>
+
+                <!-- Tóm tắt giá tiền -->
+                <div class="pt-2" id="summaryBlock">
+                    <div class="checkout-summary-container">
+                        <div class="summary-item-row">
                             <span><?= __("subtotal") ?>:</span>
-                            <span id="subTotalStr" data-value="<?= $total_price ?>">
+                            <span id="subTotalStr" data-value="<?= $total_price ?>" class="font-bold text-gray-800">
                                 <?= number_format($total_price) ?>đ
                             </span>
                         </div>
-                        <div class="flex justify-between items-center mb-2 text-sm text-gray-600">
+                        <div class="summary-item-row">
                             <span><?= __("shipping_fee") ?>:</span>
-                            <span class="text-green-600 font-medium"><?= __("free") ?></span>
+                            <span class="text-green-600 font-bold"><?= __("free") ?></span>
                         </div>
-                        <div class="flex justify-between items-center mb-2 text-sm font-bold text-green-600 <?= $applied_discount > 0 ? '' : 'hidden' ?>"
+                        <div class="summary-item-row font-bold text-green-600 <?= $applied_discount > 0 ? '' : 'hidden' ?>"
                             id="discountRow">
                             <span><?= __("voucher_discount") ?>:</span>
-                            <span id="discountValStr">-
-                                <?= number_format($applied_discount) ?>đ
-                            </span>
+                            <span id="discountValStr">-<?= number_format($applied_discount) ?>đ</span>
                         </div>
-                        <div class="flex justify-between items-center mb-2 text-sm font-bold text-green-600 <?= $bundle_discount > 0 ? '' : 'hidden' ?>"
+                        <div class="summary-item-row font-bold text-green-600 <?= $bundle_discount > 0 ? '' : 'hidden' ?>"
                             id="bundleRow">
                             <span><?= __("combo_discount") ?>:</span>
-                            <span id="bundleValStr" data-value="<?= $bundle_discount ?>">-
-                                <?= number_format($bundle_discount) ?>đ
-                            </span>
+                            <span id="bundleValStr" data-value="<?= $bundle_discount ?>">-<?= number_format($bundle_discount) ?>đ</span>
                         </div>
                         <?php if ($bundle_discount > 0 && !empty($bundle_message)): ?>
-                        <div class="text-xs text-gray-500 mb-2"><?= htmlspecialchars($bundle_message) ?></div>
+                            <div class="text-[11px] text-gray-500 mb-2 bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50"><i class="fa-solid fa-sparkles text-indigo-500 mr-1"></i><?= htmlspecialchars($bundle_message) ?></div>
                         <?php endif; ?>
-                        <div class="flex justify-between items-center mt-4 border-t border-gray-100 pt-3">
-                            <span class="font-bold text-gray-800"><?= __("final_total") ?>:</span>
-                            <span class="font-extrabold text-2xl text-danger" id="finalTotalStr">
-                                <?= number_format($display_final_price) ?>đ
-                            </span>
+                        <div class="summary-item-row total">
+                            <span><?= __("final_total") ?></span>
+                            <span class="amount" id="finalTotalStr"><?= number_format($display_final_price) ?>đ</span>
                         </div>
-                        <div class="text-[11px] text-right text-gray-500 italic mt-1"><?= __("vat_included") ?></div>
                     </div>
-
-                    <!-- Nút xác nhận đặt hàng -->
-                    <button type="submit" name="submit_order"
-                        class="w-full bg-gradient-to-b from-[#fd3a3a] to-[#d70018] text-white rounded-lg py-3.5 font-bold text-lg shadow-md hover:opacity-90 transition"><?= __("confirm_order") ?></button>
-                    <a href="cart.php" class="block text-center text-primary text-sm mt-4 hover:underline"><i
-                            class="fa-solid fa-arrow-left mr-1"></i> <?= __("back_to_cart") ?></a>
+                    <div class="text-[10px] text-right text-gray-400 italic mt-1 vat-hint"><?= __("vat_included") ?></div>
                 </div>
+
+                <!-- Nút xác nhận đặt hàng -->
+                <button type="submit" name="submit_order" class="btn-confirm-order">
+                    <i class="fa-solid fa-circle-check"></i> <?= __("confirm_order") ?>
+                </button>
+                
+                <a href="cart.php" class="block text-center text-xs text-indigo-600 font-bold mt-4 hover:underline btn-back-link">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> <?= __("back_to_cart") ?>
+                </a>
             </div>
         </form>
     <?php endif; ?>
 </div>
 
 <script>
+    // --- VALIDATION FORM ---
+    function validateCheckout() {
+        const fullname = document.getElementById('checkout-fullname').value.trim();
+        const phone = document.getElementById('checkout-phone').value.trim();
+        const address = document.getElementById('checkout-address').value.trim();
+        
+        if (!fullname) {
+            Swal.fire({
+                icon: 'error',
+                title: '<?= __("error") ?>',
+                text: '<?= __("please_enter_fullname") ?>',
+                confirmButtonColor: '#6366f1'
+            });
+            return false;
+        }
+        if (!phone || !/^\d{10}$/.test(phone)) {
+            Swal.fire({
+                icon: 'error',
+                title: '<?= __("error") ?>',
+                text: '<?= __("please_enter_valid_phone") ?>',
+                confirmButtonColor: '#6366f1'
+            });
+            return false;
+        }
+        if (!address) {
+            Swal.fire({
+                icon: 'error',
+                title: '<?= __("error") ?>',
+                text: '<?= __("fill_all_info") ?>',
+                confirmButtonColor: '#6366f1'
+            });
+            return false;
+        }
+        return true;
+    }
+
+    // --- ÁP DỤNG MÃ GIẢM GIÁ ---
     function applyVoucher() {
         const codeInput = document.getElementById('voucherCodeInput');
         const code = codeInput.value.trim();
@@ -408,8 +684,9 @@ require_once __DIR__ . '/../partials/header.php';
         const bundleDiscount = parseFloat(document.getElementById('bundleValStr').dataset.value || 0);
 
         if (!code) {
-            msgEl.textContent = 'Vui lòng nhập mã giảm giá!';
+            msgEl.textContent = '<?= __("please_enter_coupon") ?>';
             msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+            msgEl.classList.remove('hidden');
             return;
         }
 
@@ -426,6 +703,7 @@ require_once __DIR__ . '/../partials/header.php';
                     // Thành công
                     msgEl.textContent = data.message + ' (' + data.discount_text + ')';
                     msgEl.className = 'text-xs mt-2 text-green-600 font-bold';
+                    msgEl.classList.remove('hidden');
 
                     // Cập nhật DOM
                     const discountRow = document.getElementById('discountRow');
@@ -434,51 +712,57 @@ require_once __DIR__ . '/../partials/header.php';
                     document.getElementById('finalTotalStr').textContent = new Intl.NumberFormat('vi-VN').format(data.new_total) + 'đ';
                     // Highlight input field
                     codeInput.classList.add('border-green-500', 'bg-green-50');
+                    codeInput.classList.remove('border-red-500', 'bg-red-50');
                 } else {
                     // Lỗi
                     msgEl.textContent = data.message;
                     msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+                    msgEl.classList.remove('hidden');
                     document.getElementById('discountRow').classList.add('hidden');
                     const bundleDiscount = parseFloat(document.getElementById('bundleValStr').dataset.value || 0);
                     document.getElementById('finalTotalStr').textContent = new Intl.NumberFormat('vi-VN').format(subTotal - bundleDiscount) + 'đ';
+                    codeInput.classList.add('border-red-500', 'bg-red-50');
                     codeInput.classList.remove('border-green-500', 'bg-green-50');
                 }
             })
             .catch(err => {
                 console.error('Error applying voucher:', err);
-                msgEl.textContent = 'Đã xảy ra lỗi hệ thống khi áp dụng mã.';
+                msgEl.textContent = '<?= __("coupon_error") ?>';
                 msgEl.className = 'text-xs mt-2 text-red-500 font-bold';
+                msgEl.classList.remove('hidden');
             });
     }
 </script>
 
 <!-- Modal Chọn địa chỉ đã lưu -->
 <div id="addressPickerModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden" style="font-family: 'Be Vietnam Pro', sans-serif;">
         <div class="p-5 border-b flex justify-between items-center bg-gray-50">
-            <h3 class="font-bold text-gray-800">Chọn địa chỉ nhận hàng</h3>
-            <button onclick="closeAddressPicker()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            <h3 class="font-extrabold text-gray-800 text-sm flex items-center gap-2" style="margin: 0; padding: 0; border: none;">
+                <i class="fa-solid fa-map-location-dot text-indigo-500"></i><?= __("choose_shipping_address") ?>
+            </h3>
+            <button onclick="closeAddressPicker()" class="text-gray-400 hover:text-gray-600 transition"><i class="fas fa-times"></i></button>
         </div>
-        <div class="p-4 max-h-[400px] overflow-y-auto space-y-3">
+        <div class="p-4 max-h-[380px] overflow-y-auto space-y-3 hide-scrollbar">
             <?php if (!empty($saved_addresses)): ?>
                 <?php foreach ($saved_addresses as $addr): ?>
-                    <div class="p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer group" 
+                    <div class="p-4 border border-gray-100 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer group shadow-sm" 
                          onclick='selectAddress(<?= json_encode($addr) ?>)'>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="font-bold text-gray-800 group-hover:text-blue-700"><?= htmlspecialchars($addr['fullname']) ?></span>
-                            <span class="text-gray-400">|</span>
-                            <span class="text-gray-600"><?= htmlspecialchars($addr['phone']) ?></span>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="font-bold text-gray-800 group-hover:text-indigo-600 transition text-[13.5px]"><?= htmlspecialchars($addr['fullname']) ?></span>
+                            <span class="text-gray-300">|</span>
+                            <span class="text-gray-600 font-medium text-xs"><?= htmlspecialchars($addr['phone']) ?></span>
                             <?php if ($addr['is_default']): ?>
-                                <span class="bg-blue-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Mặc định</span>
+                                <span class="bg-indigo-600 text-white text-[8px] px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wide ml-auto"><?= __("default") ?></span>
                             <?php endif; ?>
                         </div>
-                        <p class="text-xs text-gray-500 line-clamp-2"><?= htmlspecialchars($addr['address']) ?></p>
+                        <p class="text-xs text-gray-500 leading-relaxed"><?= htmlspecialchars($addr['address']) ?></p>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
         <div class="p-4 border-t bg-gray-50 text-center">
-            <a href="profile.php?tab=addresses" class="text-sm text-blue-600 font-bold hover:underline">+ Thêm địa chỉ mới</a>
+            <a href="profile.php?tab=addresses" class="text-xs text-indigo-600 font-extrabold hover:text-indigo-800 transition"><?= __("add_new_address_link") ?></a>
         </div>
     </div>
 </div>
@@ -505,6 +789,15 @@ require_once __DIR__ . '/../partials/header.php';
         
         closeAddressPicker();
     }
+
+    // --- CHUYỂN ĐỔI GIAO DIỆN PHƯƠNG THỨC THANH TOÁN ---
+    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.payment-option-label').forEach(label => label.classList.remove('active'));
+            const activeLabel = document.getElementById('payment-label-' + this.value);
+            if (activeLabel) activeLabel.classList.add('active');
+        });
+    });
 </script>
 
 <?php require_once __DIR__ . '/../partials/footer.php'; ?>

@@ -64,7 +64,7 @@ class AdminService
 
                 // Thông báo web
                 $statusText = ['pending' => 'chờ xử lý', 'processing' => 'đã được xác nhận', 'delivering' => 'đang giao', 'completed' => 'đã hoàn thành', 'cancelled' => 'đã hủy'][$status] ?? $status;
-                $this->createNotification((int) $currentOrder['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order');
+                $this->createNotification((int) $currentOrder['user_id'], "Đơn hàng #$id", "Đơn hàng của bạn $statusText.", 'order', "track_order.php?order_id=$id");
             }
 
             $msg = "Cập nhật trạng thái đơn hàng thành công!";
@@ -92,7 +92,7 @@ class AdminService
                     sendWarrantyStatusEmail($wInfo['email'], $wInfo['fullname'], $id, $wInfo['product_name'], $status, $admin_note);
                 }
                 $st = ['pending' => 'chờ duyệt', 'processing' => 'đang xử lý', 'completed' => 'đã xong', 'rejected' => 'bị từ chối'][$status] ?? $status;
-                $this->createNotification($wInfo['user_id'], "Bảo hành sản phẩm", "Yêu cầu bảo hành $wInfo[product_name] $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
+                $this->createNotification($wInfo['user_id'], "Bảo hành sản phẩm", "Yêu cầu bảo hành $wInfo[product_name] $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system', "profile.php?tab=warranties");
             }
             $msg = "Cập nhật trạng thái bảo hành thành công!";
             $msg_type = 'success';
@@ -113,7 +113,7 @@ class AdminService
                     sendReturnStatusEmail($rInfo['email'], $rInfo['fullname'], $id, $rInfo['order_id'], $status, $admin_note);
                 }
                 $st = ['pending' => 'chờ duyệt', 'processing' => 'đang xử lý', 'completed' => 'xong', 'rejected' => 'từ chối'][$status] ?? $status;
-                $this->createNotification($rInfo['user_id'], "Đổi trả đơn hàng", "Yêu cầu đổi trả ĐH #$rInfo[order_id] $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
+                $this->createNotification($rInfo['user_id'], "Đổi trả đơn hàng", "Yêu cầu đổi trả ĐH #$rInfo[order_id] $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system', "profile.php?tab=returns");
             }
             $msg = "Cập nhật trạng thái trả hàng thành công!";
             $msg_type = 'success';
@@ -131,7 +131,7 @@ class AdminService
             $ir = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($ir && $ir['user_id']) {
                 $st = ['pending' => 'chờ duyệt', 'approved' => 'được chấp nhận', 'rejected' => 'bị từ chối'][$status] ?? $status;
-                $this->createNotification($ir['user_id'], "Yêu cầu Trả Góp", "Yêu cầu trả góp cho sản phẩm $ir[product_name] đã $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system');
+                $this->createNotification($ir['user_id'], "Yêu cầu Trả Góp", "Yêu cầu trả góp cho sản phẩm $ir[product_name] đã $st." . ($admin_note ? " Ghi chú: $admin_note" : ""), 'system', "profile.php?tab=installments");
             }
 
             $msg = "Cập nhật yêu cầu trả góp thành công!";
@@ -355,6 +355,38 @@ class AdminService
                 } else {
                     $msg = "Không thể tự xóa tài khoản của chính mình!";
                     $msg_type = 'error';
+                }
+            } elseif ($action === 'send_admin_notification') {
+                $recipient_type = $post['recipient_type'] ?? 'all';
+                $target_user_id = isset($post['target_user_id']) ? (int) $post['target_user_id'] : 0;
+                $title = trim($post['title'] ?? '');
+                $message = trim($post['message'] ?? '');
+                $type = trim($post['type'] ?? 'system');
+                $redirect_url = trim($post['redirect_url'] ?? '');
+
+                if (empty($title) || empty($message)) {
+                    $msg = "Vui lòng nhập đầy đủ Tiêu đề và Nội dung!";
+                    $msg_type = 'error';
+                } else {
+                    if ($recipient_type === 'single') {
+                        if ($target_user_id > 0) {
+                            $this->createNotification($target_user_id, $title, $message, $type, $redirect_url ?: null);
+                            $msg = "Đã gửi thông báo đến tài khoản thành công!";
+                            $msg_type = 'success';
+                        } else {
+                            $msg = "Vui lòng chọn người nhận hợp lệ!";
+                            $msg_type = 'error';
+                        }
+                    } else {
+                        // Gửi toàn thể
+                        $stmtUsers = $this->db->query("SELECT id FROM users");
+                        $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
+                        foreach ($users as $u) {
+                            $this->createNotification((int) $u['id'], $title, $message, $type, $redirect_url ?: null);
+                        }
+                        $msg = "Đã gửi thông báo đến toàn thể thành viên thành công!";
+                        $msg_type = 'success';
+                    }
                 }
             }
 
@@ -742,6 +774,20 @@ class AdminService
                 $stmt->execute();
             }
             $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } elseif ($page === 'notifications' && $userRole === 'admin') {
+            $sql = "SELECT n.*, u.username, u.fullname FROM notifications n LEFT JOIN users u ON n.user_id = u.id";
+            $params = [];
+            if ($search) {
+                $sql .= " WHERE n.title LIKE ? OR n.message LIKE ? OR u.fullname LIKE ?";
+                $params = ["%$search%", "%$search%", "%$search%"];
+            }
+            $sql .= " ORDER BY n.id DESC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Lấy danh sách users
+            $users_list = $this->db->query("SELECT id, username, fullname, email FROM users ORDER BY username ASC")->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($page === 'dashboard') {
             return $this->getDashboardData();
         } elseif ($page === 'revenue') {
@@ -776,15 +822,16 @@ class AdminService
             'total_orders' => $total_orders,
             'site_settings' => $site_settings,
             'products_list' => $products_list ?? [],
+            'users_list' => $users_list ?? [],
             'pagination' => $pagination ?? null
         ];
     }
 
-    private function createNotification(int $userId, string $title, string $message, string $type = 'system'): void
+    public function createNotification(int $userId, string $title, string $message, string $type = 'system', ?string $redirectUrl = null): void
     {
         try {
-            $stmt = $this->db->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
-            $stmt->execute([$userId, $title, $message, $type]);
+            $stmt = $this->db->prepare("INSERT INTO notifications (user_id, title, message, type, is_read, created_at, redirect_url) VALUES (?, ?, ?, ?, 0, NOW(), ?)");
+            $stmt->execute([$userId, $title, $message, $type, $redirectUrl]);
 
             // Gửi FCM Push Notification cho thiết bị di động
             $stmtUser = $this->db->prepare("SELECT fcm_token FROM users WHERE id = ?");

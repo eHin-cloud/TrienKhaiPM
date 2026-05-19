@@ -1,7 +1,7 @@
 <?php
-$lines = file(__DIR__ . '/../views/admin/admin.php');
-foreach ($lines as $idx => $line) {
-    if (strpos($line, 'add_product') !== false || strpos($line, 'edit_product') !== false || strpos($line, 'submit') !== false || strpos($line, 'action') !== false) {
-        echo "Line " . ($idx + 1) . ": " . substr(trim($line), 0, 150) . "\n";
+$lines = file('d:/Sever/htdocs/GitTKPM/TrienKhaiPM/PMPBDT/views/admin/admin.php');
+foreach ($lines as $i => $l) {
+    if (strpos($l, 'send_admin_notification') !== false) {
+        echo ($i + 1) . ': ' . trim($l) . PHP_EOL;
     }
 }
