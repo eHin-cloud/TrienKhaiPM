@@ -1,0 +1,1673 @@
+diff --git a/PMPBDT/views/pages/product_detail.php b/PMPBDT/views/pages/product_detail.php
+index d683ce1..928958d 100644
+--- a/PMPBDT/views/pages/product_detail.php
++++ b/PMPBDT/views/pages/product_detail.php
+@@ -345,10 +345,28 @@ function renderReviewItem($rev, $productId, $level = 0) {
+ }
+ 
+ // Thiết lập Meta SEO cho trang chi tiết sản phẩm
+-$meta_title = (getCurrentLang() === 'en' ? translate_text($product['name'], 'prod_name_' . $product['id']) : $product['name']) . " - Điện Máy PRO";
+-$meta_desc = mb_substr(strip_tags(getCurrentLang() === 'en' ? translate_html_content($product['description'], 'prod_desc_' . $product['id']) : $product['description']), 0, 160) . "...";
++$meta_title = $product['name'] . " - Điện Máy PRO";
++$meta_desc = mb_substr(strip_tags($product['description']), 0, 160) . "...";
+ $meta_image = $product['image'];
+ 
++/**
++ * XỬ LÝ DANH SÁCH ẢNH (GALLERY)
++ * - Ảnh đầu tiên là ảnh chính (cột image).
++ * - Các ảnh bổ sung nằm trong cột more_images (JSON array).
++ */
++$product_images = [$product['image']];
++if (!empty($product['more_images'])) {
++    $extra_images = json_decode($product['more_images'], true);
++    if (is_array($extra_images)) {
++        foreach($extra_images as $img) {
++            if ($img !== $product['image']) {
++                $product_images[] = $img;
++            }
++        }
++    }
++}
++
++
+ require_once __DIR__ . '/../partials/header.php';
+ ?>
+ 
+@@ -370,7 +388,7 @@ require_once __DIR__ . '/../partials/header.php';
+     <!-- Tiêu đề Sản Phẩm -->
+     <div class="mb-4 pb-4 border-b border-gray-200">
+         <h1 class="text-[22px] md:text-2xl font-bold text-gray-800 leading-snug mb-2">
+-            <?= htmlspecialchars(getCurrentLang() === 'en' ? translate_text($product['name'], 'prod_name_' . $product['id']) : $product['name']) ?></h1>
++            <?= htmlspecialchars($product['name']) ?></h1>
+         <div class="flex flex-wrap items-center gap-4 text-[13px]">
+             <div class="flex items-center gap-1 text-yellow-400">
+                 <span class="font-bold text-gray-700"><?= $product['rate_star'] ?></span>
+@@ -388,17 +406,45 @@ require_once __DIR__ . '/../partials/header.php';
+ 
+         <!-- CỘT TRÁI -->
+         <div class="lg:col-span-7 flex flex-col gap-4">
+-            <div
+-                class="border border-gray-200 rounded-lg p-4 flex items-center justify-center h-[350px] md:h-[450px] bg-white relative">
+-                <img src="<?= $product['image'] ?>" class="max-w-full max-h-full object-contain">
+-                <?php if ($product['old_price']):
+-                    $disc = round((($product['old_price'] - $product['price']) / $product['old_price']) * 100); ?>
+-                    <div
+-                        class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+-                        -<?= $disc ?>%</div>
++            <!-- Khu vực hiển thị ảnh (Gallery) -->
++            <div class="flex flex-col gap-4">
++                <!-- Ảnh chính -->
++                <div class="border border-gray-200 rounded-lg p-4 flex items-center justify-center h-[350px] md:h-[450px] bg-white relative overflow-hidden group">
++                    <img id="main-product-image" src="<?= asset($product['image']) ?>" 
++                         class="max-w-full max-h-full object-contain transition-all duration-500 ease-in-out group-hover:scale-105" 
++                         alt="<?= htmlspecialchars($product['name']) ?>"
++                         style="transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;">
++                    
++                    <?php if ($product['old_price']):
++
++                        $disc = round((($product['old_price'] - $product['price']) / $product['old_price']) * 100); ?>
++                        <div class="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md z-10">
++                            -<?= $disc ?>%
++                        </div>
++                    <?php endif; ?>
++
++                    <!-- Nút xem full ảnh -->
++                    <button onclick="openMediaViewer(document.getElementById('main-product-image').src, false)" 
++                        class="absolute bottom-4 right-4 w-10 h-10 bg-white/80 backdrop-blur shadow-md rounded-full flex items-center justify-center text-gray-600 hover:text-primary hover:bg-white transition opacity-0 group-hover:opacity-100">
++                        <i class="fa-solid fa-expand"></i>
++                    </button>
++                </div>
++
++                <!-- Danh sách ảnh thu nhỏ (Thumbnails) -->
++                <?php if (count($product_images) > 1): ?>
++                <div class="flex gap-2 overflow-x-auto pb-2 hide-scrollbar" id="thumbnail-container">
++                    <?php foreach ($product_images as $index => $img_url): ?>
++                    <div class="thumbnail-item shrink-0 w-20 h-20 border-2 <?= $index === 0 ? 'border-primary' : 'border-gray-100' ?> rounded-lg p-1 cursor-pointer hover:border-primary transition bg-white"
++                         onclick="changeMainImage('<?= asset($img_url) ?>', this, true)">
++                        <img src="<?= asset($img_url) ?>" class="w-full h-full object-contain" alt="thumbnail <?= $index + 1 ?>">
++                    </div>
++                    <?php endforeach; ?>
++                </div>
+                 <?php endif; ?>
++
+             </div>
+ 
++
+             <div
+                 class="grid grid-cols-1 md:grid-cols-2 gap-3 text-[13px] text-gray-700 bg-white p-4 border border-gray-200 rounded-lg">
+                 <div class="flex items-start gap-2"><i class="fa-solid fa-rotate text-primary mt-1 text-base w-5"></i>
+@@ -446,7 +492,7 @@ require_once __DIR__ . '/../partials/header.php';
+                                 <div
+                                     class="w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 font-bold text-[10px]">
+                                     <?= $index + 1 ?></div>
+-                                <span class="leading-tight"><?= htmlspecialchars(getCurrentLang() === 'en' ? translate_text(trim($gift), 'prod_gift_' . $product['id'] . '_' . $index) : trim($gift)) ?></span>
++                                <span class="leading-tight"><?= htmlspecialchars(trim($gift)) ?></span>
+                             </div>
+                         <?php endforeach; ?>
+                     </div>
+@@ -504,15 +550,15 @@ require_once __DIR__ . '/../partials/header.php';
+             <div id="desc-container" class="relative overflow-hidden" style="max-height: 350px;">
+                 <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed text-[15px] text-justify">
+                     <?= translate_html_content($product['description'] ? $product['description'] : '<p>Chưa có thông tin mô tả chi tiết cho sản phẩm này.</p>', 'prod_desc_' . $product['id']) ?>
+-                    <img src="<?= $product['image'] ?>"
+-                         class="w-full max-w-[500px] mx-auto my-6 rounded-lg border border-gray-100"
+-                         alt="<?= $product['name'] ?>">
++                    <img src="<?= asset($product['image']) ?>"
++                        class="w-full max-w-[500px] mx-auto my-6 rounded-lg border border-gray-100"
++                        alt="<?= $product['name'] ?>">
+                 </div>
+                 <div id="desc-gradient"
+-                     class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
++                    class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent"></div>
+             </div>
+             <button id="btn-read-more" onclick="toggleDescription()"
+-                    class="mt-4 w-full text-primary border border-primary hover:bg-blue-50 py-2 rounded-lg text-[14px] font-medium transition"><?= __("read_more") ?></button>
++                class="mt-4 w-full text-primary border border-primary hover:bg-blue-50 py-2 rounded-lg text-[14px] font-medium transition"><?= __("read_more") ?></button>
+         </div>
+ 
+         <div class="lg:col-span-5">
+@@ -520,7 +566,7 @@ require_once __DIR__ . '/../partials/header.php';
+                 <h2 class="text-[18px] font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200"><?= __("specifications") ?>
+                 </h2>
+                 <div class="text-[14px] text-gray-700 specs-table overflow-hidden" style="max-height: 300px;">
+-                    <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>' . __("no_specifications") . '</p>', 'prod_specs_' . $product['id']) ?>
++                    <?= translate_html_content($product['specifications'] ? $product['specifications'] : '<p>Chưa cập nhật thông số.</p>', 'prod_specs_' . $product['id']) ?>
+                 </div>
+                 <style>
+                     .specs-table ul {
+@@ -554,7 +600,7 @@ require_once __DIR__ . '/../partials/header.php';
+          ĐÁNH GIÁ VÀ NHẬN XÉT SẢN PHẨM 
+          ========================================================= -->
+     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 md:p-8 mt-8" id="reviews">
+-        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("reviews_comments") ?>
++        <h2 class="text-[18px] font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200"><?= __("order_history") ?> & <?= __("detail") ?>
+             <?= htmlspecialchars($product['name']) ?></h2>
+ 
+         <!-- PHẦN TỔNG HỢP ĐÁNH GIÁ -->
+@@ -586,6 +632,7 @@ require_once __DIR__ . '/../partials/header.php';
+                     ?>
+                     <div class="flex items-center gap-2 mb-1.5">
+                         <span class="text-xs font-bold text-gray-600 w-8 text-right"><?= $s ?> <i
++
+                                 class="fa-solid fa-star text-yellow-400 text-[10px]"></i></span>
+                         <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                             <div class="h-full rounded-full transition-all duration-500 <?= $s >= 4 ? 'bg-green-400' : ($s === 3 ? 'bg-yellow-400' : 'bg-orange-400') ?>"
+@@ -611,7 +658,7 @@ require_once __DIR__ . '/../partials/header.php';
+         <div id="review-form-container"
+             class="hidden mb-8 max-w-2xl mx-auto bg-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+             <?php if (isset($_SESSION['user_id'])): ?>
+-                <form id="main-review-form" method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
++                <form method="POST" action="product_detail.php?id=<?= $id ?>" enctype="multipart/form-data">
+                     <?= csrf_input_field() ?>
+                     <h4 class="font-bold mb-4 text-center text-gray-800"><?= __("invite_review") ?></h4>
+ 
+@@ -625,8 +672,8 @@ require_once __DIR__ . '/../partials/header.php';
+                     <p class="text-center text-sm text-gray-500 mb-4" id="rating-text"><?= __("excellent") ?></p>
+ 
+                     <input type="hidden" name="rating" id="input_rating" value="5">
+-                    <textarea name="comment" required rows="5"
+-                        class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none mb-4 text-sm resize-none shadow-sm"
++                    <textarea name="comment" required rows="3"
++                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:outline-none mb-3 text-sm resize-none"
+                         placeholder="<?= __("review_placeholder") ?>"></textarea>
+ 
+                     <!-- Upload ảnh/video -->
+@@ -678,7 +725,7 @@ require_once __DIR__ . '/../partials/header.php';
+                         <?= renderReviewItem($rev, $id) ?>
+                     </div>
+                 <?php endforeach; ?>
+-                
++
+                 <?php if ($totalReviews > 2): ?>
+                     <div class="text-center mt-6" id="load-more-reviews-container">
+                         <button onclick="loadMoreReviews()" class="px-8 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary hover:text-white transition shadow-sm">
+@@ -798,7 +845,7 @@ require_once __DIR__ . '/../partials/header.php';
+     </div>
+ </div>
+ 
+-<!-- MODAL TRẢ GÓP -->
++<!-- MODAL TRẢ GÓP NÂNG CAO -->
+ <div id="installmentModal" class="hidden fixed inset-0 bg-black/60 z-[100] flex items-center justify-center backdrop-blur-sm px-4 py-8 overflow-y-auto">
+     <div class="bg-white rounded-2xl w-full max-w-[750px] flex flex-col relative shadow-2xl border border-gray-100 max-h-[90vh] overflow-hidden transition-all duration-300 transform scale-95 opacity-0" id="installmentModalContainer">
+         
+@@ -872,7 +919,7 @@ require_once __DIR__ . '/../partials/header.php';
+                     
+                     <!-- Choose Prepayment Percentage -->
+                     <div>
+-                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_prepayment_percent") ?? 'Chọn mức trả trước (%)' ?></label>
++                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"><?= __("select_prepayment_percent") ?></label>
+                         <div class="grid grid-cols-2 gap-2">
+                             <button type="button" onclick="selectPrepayPercent(10)" id="prepay-10" class="border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none">
+                                 10%
+@@ -938,7 +985,7 @@ require_once __DIR__ . '/../partials/header.php';
+                         <span class="text-xs font-bold text-gray-600 text-right"><?= __("required_papers_val") ?></span>
+                     </div>
+                     <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+-                        <span class="text-sm text-gray-500 font-medium"><?= __("monthly_installment_principal") ?? 'Tiền trả góp hàng tháng (Gốc)' ?></span>
++                        <span class="text-sm text-gray-500 font-medium"><?= __("monthly_installment_principal") ?></span>
+                         <span class="text-sm font-bold text-red-600 text-right" id="calc-monthly">0đ</span>
+                     </div>
+                     <div class="grid grid-cols-2 border-b border-gray-100 p-3 hover:bg-white transition-all">
+@@ -1043,15 +1090,15 @@ require_once __DIR__ . '/../partials/header.php';
+                             <span class="text-[10px] text-green-600 font-bold">0% Lãi suất</span>
+                         </button>
+                         <button type="button" onclick="selectCreditTerm(6)" id="cterm-6" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+-                            <span class="text-sm font-extrabold text-gray-855">6 <?= __("months_suffix") ?></span>
++                            <span class="text-sm font-extrabold text-gray-800">6 <?= __("months_suffix") ?></span>
+                             <span class="text-[10px] text-red-600 font-bold">0.58% / tháng</span>
+                         </button>
+                         <button type="button" onclick="selectCreditTerm(9)" id="cterm-9" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+-                            <span class="text-sm font-extrabold text-gray-855">9 <?= __("months_suffix") ?></span>
++                            <span class="text-sm font-extrabold text-gray-800">9 <?= __("months_suffix") ?></span>
+                             <span class="text-[10px] text-red-600 font-bold">0.5% / tháng</span>
+                         </button>
+                         <button type="button" onclick="selectCreditTerm(12)" id="cterm-12" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none">
+-                            <span class="text-sm font-extrabold text-gray-855">12 <?= __("months_suffix") ?></span>
++                            <span class="text-sm font-extrabold text-gray-800">12 <?= __("months_suffix") ?></span>
+                             <span class="text-[10px] text-red-600 font-bold">0.46% / tháng</span>
+                         </button>
+                     </div>
+@@ -1103,7 +1150,7 @@ require_once __DIR__ . '/../partials/header.php';
+                         </button>
+                         <button type="button" onclick="selectBnplProvider('Fundiin')" id="bnpl-Fundiin" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none">
+                             <span class="text-sm font-extrabold text-gray-800">Fundiin</span>
+-                            <span class="text-[10px] text-blue-500 font-bold uppercase mt-1">⚡️ <?= __("popular_tag") ?></span>
++                            <span class="text-[10px] text-blue-500 font-bold uppercase mt-1">👍 <?= __("popular_tag") ?></span>
+                         </button>
+                         <button type="button" onclick="selectBnplProvider('Kredivo')" id="bnpl-Kredivo" class="border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none">
+                             <span class="text-sm font-extrabold text-gray-800">Kredivo</span>
+@@ -1160,712 +1207,812 @@ require_once __DIR__ . '/../partials/header.php';
+ </div>
+ 
+ <script>
+-    let currentTab = 1;
+-    let selectedCompany = 'Shinhan Finance';
+-    let selectedTerm = 3;
+-    let selectedPrepayPercent = 30;
+-    let selectedBank = 'Vietcombank';
+-    let selectedCreditCard = 'Visa';
+-    let selectedCreditTerm = 3;
+-    let selectedBnpl = 'Home PayLater';
+-
+-    const interestRatesMap = {
+-        'Shinhan Finance': { 3: 0, 4: 1.29, 6: 1.49, 9: 1.69, 12: 1.89 },
+-        'Home Credit': { 3: 0, 4: 1.39, 6: 1.59, 9: 1.79, 12: 1.99 },
+-        'HD Saison': { 3: 0, 4: 1.49, 6: 1.69, 9: 1.89, 12: 2.09 },
+-        'Mirae Asset': { 3: 0, 4: 1.59, 6: 1.79, 9: 1.99, 12: 2.19 }
+-    };
+-
+-    const bnplData = {
+-        'Home PayLater': {
+-            title: 'Home PayLater',
+-            desc: `<?= __("home_paylater_desc") ?>`
+-        },
+-        'Fundiin': {
+-            title: 'Fundiin',
+-            desc: `<?= __("fundiin_desc") ?>`
+-        },
+-        'Kredivo': {
+-            title: 'Kredivo',
+-            desc: `<?= __("kredivo_desc") ?>`
+-        }
+-    };
+-
+-    function openInstallmentModal() {
+-        const modal = document.getElementById('installmentModal');
+-        const container = document.getElementById('installmentModalContainer');
+-        modal.classList.remove('hidden');
+-        setTimeout(() => {
+-            container.classList.remove('scale-95', 'opacity-0');
+-            container.classList.add('scale-100', 'opacity-100');
+-        }, 10);
+-        
+-        selectedCompany = 'Shinhan Finance';
+-        selectedTerm = 3;
+-        selectedPrepayPercent = 30;
+-        selectedBnpl = 'Home PayLater';
+-        selectedBank = 'Vietcombank';
+-        selectedCreditCard = 'Visa';
+-        selectedCreditTerm = 3;
+-        
+-        selectFinanceCompany('Shinhan Finance');
+-        selectPrepayPercent(30);
+-        selectFinanceTerm(3);
+-        selectCreditBank('Vietcombank');
+-        selectCreditCard('Visa');
+-        selectCreditTerm(3);
+-        selectBnplProvider('Home PayLater');
+-        recalcInstallment();
+-        
+-        modal.onclick = function(e) {
+-            if (e.target === modal) {
+-                closeInstallmentModal();
+-            }
+-        };
+-    }
+-
+-    function closeInstallmentModal() {
+-        const modal = document.getElementById('installmentModal');
+-        const container = document.getElementById('installmentModalContainer');
+-        container.classList.remove('scale-100', 'opacity-100');
+-        container.classList.add('scale-95', 'opacity-0');
+-        setTimeout(() => {
+-            modal.classList.add('hidden');
+-        }, 300);
+-    }
++    /**
++     * MỞ RỘNG / THU GỌN MÔ TẢ SẢN PHẨM
++     * Toggle chiều cao của container mô tả ngắn (350px) thành hiển thị đầy đủ (full).
++     * Bật/tắt dải màu gradient che mờ phần dưới cùng.
++     */
++    function toggleDescription() {
++        const container = document.getElementById('desc-container');
++        const gradient = document.getElementById('desc-gradient');
++        const btn = document.getElementById('btn-read-more');
+ 
+-    function switchInstallmentTab(tabNum) {
+-        currentTab = tabNum;
+-        for (let i = 1; i <= 3; i++) {
+-            const tabEl = document.getElementById('inst-tab-' + i);
+-            const contentEl = document.getElementById('inst-content-' + i);
+-            if (i === tabNum) {
+-                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent";
+-                contentEl.classList.remove('hidden');
+-            } else {
+-                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent";
+-                contentEl.classList.add('hidden');
+-            }
++        if (container.style.maxHeight) {
++            container.style.maxHeight = null;
++            gradient.style.display = 'none';
++            btn.innerText = '<?= __("read_less") ?>';
++        } else {
++            container.style.maxHeight = '350px';
++            gradient.style.display = 'block';
++            btn.innerText = '<?= __("read_more") ?>';
+         }
+-        recalcInstallment();
+     }
+ 
+-    function selectFinanceCompany(compName) {
+-        selectedCompany = compName;
+-        const companies = ['Shinhan Finance', 'Home Credit', 'HD Saison', 'Mirae Asset'];
+-        const compMap = {
+-            'Shinhan Finance': 'Shinhan',
+-            'Home Credit': 'Home',
+-            'HD Saison': 'HD',
+-            'Mirae Asset': 'Mirae'
+-        };
+-        companies.forEach(c => {
+-            const btn = document.getElementById('comp-' + compMap[c]);
+-            if (btn) {
+-                if (c === compName) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 transition-all select-none h-12";
++    /**
++     * CHỌN SỐ SAO CẢM NHẬN (TỪ 1 ĐẾN 5)
++     */
++    const ratingLabels = { 
++        1: '<?= __("very_bad") ?>', 
++        2: '<?= __("bad") ?>', 
++        3: '<?= __("normal") ?>', 
++        4: '<?= __("good") ?>', 
++        5: '<?= __("excellent") ?>' 
++    };
++    function setRating(rating) {
++        const input = document.getElementById('input_rating');
++        if (input) input.value = rating;
++        const text = document.getElementById('rating-text');
++        if (text) text.innerText = ratingLabels[rating];
++        for (let i = 1; i <= 5; i++) {
++            let star = document.getElementById('star_' + i);
++            if (star) {
++                if (i <= rating) {
++                    star.classList.remove('text-gray-300');
++                    star.classList.add('text-yellow-400');
+                 } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12";
++                    star.classList.remove('text-yellow-400');
++                    star.classList.add('text-gray-300');
+                 }
+             }
+-        });
+-        recalcInstallment();
++        }
+     }
+-
+-    function selectPrepayPercent(percent) {
+-        selectedPrepayPercent = percent;
+-        const percents = [10, 20, 30, 40, 50];
+-        percents.forEach(p => {
+-            const btn = document.getElementById('prepay-' + p);
+-            if (btn) {
+-                if (p === percent) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
+-                }
+-            }
+-        });
+-        recalcInstallment();
++    // Chỉ gọi setRating nếu có các ngôi sao đánh giá (tức là user đã login và form hiển thị)
++    if (document.getElementById('star_1')) {
++        setRating(5);
+     }
+ 
+-    function selectFinanceTerm(months) {
+-        selectedTerm = months;
+-        const terms = [3, 4, 6, 9, 12];
+-        terms.forEach(t => {
+-            const btn = document.getElementById('term-' + t);
+-            if (btn) {
+-                if (t === months) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
++    /**
++     * ẨN / HIỆN FORM PHẢN HỒI ĐÁNH GIÁ
++     */
++    function toggleReplyForm(reviewId, userName = '') {
++        const form = document.getElementById('reply-form-' + reviewId);
++        if (form) {
++            form.classList.toggle('hidden');
++            if (!form.classList.contains('hidden')) {
++                const textarea = form.querySelector('textarea');
++                if (textarea) {
++                    if (userName) {
++                        textarea.value = '@' + userName + ' ';
++                    }
++                    textarea.focus();
+                 }
+             }
+-        });
+-        recalcInstallment();
++        }
+     }
+ 
+-    function selectCreditBank(bankName) {
+-        selectedBank = bankName;
+-        const banks = ['Vietcombank', 'Techcombank', 'Sacombank', 'ACB', 'MBBank', 'VPBank', 'VIB', 'BIDV', 'VietinBank', 'TPBank', 'HSBC', 'ShinhanBank'];
+-        banks.forEach(b => {
+-            const btn = document.getElementById('bank-' + b);
+-            if (btn) {
+-                const isSelected = (bankName === b || (bankName === 'Shinhan Bank' && b === 'ShinhanBank'));
+-                if (isSelected) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+-                }
+-            }
+-        });
+-        recalcInstallment();
++    /**
++     * ẨN / HIỆN DANH SÁCH PHẢN HỒI (KHI CÓ NHIỀU PHẢN HỒI)
++     */
++    function toggleReplies(reviewId) {
++        const container = document.getElementById('replies-container-' + reviewId);
++        const btn = document.getElementById('btn-show-replies-' + reviewId);
++        if (container && btn) {
++            container.classList.remove('hidden');
++            btn.classList.add('hidden'); // Ẩn nút sau khi đã mở
++        }
+     }
+ 
+-    function selectCreditCard(cardName) {
+-        selectedCreditCard = cardName;
+-        const cards = ['Visa', 'MasterCard', 'JCB'];
+-        cards.forEach(c => {
+-            const btn = document.getElementById('card-' + c);
+-            if (btn) {
+-                if (c === cardName) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+-                }
+-            }
+-        });
+-        recalcInstallment();
++    /**
++     * TẢI THÊM ĐÁNH GIÁ (HIỆN CÁC ĐÁNH GIÁ ĐANG ẨN)
++     */
++    function loadMoreReviews() {
++        const hiddenReviews = document.querySelectorAll('.review-item.hidden');
++        hiddenReviews.forEach(el => el.classList.remove('hidden'));
++        const btnContainer = document.getElementById('load-more-reviews-container');
++        if (btnContainer) btnContainer.remove();
+     }
+ 
+-    function selectCreditTerm(months) {
+-        selectedCreditTerm = months;
+-        const terms = [3, 6, 9, 12];
+-        terms.forEach(t => {
+-            const btn = document.getElementById('cterm-' + t);
+-            if (btn) {
+-                if (t === months) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
+-                }
+-            }
+-        });
+-        recalcInstallment();
++    /**
++     * TẢI LẠI DANH SÁCH ĐÁNH GIÁ QUA AJAX (KHÔNG RELOAD TRANG)
++     */
++    async function refreshReviewsList() {
++        const container = document.getElementById('reviews-list-container');
++        if (!container) return;
++        try {
++            const response = await fetch(`product_detail.php?id=<?= $id ?>&only_reviews=1`);
++            const html = await response.text();
++            container.innerHTML = html;
++        } catch (error) {
++            console.error('Lỗi khi tải lại danh sách đánh giá:', error);
++        }
+     }
+ 
+-    function selectBnplProvider(providerName) {
+-        selectedBnpl = providerName;
+-        const providers = ['Home PayLater', 'Fundiin', 'Kredivo'];
+-        providers.forEach(p => {
+-            const idSuffix = p.replace(/\s+/g, '');
+-            const btn = document.getElementById('bnpl-' + idSuffix);
+-            if (btn) {
+-                if (p === providerName) {
+-                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 transition-all select-none";
+-                } else {
+-                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none";
++    /**
++     * XỬ LÝ GỬI ĐÁNH GIÁ/PHẢN HỒI QUA AJAX
++     */
++    async function handleReviewSubmit(event) {
++        event.preventDefault();
++        const form = event.target;
++        const formData = new FormData(form);
++        formData.append('ajax', '1');
++        formData.append('submit_review', '1');
++
++        const submitBtn = form.querySelector('button[type="submit"]');
++        const originalBtnText = submitBtn.innerHTML;
++        submitBtn.disabled = true;
++        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
++
++        try {
++            const response = await fetch(form.action, {
++                method: 'POST',
++                body: formData
++            });
++            const result = await response.json();
++
++            if (result.success) {
++                // Hiển thị thông báo cảm ơn - Dạng pill sang xịn mịn tích hợp Nyan Cat ở vị trí checkmark
++                Swal.fire({
++                    html: `
++                        <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
++                            <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
++                            <span class="text-[14px] md:text-[14px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
++                        </div>
++                    `,
++                    background: 'transparent',
++                    showConfirmButton: false,
++                    timer: 3500,
++                    backdrop: `rgba(0, 0, 0, 0.25)`, 
++                    position: 'top',
++                    customClass: {
++                        popup: 'bg-transparent border-0 p-0 shadow-none'
++                    },
++                    showClass: {
++                        popup: 'animate__animated animate__fadeInDown'
++                    },
++                    hideClass: {
++                        popup: 'animate__animated animate__fadeOutUp'
++                    }
++                });
++
++                // Reset form và ẩn đi (nếu là form phản hồi)
++                form.reset();
++                if (form.closest('[id^="reply-form-"]')) {
++                    form.closest('[id^="reply-form-"]').classList.add('hidden');
+                 }
++
++                // Cập nhật lại danh sách đánh giá
++                await refreshReviewsList();
+             }
+-        });
+-        
+-        const data = bnplData[providerName];
+-        if (data) {
+-            document.getElementById('bnpl-title').innerText = data.title;
+-            document.getElementById('bnpl-desc').innerText = data.desc;
++        } catch (error) {
++            console.error('Lỗi khi gửi đánh giá:', error);
++            Swal.fire('<?= __("error") ?>', '<?= __("review_submit_error") ?>', 'error');
++        } finally {
++            submitBtn.disabled = false;
++            submitBtn.innerHTML = originalBtnText;
+         }
+     }
+ 
+-    function recalcInstallment() {
+-        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
+-        
+-        // 1. Finance Company calculations (Tab 1)
+-        document.getElementById('calc-company').innerText = selectedCompany;
+-        document.getElementById('calc-prepay-percent').innerText = selectedPrepayPercent;
+-        
+-        const prepayAmount = Math.round(price * (selectedPrepayPercent / 100));
+-        document.getElementById('calc-prepay').innerText = prepayAmount.toLocaleString('vi-VN') + 'đ';
+-        
+-        const remainingPrincipal = price - prepayAmount;
+-        const rates = interestRatesMap[selectedCompany] || { 3: 0, 4: 0, 6: 0, 9: 0, 12: 0 };
+-        const monthlyInterestRate = rates[selectedTerm] || 0;
+-        document.getElementById('calc-interest-rate').innerText = monthlyInterestRate + '%<?= __("per_month_suffix") ?>';
+-        
+-        const monthlyPrincipal = remainingPrincipal / selectedTerm;
+-        const monthlyInterest = remainingPrincipal * (monthlyInterestRate / 100);
+-        const monthlyAmt = Math.round(monthlyPrincipal + monthlyInterest);
+-        
+-        document.getElementById('calc-monthly').innerText = Math.round(monthlyPrincipal).toLocaleString('vi-VN') + 'đ';
+-        document.getElementById('calc-total-monthly').innerText = monthlyAmt.toLocaleString('vi-VN') + 'đ';
+-        
+-        const totalToPay = prepayAmount + (monthlyAmt * selectedTerm);
+-        document.getElementById('calc-total').innerText = totalToPay.toLocaleString('vi-VN') + 'đ';
+-        
+-        const difference = totalToPay - price;
+-        document.getElementById('calc-diff').innerText = difference.toLocaleString('vi-VN') + 'đ';
+-
+-        // 2. Credit Card calculations (Tab 2)
+-        const ccBankEl = document.getElementById('cc-calc-bank');
+-        if (ccBankEl) {
+-            ccBankEl.innerText = selectedBank;
+-            document.getElementById('cc-calc-card').innerText = selectedCreditCard;
+-            
+-            // Map flat monthly rates directly
+-            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
+-            const ccFlatRate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
+-            document.getElementById('cc-calc-rate').innerText = ccFlatRate + '%<?= __("per_month_suffix") ?>';
+-            
+-            const ccMonthlyAmt = Math.round((price / selectedCreditTerm) + (price * (ccFlatRate / 100)));
+-            document.getElementById('cc-calc-monthly').innerText = ccMonthlyAmt.toLocaleString('vi-VN') + 'đ';
+-            
+-            const ccTotalToPay = ccMonthlyAmt * selectedCreditTerm;
+-            document.getElementById('cc-calc-total').innerText = ccTotalToPay.toLocaleString('vi-VN') + 'đ';
+-            
+-            const ccDifference = ccTotalToPay - price;
+-            document.getElementById('cc-calc-diff').innerText = ccDifference.toLocaleString('vi-VN') + 'đ';
++    // Gắn sự kiện AJAX cho tất cả các form đánh giá (bao gồm cả các form mới được render qua AJAX)
++    document.addEventListener('submit', function(e) {
++        if (e.target && (e.target.id === 'main-review-form' || e.target.closest('[id^="reply-form-"]'))) {
++            handleReviewSubmit(e);
+         }
+-    }
++    });
+ 
+-    function submitNewInstallment() {
+-        const fullname = document.getElementById('inst-fullname').value.trim();
+-        const phone = document.getElementById('inst-phone').value.trim();
++    /**
++     * HIỆN THÔNG BÁO CẢM ON SAU KHI ĐÁNH GIÁ THÀNH CÔNG (Dành cho trường hợp reload truyền thống nếu có)
++     */
++    <?php if (isset($_SESSION['review_success_msg'])): ?>
++        Swal.fire({
++            html: `
++                <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
++                    <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
++                    <span class="text-[14px] md:text-[15px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
++                </div>
++            `,
++            background: 'transparent',
++            showConfirmButton: false,
++            timer: 3500,
++            backdrop: `rgba(0, 0, 0, 0.25)`, 
++            position: 'top',
++            customClass: {
++                popup: 'bg-transparent border-0 p-0 shadow-none'
++            },
++            showClass: {
++                popup: 'animate__animated animate__fadeInDown'
++            },
++            hideClass: {
++                popup: 'animate__animated animate__fadeOutUp'
++            }
++        });
++        <?php unset($_SESSION['review_success_msg']); ?>
++    <?php endif; ?>
+ 
+-        if (!fullname) {
+-            Swal.fire('<?php echo __('warning'); ?>', '<?php echo __('please_enter_fullname') ?? 'Vui lòng nhập họ tên' ?>', 'warning');
++    /**
++     * PREVIEW FILE MEDIA (ẢNH/VIDEO) TRƯỚC KHI UPLOAD
++     * Sinh tự động vùng UI xem trước cho ảnh, hoặc khung player (không auto play) cho video MP4 sau khi chọn file từ máy tính.
++     * Cảnh báo giới hạn số lượng <= 5 file.
++     */
++    function previewMedia(input) {
++        const preview = document.getElementById('media-preview');
++        const placeholder = document.getElementById('media-placeholder');
++        preview.innerHTML = '';
++
++        if (input.files.length > 5) {
++            alert('<?= __("max_files_warning") ?>');
++            input.value = '';
+             return;
+         }
+-        if (!phone || !/^[0-9]{10}$/.test(phone)) {
+-            Swal.fire('<?php echo __('warning'); ?>', '<?php echo __('please_enter_valid_phone') ?? 'Vui lòng nhập số điện thoại 10 số' ?>', 'warning');
+-            return;
++
++        if (input.files.length > 0) {
++            const filesSelectedText = '<?= __("files_selected") ?>'.replace('%s', input.files.length);
++            const changeMediaText = '<?= __("change_media") ?>';
++            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">' + filesSelectedText + '</p><p class="text-xs text-gray-400 mt-1">' + changeMediaText + '</p>';
+         }
+ 
+-        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
+-        const tradeInCheckbox = document.getElementById('inst-trade-in');
+-        const isTradeIn = tradeInCheckbox.checked ? 1 : 0;
+-        const tradeInText = isTradeIn ? ' (Thu cũ lên đời)' : '';
++        Array.from(input.files).forEach((file, idx) => {
++            const wrapper = document.createElement('div');
++            wrapper.className = 'relative w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 shadow-sm';
+ 
+-        let termText = '';
+-        let payment_method = '';
+-        let partner_name = '';
+-        let card_type = '';
+-        let prepayment_percent = 0;
+-        let prepayment_amount = 0;
+-        let term_months = 3;
+-        let monthly_payment = 0;
+-        let total_payment = 0;
+-        let difference_amount = 0;
+-        let interest_rate = 0;
++            if (file.type.startsWith('video/')) {
++                const video = document.createElement('video');
++                video.src = URL.createObjectURL(file);
++                video.className = 'w-full h-full object-cover';
++                wrapper.appendChild(video);
++                const playIcon = document.createElement('div');
++                playIcon.className = 'absolute inset-0 bg-black/30 flex items-center justify-center';
++                playIcon.innerHTML = '<i class="fa-solid fa-play text-white"></i>';
++                wrapper.appendChild(playIcon);
++            } else {
++                const img = document.createElement('img');
++                img.src = URL.createObjectURL(file);
++                img.className = 'w-full h-full object-cover';
++                wrapper.appendChild(img);
++            }
+ 
+-        if (currentTab === 1) {
+-            payment_method = 'finance';
+-            partner_name = selectedCompany;
+-            prepayment_percent = selectedPrepayPercent;
+-            prepayment_amount = Math.round(price * (prepayment_percent / 100));
+-            term_months = selectedTerm;
+-            interest_rate = (interestRatesMap[selectedCompany] || {})[selectedTerm] || 0;
+-            
+-            const remainingPrincipal = price - prepayment_amount;
+-            const monthlyPrincipal = remainingPrincipal / term_months;
+-            const monthlyInterest = remainingPrincipal * (interest_rate / 100);
+-            monthly_payment = Math.round(monthlyPrincipal + monthlyInterest);
+-            total_payment = prepayment_amount + (monthly_payment * term_months);
+-            difference_amount = total_payment - price;
+-            
+-            termText = `Công ty tài chính: ${selectedCompany}, Trả trước: ${selectedPrepayPercent}%, Kỳ hạn: ${selectedTerm} tháng${tradeInText}`;
+-        } else if (currentTab === 2) {
+-            payment_method = 'credit_card';
+-            partner_name = selectedBank;
+-            card_type = selectedCreditCard;
+-            prepayment_percent = 0;
+-            prepayment_amount = 0;
+-            term_months = selectedCreditTerm;
+-            
+-            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
+-            interest_rate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
+-            monthly_payment = Math.round((price / term_months) + (price * (interest_rate / 100)));
+-            total_payment = monthly_payment * term_months;
+-            difference_amount = total_payment - price;
+-            
+-            termText = `Thẻ tín dụng: ${selectedBank} - ${selectedCreditCard}, Kỳ hạn: ${selectedCreditTerm} tháng (Lãi suất phẳng: ${interest_rate}%/tháng)${tradeInText}`;
++            // File size badge
++            const sizeBadge = document.createElement('div');
++            const sizeMB = (file.size / 1024 / 1024).toFixed(1);
++            sizeBadge.className = 'absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5';
++            sizeBadge.innerText = sizeMB + ' MB';
++            wrapper.appendChild(sizeBadge);
++
++            preview.appendChild(wrapper);
++        });
++    }
++
++    /**
++     * LIGHTBOX VIEWER: POPUP XEM TO ẢNH / PHÁT VIDEO ĐÍNH KÈM
++     * Phóng đại xem tập tin media trên 1 modal lightbox tối nền.
++     */
++    function openMediaViewer(src, isVideo) {
++        const modal = document.getElementById('mediaViewerModal');
++        const content = document.getElementById('mediaViewerContent');
++        if (isVideo) {
++            content.innerHTML = '<video src="' + src + '" controls autoplay class="max-w-full max-h-[80vh] rounded-lg shadow-2xl"></video>';
+         } else {
+-            payment_method = 'bnpl';
+-            partner_name = selectedBnpl;
+-            prepayment_percent = 0;
+-            prepayment_amount = 0;
+-            term_months = 3;
+-            interest_rate = 0;
+-            monthly_payment = Math.round(price / 3);
+-            total_payment = price;
+-            difference_amount = 0;
++            content.innerHTML = '<img src="' + src + '" class="max-w-full max-h-[80vh] rounded-lg shadow-2xl">';
++        }
++        modal.classList.remove('hidden');
++    }
++    function closeMediaViewer(e) {
++        if (e.target === document.getElementById('mediaViewerModal')) {
++            document.getElementById('mediaViewerModal').classList.add('hidden');
++        }
++    }
++
++    /**
++     * XÁC NHẬN XÓA ĐÁNH GIÁ SẢN PHẨM
++     * Tạo UI modal overlay cảnh báo (không thể hoàn tác) bằng Javascript DOM Element tĩnh.
++     * Nếu xác nhận: Sẽ trigger submit DOM form hidden chứa review_id tương ứng.
++     */
++    function confirmDeleteReview(reviewId) {
++        // Create overlay
++        const overlay = document.createElement('div');
++        overlay.id = 'delete-confirm-overlay';
++        overlay.className = 'fixed inset-0 bg-black/50 z-[300] flex items-center justify-center backdrop-blur-sm p-4';
++        overlay.style.animation = 'fadeIn 0.2s ease';
++
++        overlay.innerHTML = `
++            <div class="bg-white rounded-xl shadow-2xl w-full max-w-[340px] p-6 text-center" style="animation: fadeIn 0.2s ease">
++                <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
++                    <i class="fa-solid fa-trash-can text-red-500 text-2xl"></i>
++                </div>
++                <h3 class="font-bold text-gray-800 text-lg mb-2"><?= __("delete_review_title") ?></h3>
++                <p class="text-sm text-gray-500 mb-5"><?= __("delete_review_warning") ?></p>
++                <div class="flex gap-3">
++                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition"><?= __("cancel") ?></button>
++                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md"><?= __("confirm_delete") ?></button>
++                </div>
++            </div>
++        `;
++
++        // Close on overlay click
++        overlay.addEventListener('click', function (e) {
++            if (e.target === overlay) overlay.remove();
++        });
++
++        document.body.appendChild(overlay);
++    }
++
++    /**
++     * AUTO SLIDE LOGIC
++     * Tự động chuyển ảnh sau mỗi 5 giây
++     */
++    const allProductImages = <?= json_encode(array_map('asset', $product_images), JSON_UNESCAPED_SLASHES) ?>;
++
++    let currentImgIndex = 0;
++    let slideInterval = null;
++
++
++    /**
++     * THAY ĐỔI ẢNH CHÍNH KHI CLICK THUMBNAIL
++     * Cập nhật src của ảnh chính và đổi style viền cho thumbnail đang chọn.
++     * Áp dụng hiệu ứng Fade + Blur + Scale chuyên nghiệp.
++     */
++    function changeMainImage(src, thumbElement, isManual = false) {
++        const mainImg = document.getElementById('main-product-image');
++        if (!mainImg || mainImg.src === src) return;
++
++        // Bước 1: Hiệu ứng thoát (Exit animation)
++        mainImg.style.opacity = '0';
++        mainImg.style.transform = 'scale(0.95) translateY(10px)';
++        mainImg.style.filter = 'blur(10px)';
++        
++        // Bước 2: Thay đổi nguồn ảnh sau khi ảnh cũ đã mờ đi
++        setTimeout(() => {
++            mainImg.src = src;
+             
+-            termText = `Mua trước trả sau: ${selectedBnpl}${tradeInText}`;
++            // Bước 3: Hiệu ứng vào (Entrance animation)
++            mainImg.onload = () => {
++                mainImg.style.opacity = '1';
++                mainImg.style.transform = 'scale(1) translateY(0)';
++                mainImg.style.filter = 'blur(0)';
++            };
++        }, 300);
++
++        // Cập nhật class border cho thumbnails
++        document.querySelectorAll('.thumbnail-item').forEach(el => {
++            el.classList.remove('border-primary', 'shadow-md', 'scale-105');
++            el.classList.add('border-gray-100', 'opacity-60');
++        });
++        
++        if (thumbElement) {
++            thumbElement.classList.remove('border-gray-100', 'opacity-60');
++            thumbElement.classList.add('border-primary', 'shadow-md', 'scale-105');
+         }
+ 
+-        const formData = new FormData();
+-        formData.append('product_id', <?= $id ?>);
+-        formData.append('term', termText);
+-        formData.append('fullname', fullname);
+-        formData.append('phone', phone);
+-        formData.append('payment_method', payment_method);
+-        formData.append('partner_name', partner_name);
+-        formData.append('card_type', card_type);
+-        formData.append('prepayment_percent', prepayment_percent);
+-        formData.append('prepayment_amount', prepayment_amount);
+-        formData.append('term_months', term_months);
+-        formData.append('monthly_payment', monthly_payment);
+-        formData.append('total_payment', total_payment);
+-        formData.append('difference_amount', difference_amount);
+-        formData.append('interest_rate', interest_rate);
+-        formData.append('is_trade_in', isTradeIn);
+-        formData.append('csrf_token', csrfToken);
++        // Nếu người dùng click thủ công, reset lại auto-slide để tránh bị nhảy hình đột ngột
++        if (isManual) {
++            const index = allProductImages.indexOf(src);
++            if (index !== -1) currentImgIndex = index;
++            resetAutoSlide();
++        }
++    }
+ 
+-        fetch(getApiUrl('save_installment.php'), {
+-            method: 'POST',
+-            body: formData
+-        })
+-        .then(res => res.json())
+-        .then(data => {
+-            if (data.success) {
+-                closeInstallmentModal();
+-                Swal.fire({
+-                    title: '<?php echo __('notification'); ?>',
+-                    text: '<?php echo __('installment_success_swal'); ?>',
+-                    icon: 'success',
+-                    timer: 3000,
+-                    showConfirmButton: false
+-                });
+-            } else {
+-                Swal.fire('<?php echo __('warning'); ?>', data.message || 'Lỗi đăng ký trả góp.', 'error');
++
++    function startAutoSlide() {
++        if (allProductImages.length <= 1) {
++            console.log("Gallery: Chỉ có 1 ảnh, không chạy auto slide.");
++            return;
++        }
++        
++        console.log("Gallery: Khởi động auto slide với " + allProductImages.length + " ảnh.");
++        
++        if (slideInterval) clearInterval(slideInterval);
++        
++        slideInterval = setInterval(() => {
++            currentImgIndex = (currentImgIndex + 1) % allProductImages.length;
++            const nextSrc = allProductImages[currentImgIndex];
++            const thumbnails = document.querySelectorAll('.thumbnail-item');
++            
++            console.log("Gallery: Tự động chuyển sang ảnh index " + currentImgIndex);
++            
++            if (thumbnails[currentImgIndex]) {
++                changeMainImage(nextSrc, thumbnails[currentImgIndex], false);
++                
++                // Tự động cuộn thanh thumbnail nếu ảnh bị khuất (Cách cuộn an toàn không nhảy trang)
++                const container = document.getElementById('thumbnail-container');
++                if (container) {
++                    const thumb = thumbnails[currentImgIndex];
++                    const scrollPos = thumb.offsetLeft - (container.offsetWidth / 2) + (thumb.offsetWidth / 2);
++                    container.scrollTo({ 
++                        left: scrollPos, 
++                        behavior: 'smooth' 
++                    });
++                }
+             }
+-        })
+-        .catch(err => {
+-            Swal.fire('<?php echo __('warning'); ?>', 'Không thể gửi yêu cầu trả góp.', 'error');
+-        });
++
++        }, 5000);
+     }
++
++    function resetAutoSlide() {
++        console.log("Gallery: Reset auto slide do tương tác người dùng.");
++        clearInterval(slideInterval);
++        startAutoSlide();
++    }
++
++    // Khởi chạy ngay lập tức
++    if (document.readyState === 'complete' || document.readyState === 'interactive') {
++        startAutoSlide();
++    } else {
++        document.addEventListener('DOMContentLoaded', startAutoSlide);
++    }
++
+ </script>
+ 
++<!-- JAVASCRIPT TRẢ GÓP NÂNG CAO -->
+ <script>
+-    /**
+-     * MỞ RỘNG / THU GỌN MÔ TẢ SẢN PHẨM
+-     * Toggle chiều cao của container mô tả ngắn (350px) thành hiển thị đầy đủ (full).
+-     * Bật/tắt dải màu gradient che mờ phần dưới cùng.
+-     */
+-    function toggleDescription() {
+-        const container = document.getElementById('desc-container');
+-        const gradient = document.getElementById('desc-gradient');
+-        const btn = document.getElementById('btn-read-more');
++    let currentTab = 1;
++    let selectedCompany = 'Shinhan Finance';
++    let selectedTerm = 3;
++    let selectedPrepayPercent = 30;
++    let selectedBank = 'Vietcombank';
++    let selectedCreditCard = 'Visa';
++    let selectedCreditTerm = 3;
++    let selectedBnpl = 'Home PayLater';
+ 
+-        if (container.style.maxHeight) {
+-            container.style.maxHeight = null;
+-            gradient.style.display = 'none';
+-            btn.innerText = '<?= __("read_less") ?>';
+-        } else {
+-            container.style.maxHeight = '350px';
+-            gradient.style.display = 'block';
+-            btn.innerText = '<?= __("read_more") ?>';
++    const interestRatesMap = {
++        'Shinhan Finance': { 3: 0, 4: 1.29, 6: 1.49, 9: 1.69, 12: 1.89 },
++        'Home Credit': { 3: 0, 4: 1.39, 6: 1.59, 9: 1.79, 12: 1.99 },
++        'HD Saison': { 3: 0, 4: 1.49, 6: 1.69, 9: 1.89, 12: 2.09 },
++        'Mirae Asset': { 3: 0, 4: 1.59, 6: 1.79, 9: 1.99, 12: 2.19 }
++    };
++
++    const bnplData = {
++        'Home PayLater': {
++            title: 'Home PayLater',
++            desc: `<?= __("home_paylater_desc") ?>`
++        },
++        'Fundiin': {
++            title: 'Fundiin',
++            desc: `<?= __("fundiin_desc") ?>`
++        },
++        'Kredivo': {
++            title: 'Kredivo',
++            desc: `<?= __("kredivo_desc") ?>`
+         }
++    };
++
++    function openInstallmentModal() {
++        const modal = document.getElementById('installmentModal');
++        const container = document.getElementById('installmentModalContainer');
++        modal.classList.remove('hidden');
++        setTimeout(() => {
++            container.classList.remove('scale-95', 'opacity-0');
++            container.classList.add('scale-100', 'opacity-100');
++        }, 10);
++        
++        selectedCompany = 'Shinhan Finance';
++        selectedTerm = 3;
++        selectedPrepayPercent = 30;
++        selectedBnpl = 'Home PayLater';
++        selectedBank = 'Vietcombank';
++        selectedCreditCard = 'Visa';
++        selectedCreditTerm = 3;
++        
++        selectFinanceCompany('Shinhan Finance');
++        selectPrepayPercent(30);
++        selectFinanceTerm(3);
++        selectCreditBank('Vietcombank');
++        selectCreditCard('Visa');
++        selectCreditTerm(3);
++        selectBnplProvider('Home PayLater');
++        recalcInstallment();
++        
++        modal.onclick = function(e) {
++            if (e.target === modal) {
++                closeInstallmentModal();
++            }
++        };
++    }
++
++    function closeInstallmentModal() {
++        const modal = document.getElementById('installmentModal');
++        const container = document.getElementById('installmentModalContainer');
++        container.classList.remove('scale-100', 'opacity-100');
++        container.classList.add('scale-95', 'opacity-0');
++        setTimeout(() => {
++            modal.classList.add('hidden');
++        }, 300);
+     }
+ 
+-    /**
+-     * ẨN / HIỆN FORM ĐÁNH GIÁ SẢN PHẨM
+-     * Xử lý ẩn/hiện và tự động cuộn trang (scrollInfoView) cho hộp thoại nhập review.
+-     */
+-    function toggleReviewForm() {
+-        const form = document.getElementById('review-form-container');
+-        form.classList.toggle('hidden');
+-        if (!form.classList.contains('hidden')) {
+-            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
++    function switchInstallmentTab(tabNum) {
++        currentTab = tabNum;
++        for (let i = 1; i <= 3; i++) {
++            const tabEl = document.getElementById('inst-tab-' + i);
++            const contentEl = document.getElementById('inst-content-' + i);
++            if (i === tabNum) {
++                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all bg-white text-primary shadow-sm font-bold border border-transparent";
++                contentEl.classList.remove('hidden');
++            } else {
++                tabEl.className = "flex flex-col items-center justify-center py-2.5 px-2 rounded-lg text-center transition-all text-gray-500 hover:text-gray-800 font-bold border border-transparent";
++                contentEl.classList.add('hidden');
++            }
+         }
++        recalcInstallment();
+     }
+ 
+-    /**
+-     * ẨN / HIỆN FORM PHẢN HỒI ĐÁNH GIÁ
+-     */
+-    function toggleReplyForm(reviewId, userName = '') {
+-        const form = document.getElementById('reply-form-' + reviewId);
+-        if (form) {
+-            form.classList.toggle('hidden');
+-            if (!form.classList.contains('hidden')) {
+-                const textarea = form.querySelector('textarea');
+-                if (textarea) {
+-                    if (userName) {
+-                        textarea.value = '@' + userName + ' ';
+-                    }
+-                    textarea.focus();
++    function selectFinanceCompany(compName) {
++        selectedCompany = compName;
++        const companies = ['Shinhan Finance', 'Home Credit', 'HD Saison', 'Mirae Asset'];
++        const compMap = {
++            'Shinhan Finance': 'Shinhan',
++            'Home Credit': 'Home',
++            'HD Saison': 'HD',
++            'Mirae Asset': 'Mirae'
++        };
++        companies.forEach(c => {
++            const btn = document.getElementById('comp-' + compMap[c]);
++            if (btn) {
++                if (c === compName) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 transition-all select-none h-12";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex items-center justify-center font-bold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none h-12";
+                 }
+             }
+-        }
++        });
++        recalcInstallment();
+     }
+ 
+-    /**
+-     * ẨN / HIỆN DANH SÁCH PHẢN HỒI (KHI CÓ NHIỀU PHẢN HỒI)
+-     */
+-    function toggleReplies(reviewId) {
+-        const container = document.getElementById('replies-container-' + reviewId);
+-        const btn = document.getElementById('btn-show-replies-' + reviewId);
+-        if (container && btn) {
+-            container.classList.remove('hidden');
+-            btn.classList.add('hidden'); // Ẩn nút sau khi đã mở
+-        }
++    function selectPrepayPercent(percent) {
++        selectedPrepayPercent = percent;
++        const percents = [10, 20, 30, 40, 50];
++        percents.forEach(p => {
++            const btn = document.getElementById('prepay-' + p);
++            if (btn) {
++                if (p === percent) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
++                }
++            }
++        });
++        recalcInstallment();
+     }
+ 
+-    /**
+-     * TẢI THÊM ĐÁNH GIÁ (HIỆN CÁC ĐÁNH GIÁ ĐANG ẨN)
+-     */
+-    function loadMoreReviews() {
+-        const hiddenReviews = document.querySelectorAll('.review-item.hidden');
+-        hiddenReviews.forEach(el => el.classList.remove('hidden'));
+-        const btnContainer = document.getElementById('load-more-reviews-container');
+-        if (btnContainer) btnContainer.remove();
++    function selectFinanceTerm(months) {
++        selectedTerm = months;
++        const terms = [3, 4, 6, 9, 12];
++        terms.forEach(t => {
++            const btn = document.getElementById('term-' + t);
++            if (btn) {
++                if (t === months) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-extrabold text-sm text-gray-700 hover:bg-gray-50 transition-all select-none";
++                }
++            }
++        });
++        recalcInstallment();
+     }
+ 
+-    /**
+-     * TẢI LẠI DANH SÁCH ĐÁNH GIÁ QUA AJAX (KHÔNG RELOAD TRANG)
+-     */
+-    async function refreshReviewsList() {
+-        const container = document.getElementById('reviews-list-container');
+-        if (!container) return;
+-        try {
+-            const response = await fetch(`product_detail.php?id=<?= $id ?>&only_reviews=1`);
+-            const html = await response.text();
+-            container.innerHTML = html;
+-        } catch (error) {
+-            console.error('Lỗi khi tải lại danh sách đánh giá:', error);
+-        }
++    function selectCreditBank(bankName) {
++        selectedBank = bankName;
++        const banks = ['Vietcombank', 'Techcombank', 'Sacombank', 'ACB', 'MBBank', 'VPBank', 'VIB', 'BIDV', 'VietinBank', 'TPBank', 'HSBC', 'ShinhanBank'];
++        banks.forEach(b => {
++            const btn = document.getElementById('bank-' + b);
++            if (btn) {
++                const isSelected = (bankName === b || (bankName === 'Shinhan Bank' && b === 'ShinhanBank'));
++                if (isSelected) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl p-2.5 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
++                }
++            }
++        });
++        recalcInstallment();
+     }
+ 
+-    /**
+-     * XỬ LÝ GỬI ĐÁNH GIÁ/PHẢN HỒI QUA AJAX
+-     */
+-    async function handleReviewSubmit(event) {
+-        event.preventDefault();
+-        const form = event.target;
+-        const formData = new FormData(form);
+-        formData.append('ajax', '1');
+-        formData.append('submit_review', '1');
+-
+-        const submitBtn = form.querySelector('button[type="submit"]');
+-        const originalBtnText = submitBtn.innerHTML;
+-        submitBtn.disabled = true;
+-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+-
+-        try {
+-            const response = await fetch(form.action, {
+-                method: 'POST',
+-                body: formData
+-            });
+-            const result = await response.json();
+-
+-            if (result.success) {
+-                // Hiển thị thông báo cảm ơn - Dạng pill sang xịn mịn tích hợp Nyan Cat ở vị trí checkmark
+-                Swal.fire({
+-                    html: `
+-                        <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+-                            <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+-                            <span class="text-[14px] md:text-[14px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+-                        </div>
+-                    `,
+-                    background: 'transparent',
+-                    showConfirmButton: false,
+-                    timer: 3500,
+-                    backdrop: `rgba(0, 0, 0, 0.25)`, 
+-                    position: 'top',
+-                    customClass: {
+-                        popup: 'bg-transparent border-0 p-0 shadow-none'
+-                    },
+-                    showClass: {
+-                        popup: 'animate__animated animate__fadeInDown'
+-                    },
+-                    hideClass: {
+-                        popup: 'animate__animated animate__fadeOutUp'
+-                    }
+-                });
+-
+-                // Reset form và ẩn đi (nếu là form phản hồi)
+-                form.reset();
+-                if (form.closest('[id^="reply-form-"]')) {
+-                    form.closest('[id^="reply-form-"]').classList.add('hidden');
++    function selectCreditCard(cardName) {
++        selectedCreditCard = cardName;
++        const cards = ['Visa', 'MasterCard', 'JCB'];
++        cards.forEach(c => {
++            const btn = document.getElementById('card-' + c);
++            if (btn) {
++                if (c === cardName) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl py-2 flex items-center justify-center font-bold text-xs text-gray-700 hover:bg-gray-50 transition-all select-none";
+                 }
+-
+-                // Cập nhật lại danh sách đánh giá
+-                await refreshReviewsList();
+             }
+-        } catch (error) {
+-            console.error('Lỗi khi gửi đánh giá:', error);
+-            Swal.fire('<?= __("error") ?>', '<?= __("review_submit_error") ?>', 'error');
+-        } finally {
+-            submitBtn.disabled = false;
+-            submitBtn.innerHTML = originalBtnText;
+-        }
++        });
++        recalcInstallment();
+     }
+ 
+-    // Gắn sự kiện AJAX cho tất cả các form đánh giá (bao gồm cả các form mới được render qua AJAX)
+-    document.addEventListener('submit', function(e) {
+-        if (e.target && (e.target.id === 'main-review-form' || e.target.closest('[id^="reply-form-"]'))) {
+-            handleReviewSubmit(e);
+-        }
+-    });
+-
+-    /**
+-     * HIỆN THÔNG BÁO CẢM ƠN SAU KHI ĐÁNH GIÁ THÀNH CÔNG (Dành cho trường hợp reload truyền thống nếu có)
+-     */
+-    <?php if (isset($_SESSION['review_success_msg'])): ?>
+-        Swal.fire({
+-            html: `
+-                <div class="flex items-center gap-3.5 px-5 py-2.5 bg-[#004bb9] rounded-full text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] border border-white/20 min-w-[300px] md:min-w-[450px] select-none">
+-                    <img src="https://sweetalert2.github.io/images/nyan-cat.gif" class="w-16 h-10 object-contain shrink-0 rounded-md" alt="Nyan Cat">
+-                    <span class="text-[14px] md:text-[15px] font-semibold text-left leading-snug"><?= __("thanks_for_comment") ?></span>
+-                </div>
+-            `,
+-            background: 'transparent',
+-            showConfirmButton: false,
+-            timer: 3500,
+-            backdrop: `rgba(0, 0, 0, 0.25)`, 
+-            position: 'top',
+-            customClass: {
+-                popup: 'bg-transparent border-0 p-0 shadow-none'
+-            },
+-            showClass: {
+-                popup: 'animate__animated animate__fadeInDown'
+-            },
+-            hideClass: {
+-                popup: 'animate__animated animate__fadeOutUp'
++    function selectCreditTerm(months) {
++        selectedCreditTerm = months;
++        const terms = [3, 6, 9, 12];
++        terms.forEach(t => {
++            const btn = document.getElementById('cterm-' + t);
++            if (btn) {
++                if (t === months) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center transition-all select-none";
++                }
+             }
+         });
+-        <?php unset($_SESSION['review_success_msg']); ?>
+-    <?php endif; ?>
++        recalcInstallment();
++    }
+ 
+-    /**
+-     * CHỌN SỐ SAO CẢM NHẬN (TỪ 1 ĐẾN 5)
+-     * Nhận giá trị nguyên (rating), cập nhật màu sắc sao tương ứng, gán text và gắn vào input hidden.
+-     */
+-    const ratingLabels = { 
+-        1: '<?= __("very_bad") ?>', 
+-        2: '<?= __("bad") ?>', 
+-        3: '<?= __("normal") ?>', 
+-        4: '<?= __("good") ?>', 
+-        5: '<?= __("excellent") ?>' 
+-    };
+-    function setRating(rating) {
+-        document.getElementById('input_rating').value = rating;
+-        document.getElementById('rating-text').innerText = ratingLabels[rating];
+-        for (let i = 1; i <= 5; i++) {
+-            let star = document.getElementById('star_' + i);
+-            if (i <= rating) {
+-                star.classList.remove('text-gray-300');
+-                star.classList.add('text-yellow-400');
+-            } else {
+-                star.classList.remove('text-yellow-400');
+-                star.classList.add('text-gray-300');
++    function selectBnplProvider(providerName) {
++        selectedBnpl = providerName;
++        const providers = ['Home PayLater', 'Fundiin', 'Kredivo'];
++        providers.forEach(p => {
++            const idSuffix = p.replace(/\s+/g, '');
++            const btn = document.getElementById('bnpl-' + idSuffix);
++            if (btn) {
++                if (p === providerName) {
++                    btn.className = "border-2 border-primary bg-blue-50/30 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 transition-all select-none";
++                } else {
++                    btn.className = "border-2 border-gray-100 rounded-xl p-3 flex flex-col items-center justify-center font-bold text-sm text-gray-800 hover:bg-gray-50 transition-all select-none";
++                }
+             }
++        });
++        
++        const data = bnplData[providerName];
++        if (data) {
++            document.getElementById('bnpl-title').innerText = data.title;
++            document.getElementById('bnpl-desc').innerText = data.desc;
+         }
+     }
+-    setRating(5);
+-
+-    /**
+-     * PREVIEW FILE MEDIA (ẢNH/VIDEO) TRƯỚC KHI UPLOAD
+-     * Sinh tự động vùng UI xem trước cho ảnh, hoặc khung player (không auto play) cho video MP4 sau khi chọn file từ máy tính.
+-     * Cảnh báo giới hạn số lượng <= 5 file.
+-     */
+-    function previewMedia(input) {
+-        const preview = document.getElementById('media-preview');
+-        const placeholder = document.getElementById('media-placeholder');
+-        preview.innerHTML = '';
+ 
+-        if (input.files.length > 5) {
+-            alert('<?= __("max_files_warning") ?>');
+-            input.value = '';
+-            return;
+-        }
++    function recalcInstallment() {
++        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
++        
++        // 1. Finance Company calculations (Tab 1)
++        document.getElementById('calc-company').innerText = selectedCompany;
++        document.getElementById('calc-prepay-percent').innerText = selectedPrepayPercent;
++        
++        const prepayAmount = Math.round(price * (selectedPrepayPercent / 100));
++        document.getElementById('calc-prepay').innerText = prepayAmount.toLocaleString('vi-VN') + 'đ';
++        
++        const remainingPrincipal = price - prepayAmount;
++        const rates = interestRatesMap[selectedCompany] || { 3: 0, 4: 0, 6: 0, 9: 0, 12: 0 };
++        const monthlyInterestRate = rates[selectedTerm] || 0;
++        document.getElementById('calc-interest-rate').innerText = monthlyInterestRate + '%' + '<?= __("per_month_suffix") ?>';
++        
++        const monthlyPrincipal = remainingPrincipal / selectedTerm;
++        const monthlyInterest = remainingPrincipal * (monthlyInterestRate / 100);
++        const monthlyAmt = Math.round(monthlyPrincipal + monthlyInterest);
++        
++        document.getElementById('calc-monthly').innerText = Math.round(monthlyPrincipal).toLocaleString('vi-VN') + 'đ';
++        document.getElementById('calc-total-monthly').innerText = monthlyAmt.toLocaleString('vi-VN') + 'đ';
++        
++        const totalToPay = prepayAmount + (monthlyAmt * selectedTerm);
++        document.getElementById('calc-total').innerText = totalToPay.toLocaleString('vi-VN') + 'đ';
++        
++        const difference = totalToPay - price;
++        document.getElementById('calc-diff').innerText = difference.toLocaleString('vi-VN') + 'đ';
+ 
+-        if (input.files.length > 0) {
+-            const filesSelectedText = '<?= __("files_selected") ?>'.replace('%s', input.files.length);
+-            const changeMediaText = '<?= __("change_media") ?>';
+-            placeholder.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 text-2xl mb-1"></i><p class="text-sm text-green-600 font-medium">' + filesSelectedText + '</p><p class="text-xs text-gray-400 mt-1">' + changeMediaText + '</p>';
++        // 2. Credit Card calculations (Tab 2)
++        const ccBankEl = document.getElementById('cc-calc-bank');
++        if (ccBankEl) {
++            ccBankEl.innerText = selectedBank;
++            document.getElementById('cc-calc-card').innerText = selectedCreditCard;
++            
++            // Map flat monthly rates directly
++            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
++            const ccFlatRate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
++            document.getElementById('cc-calc-rate').innerText = ccFlatRate + '%' + '<?= __("per_month_suffix") ?>';
++            
++            const ccMonthlyAmt = Math.round((price / selectedCreditTerm) + (price * (ccFlatRate / 100)));
++            document.getElementById('cc-calc-monthly').innerText = ccMonthlyAmt.toLocaleString('vi-VN') + 'đ';
++            
++            const ccTotalToPay = ccMonthlyAmt * selectedCreditTerm;
++            document.getElementById('cc-calc-total').innerText = ccTotalToPay.toLocaleString('vi-VN') + 'đ';
++            
++            const ccDifference = ccTotalToPay - price;
++            document.getElementById('cc-calc-diff').innerText = ccDifference.toLocaleString('vi-VN') + 'đ';
+         }
++    }
+ 
+-        Array.from(input.files).forEach((file, idx) => {
+-            const wrapper = document.createElement('div');
+-            wrapper.className = 'relative w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 shadow-sm';
++    function submitNewInstallment() {
++        const fullname = document.getElementById('inst-fullname').value.trim();
++        const phone = document.getElementById('inst-phone').value.trim();
+ 
+-            if (file.type.startsWith('video/')) {
+-                const video = document.createElement('video');
+-                video.src = URL.createObjectURL(file);
+-                video.className = 'w-full h-full object-cover';
+-                wrapper.appendChild(video);
+-                const playIcon = document.createElement('div');
+-                playIcon.className = 'absolute inset-0 bg-black/30 flex items-center justify-center';
+-                playIcon.innerHTML = '<i class="fa-solid fa-play text-white"></i>';
+-                wrapper.appendChild(playIcon);
+-            } else {
+-                const img = document.createElement('img');
+-                img.src = URL.createObjectURL(file);
+-                img.className = 'w-full h-full object-cover';
+-                wrapper.appendChild(img);
+-            }
++        if (!fullname) {
++            Swal.fire('<?= __("warning") ?>', '<?= __("please_enter_fullname") ?>', 'warning');
++            return;
++        }
++        if (!phone || !/^[0-9]{10}$/.test(phone)) {
++            Swal.fire('<?= __("warning") ?>', '<?= __("please_enter_valid_phone") ?>', 'warning');
++            return;
++        }
+ 
+-            // File size badge
+-            const sizeBadge = document.createElement('div');
+-            const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+-            sizeBadge.className = 'absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] text-center py-0.5';
+-            sizeBadge.innerText = sizeMB + ' MB';
+-            wrapper.appendChild(sizeBadge);
++        const price = parseFloat(document.getElementById('installmentProductPrice').getAttribute('data-price'));
++        const tradeInCheckbox = document.getElementById('inst-trade-in');
++        const isTradeIn = tradeInCheckbox.checked ? 1 : 0;
++        const tradeInText = isTradeIn ? ' (Thu cũ lên đời)' : '';
+ 
+-            preview.appendChild(wrapper);
+-        });
+-    }
++        let termText = '';
++        let payment_method = '';
++        let partner_name = '';
++        let card_type = '';
++        let prepayment_percent = 0;
++        let prepayment_amount = 0;
++        let term_months = 3;
++        let monthly_payment = 0;
++        let total_payment = 0;
++        let difference_amount = 0;
++        let interest_rate = 0;
+ 
+-    /**
+-     * LIGHTBOX VIEWER: POPUP XEM TO ẢNH / PHÁT VIDEO ĐÍNH KÈM
+-     * Phóng đại xem tập tin media trên 1 modal lightbox tối nền.
+-     */
+-    function openMediaViewer(src, isVideo) {
+-        const modal = document.getElementById('mediaViewerModal');
+-        const content = document.getElementById('mediaViewerContent');
+-        if (isVideo) {
+-            content.innerHTML = '<video src="' + src + '" controls autoplay class="max-w-full max-h-[80vh] rounded-lg shadow-2xl"></video>';
++        if (currentTab === 1) {
++            payment_method = 'finance';
++            partner_name = selectedCompany;
++            prepayment_percent = selectedPrepayPercent;
++            prepayment_amount = Math.round(price * (prepayment_percent / 100));
++            term_months = selectedTerm;
++            interest_rate = (interestRatesMap[selectedCompany] || {})[selectedTerm] || 0;
++            
++            const remainingPrincipal = price - prepayment_amount;
++            const monthlyPrincipal = remainingPrincipal / term_months;
++            const monthlyInterest = remainingPrincipal * (interest_rate / 100);
++            monthly_payment = Math.round(monthlyPrincipal + monthlyInterest);
++            total_payment = prepayment_amount + (monthly_payment * term_months);
++            difference_amount = total_payment - price;
++            
++            termText = `Công ty tài chính: ${selectedCompany}, Trả trước: ${selectedPrepayPercent}%, Kỳ hạn: ${selectedTerm} tháng${tradeInText}`;
++        } else if (currentTab === 2) {
++            payment_method = 'credit_card';
++            partner_name = selectedBank;
++            card_type = selectedCreditCard;
++            prepayment_percent = 0;
++            prepayment_amount = 0;
++            term_months = selectedCreditTerm;
++            
++            const ccMonthlyRatesMap = { 3: 0, 6: 0.58, 9: 0.5, 12: 0.46 };
++            interest_rate = ccMonthlyRatesMap[selectedCreditTerm] || 0;
++            monthly_payment = Math.round((price / term_months) + (price * (interest_rate / 100)));
++            total_payment = monthly_payment * term_months;
++            difference_amount = total_payment - price;
++            
++            termText = `Thẻ tín dụng: ${selectedBank} - ${selectedCreditCard}, Kỳ hạn: ${selectedCreditTerm} tháng (Lãi suất phẳng: ${interest_rate}%/tháng)${tradeInText}`;
+         } else {
+-            content.innerHTML = '<img src="' + src + '" class="max-w-full max-h-[80vh] rounded-lg shadow-2xl">';
+-        }
+-        modal.classList.remove('hidden');
+-    }
+-    function closeMediaViewer(e) {
+-        if (e.target === document.getElementById('mediaViewerModal')) {
+-            document.getElementById('mediaViewerModal').classList.add('hidden');
++            payment_method = 'bnpl';
++            partner_name = selectedBnpl;
++            prepayment_percent = 0;
++            prepayment_amount = 0;
++            term_months = 3;
++            interest_rate = 0;
++            monthly_payment = Math.round(price / 3);
++            total_payment = price;
++            difference_amount = 0;
++            
++            termText = `Mua trước trả sau: ${selectedBnpl}${tradeInText}`;
+         }
+-    }
+ 
+-    /**
+-     * XÁC NHẬN XÓA ĐÁNH GIÁ SẢN PHẨM
+-     * Tạo UI modal overlay cảnh báo (không thể hoàn tác) bằng Javascript DOM Element tĩnh.
+-     * Nếu xác nhận: Sẽ trigger submit DOM form hidden chứa review_id tương ứng.
+-     */
+-    function confirmDeleteReview(reviewId) {
+-        // Create overlay
+-        const overlay = document.createElement('div');
+-        overlay.id = 'delete-confirm-overlay';
+-        overlay.className = 'fixed inset-0 bg-black/50 z-[300] flex items-center justify-center backdrop-blur-sm p-4';
+-        overlay.style.animation = 'fadeIn 0.2s ease';
+-
+-        overlay.innerHTML = `
+-            <div class="bg-white rounded-xl shadow-2xl w-full max-w-[340px] p-6 text-center" style="animation: fadeIn 0.2s ease">
+-                <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+-                    <i class="fa-solid fa-trash-can text-red-500 text-2xl"></i>
+-                </div>
+-                <h3 class="font-bold text-gray-800 text-lg mb-2"><?= __("delete_review_title") ?></h3>
+-                <p class="text-sm text-gray-500 mb-5"><?= __("delete_review_warning") ?></p>
+-                <div class="flex gap-3">
+-                    <button onclick="document.getElementById('delete-confirm-overlay').remove()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium text-sm transition"><?= __("cancel") ?></button>
+-                    <button onclick="document.getElementById('delete-review-form-${reviewId}').submit()" class="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-bold text-sm transition shadow-md"><?= __("confirm_delete") ?></button>
+-                </div>
+-            </div>
+-        `;
++        const formData = new FormData();
++        formData.append('product_id', <?= $id ?>);
++        formData.append('term', termText);
++        formData.append('fullname', fullname);
++        formData.append('phone', phone);
++        formData.append('payment_method', payment_method);
++        formData.append('partner_name', partner_name);
++        formData.append('card_type', card_type);
++        formData.append('prepayment_percent', prepayment_percent);
++        formData.append('prepayment_amount', prepayment_amount);
++        formData.append('term_months', term_months);
++        formData.append('monthly_payment', monthly_payment);
++        formData.append('total_payment', total_payment);
++        formData.append('difference_amount', difference_amount);
++        formData.append('interest_rate', interest_rate);
++        formData.append('is_trade_in', isTradeIn);
++        formData.append('csrf_token', csrfToken);
+ 
+-        // Close on overlay click
+-        overlay.addEventListener('click', function (e) {
+-            if (e.target === overlay) overlay.remove();
++        fetch(getApiUrl('save_installment.php'), {
++            method: 'POST',
++            body: formData
++        })
++        .then(res => res.json())
++        .then(data => {
++            if (data.success) {
++                closeInstallmentModal();
++                Swal.fire({
++                    title: '<?= __("notification") ?>',
++                    text: '<?= __("installment_success_swal") ?>',
++                    icon: 'success',
++                    timer: 3000,
++                    showConfirmButton: false
++                });
++            } else {
++                Swal.fire('<?= __("warning") ?>', data.message || 'Lỗi đăng ký trả góp.', 'error');
++            }
++        })
++        .catch(err => {
++            Swal.fire('<?= __("warning") ?>', 'Không thể gửi yêu cầu trả góp.', 'error');
+         });
+-
+-        document.body.appendChild(overlay);
+     }
+ </script>
+ 
