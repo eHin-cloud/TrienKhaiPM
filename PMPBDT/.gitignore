@@ -6,3 +6,4 @@
 /.vscode
 *.log
 config_api.php
+.env
