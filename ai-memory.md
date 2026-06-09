@@ -1,8 +1,9 @@
 # Project Memory - Hệ thống Thương Mại Điện Tử (PMVcuoi)
 
 ## Trạng thái hiện tại
-- **[2026-06-10] Tối ưu hóa Git và Tài liệu tuyển dụng:**
-  - **Bảo mật Git:** Cấu hình toàn diện lại `.gitignore` để tự động bỏ qua các file nhạy cảm và file rác (`.env`, các tệp backup zip dung lượng lớn, `error_log`, thư mục `scratch/` nháp và các thư mục cấu hình IDE `.agents/`, `.continue/`, `*.code-workspace`). Đã chạy xác minh `git status` đảm bảo an toàn tuyệt đối trước khi push code lên GitHub.
+- **[2026-06-10] Tối ưu hóa Git, Sửa lỗi bảo mật API Key và Push code:**
+  - **Bảo mật Git & Sửa lỗi Push Protection:** Khắc phục thành công sự cố push bị GitHub chặn do tệp `core/config_api.php` chứa API Key cứng của Gemini. Đã chuyển đổi logic trong `core/config_api.php` sang nạp động từ `.env`, đưa tệp này vào `.gitignore` và dùng `git rm --cached` để gỡ bỏ. Sử dụng `git commit --amend` để làm sạch hoàn toàn lịch sử commit trước khi push.
+  - **Push Code:** Đẩy thành công nhánh `HoanChinh` lên kho chứa GitHub remote (`https://github.com/eHin-cloud/TrienKhaiPM.git`).
   - **Tài liệu README.md:** Biên soạn file `README.md` chuyên nghiệp với đầy đủ sơ đồ kiến trúc Mermaid, phân tích technical stack, cấu trúc thư mục dự án chi tiết, hướng dẫn setup local, và phần mô tả các thử thách kỹ thuật đã vượt qua (xử lý session-less JWT, xung đột logic nghiệp vụ chéo và lỗi type casting trên Flutter app) để phục vụ nhà tuyển dụng đánh giá.
 - **[2026-06-10] Kiểm tra trạng thái Git:**
   - **Hiện trạng:** Thư mục `.git` local mới được khởi tạo lại (`git init`) với duy nhất 1 commit ban đầu (`first commit`). Repository remote trên GitHub (`https://github.com/AQuyGib/PMPBDT.git`) hiện đang trống hoàn toàn (chưa có commit hay branch nào được push).
@@ -143,10 +144,11 @@
 - [x] Đã bổ sung ghi log thất bại cho API Auth.
 
 ## Các file đã can thiệp (Gần đây)
-- [MODIFY] `.gitignore`: Cấu hình chi tiết các file nhạy cảm và file rác cần loại bỏ khỏi Git (như .env, file zip lớn, scratch/, logs, code-workspace).
+- [MODIFY] `.gitignore`: Cấu hình chi tiết các file nhạy cảm và file rác cần loại bỏ khỏi Git (như .env, core/config_api.php, file zip lớn, scratch/, logs, code-workspace).
 - [CREATE] `README.md`: Biên soạn tài liệu giới thiệu hệ thống thương mại điện tử DienMayPro cho nhà tuyển dụng xem.
+- [MODIFY] `core/config_api.php`: Loại bỏ Gemini API Key cứng, chuyển sang nạp từ biến môi trường qua Env support.
+- [MODIFY] `.env`: Bổ sung khoá cấu hình GEMINI_API_KEY local cho AI Chatbot.
 - [MODIFY] `public/index.php`: Khắc phục lỗi định tuyến 404 local bằng cách tự động nhận diện tên thư mục dự án gốc.
-- [MODIFY] `.env`: Sửa lỗi cú pháp dòng ghi chú không chứa ký tự comment (#).
 - [MODIFY] `src/Service/AdminService.php`: Bổ sung kiểm tra mã lỗi tải lên chi tiết (kích thước file, quyền máy chủ), ràng buộc validation bắt buộc ảnh đại diện đối với sản phẩm mới, và bao bọc toàn bộ logic CSDL bằng try-catch PDOException để bắt lỗi chính xác và trả về qua SweetAlert.
 - [CREATE] `scratch/check_db.php`: Script debug truy xuất cấu trúc bảng `products` của CSDL.
 - [CREATE] `scratch/test_add_product.php`: Script giả lập hành động thêm sản phẩm của AdminService nhằm kiểm chứng hoạt động.

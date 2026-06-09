@@ -167,8 +167,8 @@ DB_PASS=
 # Cấu hình gửi mail OTP 2FA qua Gmail
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=dienmaysieupro@gmail.com
-SMTP_PASSWORD=jfeejwsaamvfnowe   # Mật khẩu ứng dụng Gmail 16 ký tự
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_gmail_app_password_here   # Mật khẩu ứng dụng Gmail 16 ký tự
 
 # Cấu hình Google Gemini AI Chatbot
 GEMINI_API_KEY=your_gemini_api_key_here
