@@ -1,3 +1,0 @@
-<?php
-$GEMINI_API_KEY = "AIzaSyDxLs_QcSyy4952IeUVNzH2weAq0BTlvE8";
-?>

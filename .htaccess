@@ -1,0 +1,25 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Chặn truy cập trực tiếp vào các thư mục nhạy cảm bên ngoài thư mục public
+    RewriteRule ^(core|views|src|vendor|scratch|sql|storage|config)(\/|$) - [F,L,NC]
+    
+    # 1. Nếu file hoặc thư mục tồn tại thật sự trong thư mục gốc thì cho qua
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 2. Chuyển hướng âm thầm mọi request khác vào thư mục public/
+    RewriteRule ^((?!public/).*)$ public/$1 [L,NC]
+</IfModule>
+
+# Cấu hình bảo mật bổ sung cho tệp tin nhạy cảm ở gốc
+<FilesMatch "^\.env|composer\.json|composer\.lock|package\.json|package-lock\.json|README\.md|ai-memory\.md">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
